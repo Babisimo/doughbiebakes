@@ -5,6 +5,7 @@ import { dropType } from "./drop";
 import { memberType } from "./member";
 import { memberSelectionType } from "./memberSelection";
 import { productType } from "./product";
+import { reservationType } from "./reservation";
 
 export const schemaTypes: SchemaTypeDefinition[] = [
   productType,
@@ -12,4 +13,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   dropType,
   memberType,
   memberSelectionType,
+  reservationType,
 ];

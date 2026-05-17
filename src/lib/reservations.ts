@@ -76,6 +76,9 @@ export async function decideReservation(
     // the same (tested) evaluator the request used.
     const now = new Date();
     const drop = await freshClient.fetch<Drop | null>(DROP_BY_ID_QUERY, { id: r.dropId });
+    if (!drop) {
+      console.error("[reservations] drop not found for reservation", r.id, r.dropId);
+    }
     const selections = drop ? await getMemberSelectionsForDrop(drop, { fresh: true }) : [];
     const recheck = evaluateReservation(
       drop,
@@ -89,12 +92,20 @@ export async function decideReservation(
       if (moved) await sendReservationDeclined(emailInputFor(r), declineReason);
       return { ok: true, status: "declined", idempotent: !moved };
     }
+    // Status is claimed `confirmed` BEFORE the decrement so two actors can't
+    // both decrement. Accepted tradeoff: if the decrement throws, the doc
+    // stays `confirmed` with stock not reduced — baker-visible; a retry is an
+    // idempotent no-op (no double-decrement) but won't re-send the confirm
+    // email. Rare at Cottage-Food scale.
     const claimed = await setReservationStatus(id, "pending", "confirmed");
     if (!claimed) {
       const fresh = await freshClient.fetch<Reservation | null>(RESERVATION_BY_ID_QUERY, { id });
       return {
         ok: true,
-        status: (fresh?.status as "confirmed" | "declined") ?? "confirmed",
+        status:
+          fresh?.status === "confirmed" || fresh?.status === "declined"
+            ? fresh.status
+            : "confirmed",
         idempotent: true,
       };
     }

@@ -197,11 +197,9 @@ Run: `npm test` — Expected: FAIL (`Cannot find module '../reservation-token.ts
 
 - [ ] **Step 3: Implement**
 
-Create `src/lib/reservation-token.ts`:
+Create `src/lib/reservation-token.ts` (note: **no `import "server-only"`** — that package throws when imported by Node's test runner, making the module untestable. The secret stays server-side anyway: `node:crypto` cannot be bundled into a client component and `CLUB_LINK_SECRET` is not `NEXT_PUBLIC_`, so it is never shipped to the browser — same approach as the tested `drop-status.ts`):
 
 ```ts
-import "server-only";
-
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type ReservationAction = "approve" | "decline";
@@ -354,10 +352,12 @@ Run: `npm test` — Expected: FAIL (`Cannot find module '../reservation-eval.ts'
 
 Create `src/lib/reservation-eval.ts`:
 
+Because `evaluateReservation` imports **values** (not just types) from `./availability` and `./drop-status`, the `node:test` runner must resolve that chain at runtime — so this module AND `src/lib/availability.ts` use explicit `.ts` import specifiers. (`src/lib/availability.ts`'s relative imports — `./types`, `./drop-status` — must be changed to `./types.ts`, `./drop-status.ts` as part of this task.) This is **build-verified safe**: `npm run build` succeeds with these specifiers (Next 16 + `allowImportingTsExtensions`). `drop-status.ts`/`types.ts` need no change — they only `import type` (erased by type-stripping).
+
 ```ts
-import { availabilityOf, buildAvailability, type MemberSelection } from "./availability";
-import { effectiveDropStatus } from "./drop-status";
-import type { Drop } from "./types";
+import { availabilityOf, buildAvailability, type MemberSelection } from "./availability.ts";
+import { effectiveDropStatus } from "./drop-status.ts";
+import type { Drop } from "./types.ts";
 
 export type ReqItem = { slug: string; quantity: number };
 export type PricedItem = {
@@ -1524,3 +1524,5 @@ git commit -m "chore: verification fixups for pay-in-person"
 - **Idempotency:** every decision path tolerates being run twice (signed link clicked twice, or link + admin) via `setReservationStatus`'s revision-guarded transition returning false.
 - **`.env.local` is not deployed.** This feature needs `CLUB_LINK_SECRET`, `SANITY_API_WRITE_TOKEN`, `RESEND_API_KEY`, `FROM_EMAIL` set in Vercel for the deployed site (same as the existing flows).
 - TypeScript test files import with explicit `.ts` extensions (Node native ESM); `tsconfig.json` already has `allowImportingTsExtensions`.
+- **A `node:test`-loaded module's runtime-import chain needs `.ts` specifiers.** `node --test --experimental-strip-types` resolves relative *value* imports at runtime. Type-only imports (`import type`) are erased and need no change. So a tested module that imports values from another source module forces `.ts` specifiers through that chain (here: `reservation-eval.ts` + `availability.ts`). This is build-verified safe (`npm run build` passes with Next 16 + `allowImportingTsExtensions`). Server-only / non-tested modules (`reservations.ts`, routes, pages) stay extensionless.
+- **`import "server-only"` is incompatible with the `node:test` runner** (it throws on import outside the Next bundler). Any module that a `*.test.ts` imports must NOT have `server-only` — protect secrets instead via `node:crypto` imports + non-`NEXT_PUBLIC_` env (as `reservation-token.ts` and `drop-status.ts` do). Modules that keep `server-only` (`reservation-email.ts`, `reservations.ts`) are correctly *not* unit-tested (manual/integration only).

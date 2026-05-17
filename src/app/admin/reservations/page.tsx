@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ReservationActions } from "@/components/reservation-actions";
@@ -7,6 +8,13 @@ import { sanityClient } from "@/sanity/client";
 import { RESERVATIONS_QUERY } from "@/sanity/lib/queries";
 
 export const dynamic = "force-dynamic";
+
+// Admin page with customer PII — keep it out of search indexes, matching the
+// other /admin/* pages.
+export const metadata: Metadata = {
+  title: "Pickup reservations",
+  robots: { index: false, follow: false },
+};
 
 type Row = {
   id: string;

@@ -35,6 +35,13 @@ function when(input: ReservationEmailInput): string {
     : "the drop date";
 }
 
+function toItemRows(input: ReservationEmailInput) {
+  return input.lines.map((l) => ({
+    label: `${l.quantity}× ${l.productName}`,
+    amount: formatPrice(l.priceCents * l.quantity),
+  }));
+}
+
 /** (a) Customer: request received, not yet confirmed. */
 export async function sendReservationReceived(input: ReservationEmailInput): Promise<void> {
   const body = [
@@ -46,17 +53,14 @@ export async function sendReservationReceived(input: ReservationEmailInput): Pro
     "",
     `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}.`,
   ].join("\n");
-  const itemRows = input.lines.map((l) => ({
-    label: `${l.quantity}× ${l.productName}`,
-    amount: formatPrice(l.priceCents * l.quantity),
-  }));
+  const itemRows = toItemRows(input);
   const html = renderEmail({
     preheader: `We received your ${site.name} pickup reservation request`,
     eyebrow: "Reservation requested",
     heading: `Thanks ${input.customerName} — request received`,
     bodyHtml:
       infoCard(
-        "It&#39;s not confirmed yet — we&#39;ll email you once it&#39;s approved.",
+        "It's not confirmed yet — we'll email you once it's approved.",
       ) +
       lineItemsTable(itemRows, {
         label: "Total due at pickup",
@@ -89,10 +93,7 @@ export async function sendReservationBakerAlert(input: ReservationEmailInput): P
     "",
     lines(input.lines),
   ].join("\n");
-  const itemRows = input.lines.map((l) => ({
-    label: `${l.quantity}× ${l.productName}`,
-    amount: formatPrice(l.priceCents * l.quantity),
-  }));
+  const itemRows = toItemRows(input);
   const html = renderEmail({
     preheader: `New pickup reservation — ${formatPrice(input.totalCents)}`,
     eyebrow: "New pickup reservation",
@@ -133,14 +134,11 @@ export async function sendReservationConfirmed(input: ReservationEmailInput): Pr
     "",
     `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}. ${site.cottageFood.permitNumber}.`,
   ].join("\n");
-  const itemRows = input.lines.map((l) => ({
-    label: `${l.quantity}× ${l.productName}`,
-    amount: formatPrice(l.priceCents * l.quantity),
-  }));
+  const itemRows = toItemRows(input);
   const html = renderEmail({
     preheader: `Your ${site.name} pickup reservation is confirmed`,
     eyebrow: "Reservation confirmed",
-    heading: `You&#39;re confirmed, ${input.customerName}! 🍞`,
+    heading: `You're confirmed, ${input.customerName}! 🍞`,
     bodyHtml:
       infoCard(
         `Pay <strong>${formatPrice(input.totalCents)}</strong> at pickup (cash or card) · ` +

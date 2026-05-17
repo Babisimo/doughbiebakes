@@ -2,6 +2,8 @@ import "server-only";
 
 import { createClient } from "next-sanity";
 
+import type { OrderRecord } from "@/lib/order-record";
+
 import { apiVersion, dataset, projectId, sanityConfigured, writeToken } from "../env";
 
 /**
@@ -67,13 +69,16 @@ export async function decrementDropQuantities(
 /**
  * Best-effort: decrement the current open drop after a paid Stripe order.
  */
-export async function applyOrderToActiveDrop(items: SoldItem[]): Promise<void> {
-  if (!writeClient || items.length === 0) return;
+export async function applyOrderToActiveDrop(
+  items: SoldItem[],
+): Promise<string | null> {
+  if (!writeClient || items.length === 0) return null;
   const open = await writeClient.fetch<{ _id: string } | null>(
     `*[_type == "drop" && status == "open"] | order(pickupOrShipDate asc)[0]{ _id }`,
   );
-  if (!open?._id) return;
+  if (!open?._id) return null;
   await decrementDropQuantities(open._id, items);
+  return open._id;
 }
 
 type MemberSelectionInput = {
@@ -246,4 +251,33 @@ export async function setReservationStatus(
     }
     throw err;
   }
+}
+
+/**
+ * Idempotently persist a paid public order. The deterministic
+ * `_id = order.<stripeSessionId>` + `createIfNotExists` make duplicate
+ * `checkout.session.completed` webhook deliveries a no-op. Returns false
+ * when Sanity isn't configured (best-effort).
+ */
+export async function createOrder(rec: OrderRecord): Promise<boolean> {
+  if (!writeClient) return false;
+  await writeClient.createIfNotExists({
+    _id: `order.${rec.stripeSessionId}`,
+    _type: "order",
+    stripeSessionId: rec.stripeSessionId,
+    customerEmail: rec.customerEmail,
+    ...(rec.customerName ? { customerName: rec.customerName } : {}),
+    ...(rec.customerPhone ? { customerPhone: rec.customerPhone } : {}),
+    ...(rec.dropId ? { drop: { _type: "reference", _ref: rec.dropId } } : {}),
+    items: rec.items.map((i) => ({ _type: "orderItem", ...i })),
+    subtotalCents: rec.subtotalCents,
+    shippingCents: rec.shippingCents,
+    totalCents: rec.totalCents,
+    fulfillment: rec.fulfillment,
+    ...(rec.shipState ? { shipState: rec.shipState } : {}),
+    ...(rec.shipAddress ? { shipAddress: rec.shipAddress } : {}),
+    livemode: rec.livemode,
+    createdAt: rec.createdAt,
+  });
+  return true;
 }

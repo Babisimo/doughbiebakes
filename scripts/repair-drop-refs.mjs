@@ -76,7 +76,6 @@ for (const drop of drops) {
       unresolved++;
       continue;
     }
-    // eslint-disable-next-line no-await-in-loop
     const refId = await resolveProductId(li.product);
     if (!refId) {
       console.warn(
@@ -106,7 +105,6 @@ for (const drop of drops) {
         },
       });
     }
-    // eslint-disable-next-line no-await-in-loop
     await patch.commit({ autoGenerateArrayKeys: false });
     console.log(`  ✓ applied`);
   }

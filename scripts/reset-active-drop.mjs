@@ -104,7 +104,6 @@ for (const li of items) {
     break;
   }
   const refClean = isCleanRef(li.product);
-  // eslint-disable-next-line no-await-in-loop
   const refId = refClean ? li.product._ref : await resolveProductId(li.product);
   const label = li.product?.slug?.current ?? li.product?._ref ?? "(unknown)";
   if (!refId) {

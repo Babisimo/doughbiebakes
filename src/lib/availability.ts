@@ -1,4 +1,5 @@
 import type { Drop } from "./types";
+import { effectiveDropStatus } from "./drop-status";
 
 /**
  * Whether a loaf can be added to an order right now, and why not if it can't.
@@ -44,10 +45,12 @@ const NOT_IN_DROP: Availability = {
 export function buildAvailability(
   drop: Drop | null,
   memberSelections: MemberSelection[] = [],
+  now: Date = new Date(),
 ): Map<string, Availability> {
   const map = new Map<string, Availability>();
   if (!drop) return map;
-  const open = drop.status === "open";
+  const eff = effectiveDropStatus(drop, now);
+  const open = eff === "open";
 
   const claimedBySlug = new Map<string, number>();
   for (const sel of memberSelections) {
@@ -64,7 +67,7 @@ export function buildAvailability(
       entry = {
         canOrder: false,
         remaining,
-        reason: drop.status === "announced" ? "not-open" : "soldout",
+        reason: eff === "announced" ? "not-open" : "soldout",
       };
     } else if (!product.available || remaining <= 0) {
       entry = { canOrder: false, remaining, reason: "soldout" };

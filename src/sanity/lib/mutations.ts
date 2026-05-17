@@ -24,47 +24,51 @@ type SoldItem = { slug: string; quantity: number };
 
 /**
  * Best-effort: decrement the available quantities on the current open drop
- * after a paid order. Reads the drop, subtracts in memory, writes the array
- * back, and flips status to "soldout" when nothing is left. Fine for the
- * low-volume Cottage Food scale; revisit with optimistic locking if you grow.
+ * after a paid order, and flip status to "soldout" when nothing is left.
+ *
+ * IMPORTANT: we patch only each line item's `quantity`, addressed by its
+ * array `_key`. We must never write `product` back — the query below
+ * dereferences it (`product->{ … }`), so re-setting the whole `lineItems`
+ * array would replace each reference with a malformed object and corrupt the
+ * drop (Sanity then rejects every Studio save with `Key "slug" not allowed in
+ * ref`). Keyed quantity patches leave `product` and every other field intact.
+ * Fine for the low-volume Cottage Food scale; revisit with optimistic locking
+ * if you grow.
  */
 export async function applyOrderToActiveDrop(items: SoldItem[]): Promise<void> {
   if (!writeClient || items.length === 0) return;
 
   const drop = await writeClient.fetch<{
     _id: string;
-    _rev: string;
     lineItems?: { _key: string; quantity?: number; product?: { slug?: { current?: string } } }[];
   } | null>(
     `*[_type == "drop" && status == "open"] | order(pickupOrShipDate asc)[0]{
-      _id, _rev, "lineItems": lineItems[]{ _key, quantity, "product": product->{ "slug": slug } }
+      _id, "lineItems": lineItems[]{ _key, quantity, "product": product->{ "slug": slug } }
     }`,
   );
 
   if (!drop?.lineItems?.length) return;
 
   const wanted = new Map(items.map((i) => [i.slug, i.quantity] as const));
+  let patch = writeClient.patch(drop._id);
   let changed = false;
-  const nextLineItems = drop.lineItems.map((li) => {
+  let allZero = true;
+
+  for (const li of drop.lineItems) {
     const slug = li.product?.slug?.current;
     const dec = slug ? wanted.get(slug) ?? 0 : 0;
-    if (dec > 0) {
+    const next = Math.max(0, (li.quantity ?? 0) - dec);
+    if (dec > 0 && li._key) {
       changed = true;
-      return { ...li, quantity: Math.max(0, (li.quantity ?? 0) - dec) };
+      patch = patch.set({ [`lineItems[_key=="${li._key}"].quantity`]: next });
     }
-    return li;
-  });
+    if (next > 0) allZero = false;
+  }
 
   if (!changed) return;
+  if (allZero) patch = patch.set({ status: "soldout" });
 
-  const soldOut = nextLineItems.every((li) => (li.quantity ?? 0) <= 0);
-  await writeClient
-    .patch(drop._id)
-    .set({
-      lineItems: nextLineItems,
-      ...(soldOut ? { status: "soldout" } : {}),
-    })
-    .commit({ autoGenerateArrayKeys: false });
+  await patch.commit({ autoGenerateArrayKeys: false });
 }
 
 type MemberSelectionInput = {

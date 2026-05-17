@@ -1545,6 +1545,29 @@ git commit -m "chore: verification fixups for pay-in-person"
 
 ---
 
+## Final-review fixes (post-implementation)
+
+- **Seed-drop guard (Important).** `getActiveDrop()` returns the bundled
+  `seedDrop()` (id `"seed-drop"`) whenever Sanity has no live non-draft drop —
+  even when Sanity *is* configured. `/api/checkout` is unaffected (Stripe-
+  mediated, never persists a Sanity ref), but `/api/reserve` would persist a
+  reservation with `drop._ref:"seed-drop"` (dangling) that can never be
+  approved (the approve path's `DROP_BY_ID_QUERY` returns null →
+  auto-declined), emailing the customer a false "received" then false
+  "declined". Fix: export `SEED_DROP_ID = "seed-drop"` from
+  `src/lib/seed-products.ts` (use it in `seedDrop()`), and in
+  `src/app/api/reserve/route.ts` change the post-`getActiveDrop` guard from
+  `if (!drop)` to `if (!drop || drop.id === SEED_DROP_ID)` (same 409 "Ordering
+  isn't open right now."). Prevents creating unfulfillable reservations.
+- **Confirmed-but-not-decremented signal (Minor).** In
+  `src/lib/reservations.ts`, after the `confirmed` claim, wrap ONLY
+  `decrementDropQuantities(...)` + `sendReservationConfirmed(...)` in their own
+  try/catch that logs a distinct greppable error
+  (`"[reservations] CONFIRMED BUT STOCK NOT DECREMENTED"`, with reservation id)
+  and still `return { ok: true, status: "confirmed" }` — so the reported
+  status matches the actual `confirmed` doc state and the rare inconsistency
+  is diagnosable instead of surfacing as a misleading generic failure.
+
 ## Notes for the implementer
 
 - **Reuse, don't duplicate:** `decrementDropQuantities` is the *only* place a drop's stock is reduced (webhook + reservation approval both call it). Never write the whole `lineItems` array back — that reintroduces the fixed "Key slug not allowed in ref" corruption.

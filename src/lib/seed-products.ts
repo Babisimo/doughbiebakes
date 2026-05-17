@@ -125,3 +125,44 @@ export function seedDrop(): Drop {
     })),
   };
 }
+
+/**
+ * Two already-ended demo drops so the "Previous drops" section is populated
+ * before the CMS is wired (mirrors the seedDrop() philosophy of showcasing
+ * every state with zero config).
+ */
+export function seedPreviousDrops(): Drop[] {
+  const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
+  const mk = (
+    idx: number,
+    title: string,
+    slug: string,
+    closedDaysAgo: number,
+    slugs: string[],
+  ): Drop => ({
+    id: `seed-prev-${idx}`,
+    slug,
+    title,
+    status: "closed",
+    ordersOpenAt: new Date(now - (closedDaysAgo + 5) * day).toISOString(),
+    ordersCloseAt: new Date(now - closedDaysAgo * day).toISOString(),
+    pickupOrShipDate: new Date(now - (closedDaysAgo - 2) * day).toISOString(),
+    createdAt: new Date(now - (closedDaysAgo + 6) * day).toISOString(),
+    lineItems: seedProducts
+      .filter((p) => slugs.includes(p.slug))
+      .map((product) => ({ product, quantity: 0 })),
+  });
+  return [
+    mk(1, "Last Weekend's Drop", "last-weekend", 7, [
+      "classic",
+      "cheddar-jalapeno",
+      "strawberry",
+    ]),
+    mk(2, "Two Weekends Ago", "two-weekends-ago", 14, [
+      "classic",
+      "pepperoni-garlic",
+      "banana-brown-sugar-cinnamon",
+    ]),
+  ];
+}

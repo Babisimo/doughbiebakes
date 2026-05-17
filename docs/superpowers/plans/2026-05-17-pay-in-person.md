@@ -1014,6 +1014,11 @@ export async function POST(req: Request) {
     totalCents: result.totalCents,
     pickupDate: drop.pickupOrShipDate,
   };
+  console.info(
+    `[reserve] new reservation ${id} — ${name} <${email}> — ` +
+      `$${(result.totalCents / 100).toFixed(2)} — ` +
+      result.items.map((i) => `${i.quantity}× ${i.productSlug}`).join(", "),
+  );
   await sendReservationReceived(emailInput);
   await sendReservationBakerAlert(emailInput);
 

@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 
-import { applyOrderToActiveDrop, upsertMember } from "@/sanity/lib/mutations";
+import { applyOrderToActiveDrop, createOrder, upsertMember } from "@/sanity/lib/mutations";
+import { buildOrderRecord, type OrderShipAddress } from "@/lib/order-record";
 import { sendOrderEmails, type OrderEmailLine } from "@/lib/order-email";
 import { getStripe } from "@/lib/stripe";
 
@@ -110,6 +111,22 @@ async function handleSubscriptionEvent(
   }
 }
 
+function mapAddr(
+  a:
+    | { line1?: string | null; line2?: string | null; city?: string | null; state?: string | null; postal_code?: string | null }
+    | null
+    | undefined,
+): OrderShipAddress | null {
+  if (!a) return null;
+  const out: OrderShipAddress = {};
+  if (a.line1) out.line1 = a.line1;
+  if (a.line2) out.line2 = a.line2;
+  if (a.city) out.city = a.city;
+  if (a.state) out.state = a.state;
+  if (a.postal_code) out.postalCode = a.postal_code;
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 async function handleCompletedCheckout(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
@@ -165,8 +182,9 @@ async function handleCompletedCheckout(
       sold.map((s) => `${s.quantity}× ${s.slug}`).join(", "),
   );
 
+  let dropId: string | null = null;
   try {
-    await applyOrderToActiveDrop(sold);
+    dropId = await applyOrderToActiveDrop(sold);
   } catch (err) {
     console.error("[webhook] failed to update drop inventory:", err);
   }
@@ -182,6 +200,7 @@ async function handleCompletedCheckout(
   // Prefer Stripe's line items for the email — they carry the names and the
   // exact amounts the customer was actually charged.
   let emailLines: OrderEmailLine[] = [];
+  const productLookup = new Map<string, { name: string; priceCents: number }>();
   try {
     const li = await stripe.checkout.sessions.listLineItems(session.id, {
       limit: 100,
@@ -189,11 +208,18 @@ async function handleCompletedCheckout(
     });
     emailLines = li.data.map((item) => {
       const product = item.price?.product;
-      const name =
-        item.description ??
-        (product && typeof product !== "string" && !("deleted" in product)
-          ? product.name
-          : "Loaf");
+      const resolved =
+        product && typeof product !== "string" && !("deleted" in product)
+          ? product
+          : null;
+      const name = item.description ?? resolved?.name ?? "Loaf";
+      const slug = resolved?.metadata?.slug;
+      if (slug) {
+        productLookup.set(slug, {
+          name: resolved?.name ?? item.description ?? "Loaf",
+          priceCents: item.price?.unit_amount ?? 0,
+        });
+      }
       return {
         name,
         quantity: item.quantity ?? 1,
@@ -202,6 +228,45 @@ async function handleCompletedCheckout(
     });
   } catch (err) {
     console.error("[webhook] failed to list line items for email:", err);
+  }
+
+  // Best-effort: persist a public-order record (Bread Club subscription
+  // checkouts are `mode: "subscription"` — never recorded as orders).
+  if (session.mode === "payment") {
+    const rec = buildOrderRecord({
+      stripeSessionId: session.id,
+      customerEmail: customerEmail,
+      customerName: session.customer_details?.name,
+      customerPhone: session.customer_details?.phone,
+      dropId,
+      sold,
+      productLookup,
+      subtotalCents: session.amount_subtotal ?? 0,
+      shippingCents: session.shipping_cost?.amount_total ?? 0,
+      totalCents: session.amount_total ?? 0,
+      isPickup,
+      shipState: state,
+      shipAddress: isPickup
+        ? null
+        : mapAddr(
+            session.collected_information?.shipping_details?.address ??
+              session.customer_details?.address,
+          ),
+      livemode: session.livemode,
+      createdAt: new Date().toISOString(),
+    });
+    if (rec) {
+      try {
+        await createOrder(rec);
+      } catch (err) {
+        console.error("[webhook] ORDER NOT PERSISTED", session.id, err);
+      }
+    } else {
+      console.warn(
+        "[webhook] order not recorded — no resolvable items/email",
+        session.id,
+      );
+    }
   }
 
   // Best-effort: never blocks the 200 (sendOrderEmails swallows its own errors).

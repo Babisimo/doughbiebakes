@@ -106,13 +106,13 @@ test("ship keeps shipAddress + shipState; pickup drops them", () => {
   }
 });
 
-test("omits optional fields when absent; normalizes qty/amounts; passthrough livemode", () => {
+test("omits optional fields when absent; clamps amounts; passthrough livemode", () => {
   const r = buildOrderRecord(
     input({
       customerName: null,
       customerPhone: null,
       dropId: null,
-      sold: [{ slug: "rye", quantity: 0 }],
+      sold: [{ slug: "rye", quantity: 3 }],
       subtotalCents: -5,
       livemode: true,
     }),
@@ -122,10 +122,27 @@ test("omits optional fields when absent; normalizes qty/amounts; passthrough liv
     assert.equal("customerName" in r, false);
     assert.equal("customerPhone" in r, false);
     assert.equal("dropId" in r, false);
-    assert.equal(r.items[0].quantity, 1); // floored to min 1
+    assert.equal(r.items[0].quantity, 3);
     assert.equal(r.subtotalCents, 0); // clamped min 0
     assert.equal(r.livemode, true);
   }
+});
+
+test("skips quantity<=0 items; null if that leaves nothing", () => {
+  assert.equal(
+    buildOrderRecord(input({ sold: [{ slug: "rye", quantity: 0 }] })),
+    null,
+  );
+  const r = buildOrderRecord(
+    input({
+      sold: [
+        { slug: "rye", quantity: 0 },
+        { slug: "classic", quantity: 2 },
+      ],
+    }),
+  );
+  assert.ok(r);
+  if (r) assert.deepEqual(r.items.map((i) => i.productSlug), ["classic"]);
 });
 ```
 
@@ -203,10 +220,12 @@ export function buildOrderRecord(input: BuildOrderInput): OrderRecord | null {
   for (const s of input.sold) {
     const p = input.productLookup.get(s.slug);
     if (!p) continue;
+    const quantity = Math.floor(s.quantity);
+    if (quantity <= 0) continue; // never fabricate a unit from a 0/neg qty
     items.push({
       productSlug: s.slug,
       productName: p.name,
-      quantity: Math.max(1, Math.floor(s.quantity)),
+      quantity,
       priceCents: cents(p.priceCents),
     });
   }
@@ -235,7 +254,7 @@ export function buildOrderRecord(input: BuildOrderInput): OrderRecord | null {
 - [ ] **Step 4: Run it — expect PASS**
 
 Run: `npm test`
-Expected: ALL pass (`# fail 0`; 28 prior + 5 new = 33).
+Expected: ALL pass (`# fail 0`; 28 prior + 6 new = 34).
 
 - [ ] **Step 5: Verify + commit**
 
@@ -456,7 +475,7 @@ export async function createOrder(rec: OrderRecord): Promise<boolean> {
 
 - [ ] **Step 4: Verify + commit**
 
-Run: `npm run typecheck` (exit 0), `npm run lint` (exit 0), `npm test` (`# fail 0`, 33 pass).
+Run: `npm run typecheck` (exit 0), `npm run lint` (exit 0), `npm test` (`# fail 0`, 34 pass).
 
 ```bash
 git add src/sanity/lib/mutations.ts
@@ -651,7 +670,7 @@ Replace that with:
 
 - [ ] **Step 5: Verify + commit**
 
-Run: `npm run typecheck` (exit 0), `npm run lint` (exit 0), `npm test` (`# fail 0`, 33 pass), `npm run build` (succeeds).
+Run: `npm run typecheck` (exit 0), `npm run lint` (exit 0), `npm test` (`# fail 0`, 34 pass), `npm run build` (succeeds).
 
 ```bash
 git add src/app/api/webhooks/stripe/route.ts
@@ -666,7 +685,7 @@ git commit -m "feat: persist public orders from the Stripe webhook (best-effort)
 
 - [ ] **Step 1: Static checks**
 
-Run: `npm run typecheck` (exit 0); `npm run lint` (exit 0); `npm test` (`# fail 0`, 33: 12 drop-status + 4 reservation-token + 7 reservation-eval + 5 email-layout + 5 order-record); `npm run build` (succeeds, all routes).
+Run: `npm run typecheck` (exit 0); `npm run lint` (exit 0); `npm test` (`# fail 0`, 34: 12 drop-status + 4 reservation-token + 7 reservation-eval + 5 email-layout + 6 order-record); `npm run build` (succeeds, all routes).
 
 - [ ] **Step 2: Idempotency + gate wiring (read-only)**
 

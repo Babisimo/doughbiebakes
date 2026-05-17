@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
 import { verifyClubToken } from "@/lib/club-token";
+import { effectiveDropStatus } from "@/lib/drop-status";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 
@@ -57,7 +58,7 @@ export default async function ClubDropPage({
     return { product, remaining };
   });
 
-  const windowOpen = drop.status === "announced";
+  const windowOpen = effectiveDropStatus(drop, new Date()) === "announced";
   const hasExplicitPick = myPick != null && myPick.source !== "default";
   const defaultLoaf = drop.lineItems.find(
     (li) => li.product.slug === site.breadClub.defaultLoafSlug,

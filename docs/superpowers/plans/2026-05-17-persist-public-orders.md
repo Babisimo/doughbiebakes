@@ -607,7 +607,10 @@ Replace with (same single `listLineItems` call; additionally populate a `product
       };
     });
   } catch (err) {
-    console.error("[webhook] failed to list line items for email:", err);
+    console.error(
+      "[webhook] failed to list line items — order will not be persisted:",
+      err,
+    );
   }
 ```
 
@@ -639,6 +642,8 @@ Replace that with:
       totalCents: session.amount_total ?? 0,
       isPickup,
       shipState: state,
+      // ship orders only: prefer the collected shipping address, fall back
+      // to the billing address if no shipping address was collected.
       shipAddress: isPickup
         ? null
         : mapAddr(
@@ -646,7 +651,9 @@ Replace that with:
               session.customer_details?.address,
           ),
       livemode: session.livemode,
-      createdAt: new Date().toISOString(),
+      // Stripe-authoritative completion time (stable across webhook
+      // redeliveries), not wall-clock processing time.
+      createdAt: new Date(session.created * 1000).toISOString(),
     });
     if (rec) {
       try {

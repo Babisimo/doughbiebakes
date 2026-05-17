@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 
 import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
+import { effectiveDropStatus } from "@/lib/drop-status";
 import { shippingOptions } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/url";
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
   // Authoritative point-of-sale inventory check — read live (no CDN / no
   // cache) so a stale snapshot can't oversell a sold-out loaf.
   const drop = await getActiveDrop({ fresh: true });
-  if (!drop || drop.status !== "open") {
+  if (!drop || effectiveDropStatus(drop, new Date()) !== "open") {
     return Response.json(
       { error: "Ordering isn't open right now — check the current drop." },
       { status: 409 },

@@ -12,6 +12,7 @@
     "club:emails": "node --env-file=.env.local scripts/club-emails.mjs",
     "club:link": "node --env-file=.env.local scripts/club-link.mjs",
     "drop:repair": "node --env-file=.env.local scripts/repair-drop-refs.mjs",
+    "drop:reset": "node --env-file=.env.local scripts/reset-active-drop.mjs",
     "test": "node --test --experimental-strip-types"
   },
   "dependencies": {

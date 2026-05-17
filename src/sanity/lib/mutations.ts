@@ -232,7 +232,18 @@ export async function setReservationStatus(
       .set({ status: toStatus, decidedAt: new Date().toISOString() })
       .commit();
     return true;
-  } catch {
-    return false; // revision mismatch — another actor decided it first
+  } catch (err) {
+    // Swallow ONLY a revision conflict (HTTP 409 — another actor decided it
+    // first → idempotent no-op). Re-throw real failures (network/auth) so a
+    // transient error is never silently treated as "already decided".
+    if (
+      err &&
+      typeof err === "object" &&
+      "statusCode" in err &&
+      (err as { statusCode?: number }).statusCode === 409
+    ) {
+      return false;
+    }
+    throw err;
   }
 }

@@ -95,6 +95,8 @@ export const RESERVATION_BY_ID_QUERY = groq`
     items[]{ productSlug, productName, quantity, priceCents }
   }`;
 
+// Intentionally unfiltered (MVP, low Cottage-Food volume): the admin list
+// shows all reservations, pending first. Add a $limit/cutoff if it grows.
 export const RESERVATIONS_QUERY = groq`
   *[_type == "reservation"] | order(
     select(status == "pending" => 0, 1) asc, createdAt desc

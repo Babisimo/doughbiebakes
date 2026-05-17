@@ -55,14 +55,14 @@ export function SiteFooter() {
             >
               Instagram ↗
             </a>
-            <a
+            {/* <a
               className="block hover:text-acid-600"
               href={site.tiktok}
               target="_blank"
               rel="noopener noreferrer"
             >
-              TikTok ↗
-            </a>
+              TikTok - Coming Soon ↗
+            </a> */}
           </div>
         </div>
         <div className="border-t border-white/40 px-4 py-4 text-center text-xs text-ink-500 sm:px-6">

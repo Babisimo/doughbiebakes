@@ -11,9 +11,9 @@ export const site = {
   description:
     "Doughbie — naturally leavened sourdough loaves baked in limited weekend drops in Corona, California. Local pickup or California-only shipping.",
   // Update these before launch.
-  email: "hello@doughbie.example",
+  email: "gondaniel852@gmail.com",
   instagram: "https://instagram.com/doughbbiee",
-  tiktok: "https://tiktok.com/",
+  // tiktok: "https://tiktok.com/",
   city: "Corona, CA",
   // Required on the California Cottage Food label and shown in the footer.
   cottageFood: {

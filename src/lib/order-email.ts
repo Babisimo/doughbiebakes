@@ -1,6 +1,7 @@
 import "server-only";
 
 import { sendEmail } from "./email";
+import { escapeHtml, infoCard, lineItemsTable, renderEmail } from "./email-layout";
 import { formatPrice } from "./money";
 import { site } from "./site";
 
@@ -27,19 +28,6 @@ export type OrderEmailInput = {
   shipState?: string | null;
 };
 
-function escapeHtml(s: string): string {
-  return s.replace(
-    /[&<>"']/g,
-    (c) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[c] as string,
-  );
-}
 
 function fulfillmentText(input: OrderEmailInput): string {
   return input.isPickup
@@ -48,40 +36,51 @@ function fulfillmentText(input: OrderEmailInput): string {
 }
 
 function customerHtml(input: OrderEmailInput): string {
-  const rows = input.lines
-    .map(
-      (l) =>
-        `<tr><td style="padding:6px 0;border-bottom:1px solid #eee">${l.quantity}× ${escapeHtml(
-          l.name,
-        )}</td><td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right">${formatPrice(
-          l.amountCents,
-        )}</td></tr>`,
-    )
-    .join("");
-  return `
-  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;color:#283618">
-    <h1 style="font-size:22px;margin:0 0 4px">Thanks${
-      input.customerName ? `, ${escapeHtml(input.customerName)}` : ""
-    } — your order is confirmed 🍞</h1>
-    <p style="color:#6c7150;margin:0 0 16px">Order ${escapeHtml(input.orderRef)} · ${site.name}</p>
-    <table style="width:100%;border-collapse:collapse;font-size:15px">
-      ${rows}
-      <tr><td style="padding:8px 0">Subtotal</td><td style="padding:8px 0;text-align:right">${formatPrice(
-        input.subtotalCents,
-      )}</td></tr>
-      <tr><td style="padding:2px 0">Shipping</td><td style="padding:2px 0;text-align:right">${
-        input.shippingCents > 0 ? formatPrice(input.shippingCents) : "Free (pickup)"
-      }</td></tr>
-      <tr><td style="padding:8px 0;font-weight:700">Total</td><td style="padding:8px 0;text-align:right;font-weight:700">${formatPrice(
-        input.totalCents,
-      )}</td></tr>
-    </table>
-    <p style="margin:16px 0 4px">${fulfillmentText(input)}</p>
-    <p style="color:#6c7150;font-size:13px;margin:16px 0 0">
-      Everything is baked to order. ${site.cottageFood.madeIn}. ${site.cottageFood.permitNumber}.
-      Questions? Just reply to this email.
-    </p>
-  </div>`;
+  const items = input.lines.map((l) => ({
+    label: `${l.quantity}× ${l.name}`,
+    amount: formatPrice(l.amountCents),
+  }));
+  const rows = [
+    ...items,
+    { label: "Subtotal", amount: formatPrice(input.subtotalCents) },
+    {
+      label: "Shipping",
+      amount:
+        input.shippingCents > 0 ? formatPrice(input.shippingCents) : "Free (pickup)",
+    },
+  ];
+  const body =
+    lineItemsTable(rows, { label: "Total", amount: formatPrice(input.totalCents) }) +
+    infoCard(escapeHtml(fulfillmentText(input)));
+  return renderEmail({
+    preheader: `Your ${site.name} order ${input.orderRef} is confirmed`,
+    eyebrow: "Order confirmed",
+    heading: `Thanks${input.customerName ? `, ${input.customerName}` : ""} — you're all set 🍞`,
+    bodyHtml: body,
+    footerNote: "Everything is baked to order.",
+  });
+}
+
+function bakerHtml(input: OrderEmailInput): string {
+  const items = input.lines.map((l) => ({
+    label: `${l.quantity}× ${l.name}`,
+    amount: formatPrice(l.amountCents),
+  }));
+  const fulfill = input.isPickup
+    ? "LOCAL PICKUP"
+    : `SHIP to ${input.shipState ?? "?"}`;
+  const body =
+    `<p style="margin:0 0 6px;">Customer: <strong>${escapeHtml(
+      input.customerName ?? "(no name)",
+    )}</strong> &lt;${escapeHtml(input.to)}&gt;</p>` +
+    `<p style="margin:0 0 12px;">Fulfillment: <strong>${escapeHtml(fulfill)}</strong></p>` +
+    lineItemsTable(items, { label: "Total", amount: formatPrice(input.totalCents) });
+  return renderEmail({
+    preheader: `New paid order ${input.orderRef} — ${formatPrice(input.totalCents)}`,
+    eyebrow: "New paid order",
+    heading: `${input.orderRef} · ${formatPrice(input.totalCents)}`,
+    bodyHtml: body,
+  });
 }
 
 function customerText(input: OrderEmailInput): string {
@@ -143,9 +142,7 @@ export async function sendOrderEmails(input: OrderEmailInput): Promise<void> {
     await sendEmail({
       to: site.email,
       subject: `🍞 New order ${input.orderRef} — ${formatPrice(input.totalCents)}`,
-      html: `<pre style="font-family:ui-monospace,monospace;font-size:14px">${escapeHtml(
-        bakerText(input),
-      )}</pre>`,
+      html: bakerHtml(input),
       text: bakerText(input),
     });
   } catch (err) {

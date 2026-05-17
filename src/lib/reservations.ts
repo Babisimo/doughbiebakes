@@ -109,11 +109,24 @@ export async function decideReservation(
         idempotent: true,
       };
     }
-    await decrementDropQuantities(
-      r.dropId,
-      r.items.map((i) => ({ slug: i.productSlug, quantity: i.quantity })),
-    );
-    await sendReservationConfirmed(emailInputFor(r, drop?.pickupOrShipDate));
+    try {
+      await decrementDropQuantities(
+        r.dropId,
+        r.items.map((i) => ({ slug: i.productSlug, quantity: i.quantity })),
+      );
+      await sendReservationConfirmed(emailInputFor(r, drop?.pickupOrShipDate));
+    } catch (err) {
+      // The reservation is already `confirmed` (claimed above). If the
+      // decrement/email fails here, the doc state is still authoritative —
+      // report it truthfully so the admin UI/link doesn't show a misleading
+      // generic failure — but log a distinct, greppable signal so the rare
+      // "confirmed but stock not reduced" inconsistency is diagnosable.
+      console.error(
+        "[reservations] CONFIRMED BUT STOCK NOT DECREMENTED",
+        r.id,
+        err,
+      );
+    }
     return { ok: true, status: "confirmed" };
   } catch (err) {
     console.error("[reservations] decide failed", err);

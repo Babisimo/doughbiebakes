@@ -1,5 +1,7 @@
 import type { Drop, Product } from "./types";
 
+export const SEED_DROP_ID = "seed-drop";
+
 /**
  * Bundled menu used when Sanity is not yet connected (no
  * NEXT_PUBLIC_SANITY_PROJECT_ID). Mirrors the product roadmap in
@@ -108,7 +110,7 @@ export function seedDrop(): Drop {
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
   return {
-    id: "seed-drop",
+    id: SEED_DROP_ID,
     slug: "this-weekend",
     title: "This Weekend's Drop",
     status: "open",

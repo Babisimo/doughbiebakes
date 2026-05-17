@@ -5,6 +5,7 @@ import {
 } from "@/lib/reservation-email";
 import { validateReservationCart } from "@/lib/reservations";
 import { getActiveDrop } from "@/lib/catalog";
+import { SEED_DROP_ID } from "@/lib/seed-products";
 
 export const runtime = "nodejs";
 
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
   }
 
   const drop = await getActiveDrop({ fresh: true });
-  if (!drop) {
+  if (!drop || drop.id === SEED_DROP_ID) {
     return Response.json(
       { error: "Ordering isn't open right now." },
       { status: 409 },

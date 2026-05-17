@@ -23,37 +23,32 @@ const writeClient =
 type SoldItem = { slug: string; quantity: number };
 
 /**
- * Best-effort: decrement the available quantities on the current open drop
- * after a paid order, and flip status to "soldout" when nothing is left.
- *
- * IMPORTANT: we patch only each line item's `quantity`, addressed by its
- * array `_key`. We must never write `product` back — the query below
- * dereferences it (`product->{ … }`), so re-setting the whole `lineItems`
- * array would replace each reference with a malformed object and corrupt the
- * drop (Sanity then rejects every Studio save with `Key "slug" not allowed in
- * ref`). Keyed quantity patches leave `product` and every other field intact.
- * Fine for the low-volume Cottage Food scale; revisit with optimistic locking
- * if you grow.
+ * Decrement quantities on a specific drop by array `_key` (never writes
+ * `product` — that caused the "Key slug not allowed in ref" corruption).
+ * Flips the drop to "soldout" when every line hits 0. Shared by the Stripe
+ * webhook and reservation approval.
  */
-export async function applyOrderToActiveDrop(items: SoldItem[]): Promise<void> {
+export async function decrementDropQuantities(
+  dropId: string,
+  items: SoldItem[],
+): Promise<void> {
   if (!writeClient || items.length === 0) return;
 
   const drop = await writeClient.fetch<{
     _id: string;
     lineItems?: { _key: string; quantity?: number; product?: { slug?: { current?: string } } }[];
   } | null>(
-    `*[_type == "drop" && status == "open"] | order(pickupOrShipDate asc)[0]{
+    `*[_type == "drop" && _id == $id][0]{
       _id, "lineItems": lineItems[]{ _key, quantity, "product": product->{ "slug": slug } }
     }`,
+    { id: dropId },
   );
-
   if (!drop?.lineItems?.length) return;
 
   const wanted = new Map(items.map((i) => [i.slug, i.quantity] as const));
   let patch = writeClient.patch(drop._id);
   let changed = false;
   let allZero = true;
-
   for (const li of drop.lineItems) {
     const slug = li.product?.slug?.current;
     const dec = slug ? wanted.get(slug) ?? 0 : 0;
@@ -64,11 +59,21 @@ export async function applyOrderToActiveDrop(items: SoldItem[]): Promise<void> {
     }
     if (next > 0) allZero = false;
   }
-
   if (!changed) return;
   if (allZero) patch = patch.set({ status: "soldout" });
-
   await patch.commit({ autoGenerateArrayKeys: false });
+}
+
+/**
+ * Best-effort: decrement the current open drop after a paid Stripe order.
+ */
+export async function applyOrderToActiveDrop(items: SoldItem[]): Promise<void> {
+  if (!writeClient || items.length === 0) return;
+  const open = await writeClient.fetch<{ _id: string } | null>(
+    `*[_type == "drop" && status == "open"] | order(pickupOrShipDate asc)[0]{ _id }`,
+  );
+  if (!open?._id) return;
+  await decrementDropQuantities(open._id, items);
 }
 
 type MemberSelectionInput = {
@@ -170,4 +175,64 @@ export async function upsertMember(input: MemberSyncInput): Promise<boolean> {
   });
   await patch.commit();
   return true;
+}
+
+type ReservationItemInput = {
+  productSlug: string;
+  productName: string;
+  quantity: number;
+  priceCents: number;
+};
+
+export async function createReservation(input: {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  dropId: string;
+  items: ReservationItemInput[];
+  totalCents: number;
+}): Promise<string | null> {
+  if (!writeClient) return null;
+  const now = new Date().toISOString();
+  const doc = await writeClient.create({
+    _type: "reservation",
+    customerName: input.customerName,
+    customerEmail: input.customerEmail.trim().toLowerCase(),
+    customerPhone: input.customerPhone,
+    drop: { _type: "reference", _ref: input.dropId },
+    items: input.items.map((i) => ({ _type: "reservationItem", ...i })),
+    totalCents: input.totalCents,
+    status: "pending",
+    createdAt: now,
+  });
+  return doc._id;
+}
+
+/**
+ * Atomically transition a reservation only if it is still `fromStatus`
+ * (fetch current `_rev`, patch with `ifRevisionId`). Returns true if THIS
+ * call performed the transition; false if it was already decided / lost the
+ * race — callers treat false as an idempotent no-op (no double-decrement).
+ */
+export async function setReservationStatus(
+  id: string,
+  fromStatus: string,
+  toStatus: string,
+): Promise<boolean> {
+  if (!writeClient) return false;
+  const cur = await writeClient.fetch<{ _rev: string; status: string } | null>(
+    `*[_type == "reservation" && _id == $id][0]{ _rev, status }`,
+    { id },
+  );
+  if (!cur || cur.status !== fromStatus) return false;
+  try {
+    await writeClient
+      .patch(id)
+      .ifRevisionId(cur._rev)
+      .set({ status: toStatus, decidedAt: new Date().toISOString() })
+      .commit();
+    return true;
+  } catch {
+    return false; // revision mismatch — another actor decided it first
+  }
 }

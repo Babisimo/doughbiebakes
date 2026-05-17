@@ -85,3 +85,21 @@ export const MEMBER_BY_EMAIL_QUERY = groq`
     customerEmail
   }
 `;
+
+export const DROP_BY_ID_QUERY = groq`*[_type == "drop" && _id == $id][0] { ${DROP_FIELDS} }`;
+
+export const RESERVATION_BY_ID_QUERY = groq`
+  *[_type == "reservation" && _id == $id][0]{
+    "id": _id, _rev, customerName, customerEmail, customerPhone,
+    "dropId": drop._ref, status, totalCents, createdAt, decidedAt,
+    items[]{ productSlug, productName, quantity, priceCents }
+  }`;
+
+export const RESERVATIONS_QUERY = groq`
+  *[_type == "reservation"] | order(
+    select(status == "pending" => 0, 1) asc, createdAt desc
+  ){
+    "id": _id, customerName, customerEmail, customerPhone,
+    "dropTitle": drop->title, status, totalCents, createdAt, decidedAt,
+    items[]{ productSlug, productName, quantity, priceCents }
+  }`;

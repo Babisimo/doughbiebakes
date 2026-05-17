@@ -53,13 +53,13 @@ export function lineItemsTable(
     .map(
       (r) =>
         `<tr><td style="${cell}">${escapeHtml(r.label)}</td>` +
-        `<td style="${cell}text-align:right;white-space:nowrap;">${r.amount}</td></tr>`,
+        `<td style="${cell}text-align:right;white-space:nowrap;">${escapeHtml(r.amount)}</td></tr>`,
     )
     .join("");
   const tcell = `padding:12px 0 0;font-size:16px;font-weight:700;color:${INK};`;
   const total = totalRow
     ? `<tr><td style="${tcell}">${escapeHtml(totalRow.label)}</td>` +
-      `<td style="${tcell}text-align:right;">${totalRow.amount}</td></tr>`
+      `<td style="${tcell}text-align:right;">${escapeHtml(totalRow.amount)}</td></tr>`
     : "";
   return (
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" ` +

@@ -38,20 +38,22 @@ test("emailButton: variant styling + escaped href", () => {
   assert.ok(s.includes("#fffdf2"));
 });
 
-test("lineItemsTable: row per item + total, escapes label", () => {
+test("lineItemsTable: row per item + total, escapes label and amount", () => {
   const t = lineItemsTable(
     [
       { label: "2× A<b>", amount: "$2.00" },
-      { label: "1× B", amount: "$1.00" },
+      { label: "1× B", amount: "10 & 20" },
     ],
     { label: "Total", amount: "$3.00" },
   );
   assert.equal((t.match(/<tr>/g) ?? []).length, 3);
   assert.ok(t.includes("2× A&lt;b&gt;"));
+  assert.ok(t.includes("10 &amp; 20"));
   assert.ok(t.includes("$3.00"));
 });
 
-test("infoCard: tone backgrounds", () => {
+test("infoCard: tone backgrounds + injects markup", () => {
+  assert.ok(infoCard("<b>hi</b>").includes("<b>hi</b>"));
   assert.ok(infoCard("hi").includes("#fbedd6"));
   assert.ok(infoCard("hi", "sage").includes("#eef3df"));
 });

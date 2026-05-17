@@ -3,6 +3,7 @@ import "server-only";
 import { getActiveDrop, getMemberByEmail, getMemberSelectionsForDrop } from "@/lib/catalog";
 import { buildClubConfirmation } from "@/lib/club-confirmation-email";
 import { signClubToken, verifyClubToken } from "@/lib/club-token";
+import { effectiveDropStatus } from "@/lib/drop-status";
 import { sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
       { status: 409 },
     );
   }
-  if (drop.status !== "announced") {
+  if (effectiveDropStatus(drop, new Date()) !== "announced") {
     return Response.json(
       { error: "The member selection window for this drop is closed." },
       { status: 409 },

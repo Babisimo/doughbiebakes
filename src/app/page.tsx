@@ -14,6 +14,9 @@ import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import type { DropStatus } from "@/lib/types";
 
+// Render per-request so "loaves left" reflects inventory immediately.
+export const dynamic = "force-dynamic";
+
 const DROP_STATUS_LABEL: Record<DropStatus, string> = {
   draft: "Draft",
   announced: "Dropping soon",

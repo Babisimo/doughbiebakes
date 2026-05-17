@@ -28,13 +28,12 @@ import type { Drop, Product } from "./types";
  * otherwise we fall back to the bundled seed menu so the app runs out of the box.
  */
 
-const REVALIDATE_SECONDS = 60;
-
-// The shared client uses the Sanity CDN (fast, but eventually consistent — it
-// can serve a stale snapshot for a short window after a write). For freshness-
-// critical reads (the Bread Club selection window, the bake list, the seat
-// cap) we derive a non-CDN client that always hits the live Content Lake, so
-// a member never sees their own just-saved pick revert.
+// Reads are intentionally live: the client is non-CDN (see sanity/client.ts)
+// and storefront fetches are uncached (`no-store`), so inventory counts
+// reflect a paid order immediately instead of lagging behind a CDN snapshot
+// plus the Next.js data cache. At Cottage-Food traffic, always-live beats
+// cleverly-cached. `freshClient` is kept as an explicit non-CDN handle for
+// freshness-critical reads (Bread Club window, bake list, seat cap).
 const freshClient = sanityClient?.withConfig({ useCdn: false }) ?? null;
 
 type FetchOpts = {
@@ -55,7 +54,7 @@ function fetchSanity<T>(
     });
   }
   return sanityClient.fetch<T>(query, params, {
-    next: { revalidate: REVALIDATE_SECONDS },
+    cache: "no-store" as const,
   });
 }
 

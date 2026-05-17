@@ -6,6 +6,9 @@ import { availabilityOf, buildAvailability } from "@/lib/availability";
 import { getActiveDrop, getMemberSelectionsForDrop, getProducts } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 
+// Render per-request so "loaves left" reflects inventory immediately.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Menu",
   description: "Every sourdough loaf we bake, with ingredients and allergens.",

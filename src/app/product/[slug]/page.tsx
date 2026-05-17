@@ -16,6 +16,8 @@ export function generateStaticParams() {
   return seedProducts.map((p) => ({ slug: p.slug }));
 }
 export const dynamicParams = true;
+// Render per-request so "loaves left" reflects inventory immediately.
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 

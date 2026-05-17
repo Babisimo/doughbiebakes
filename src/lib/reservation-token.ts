@@ -1,5 +1,3 @@
-import "server-only";
-
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type ReservationAction = "approve" | "decline";

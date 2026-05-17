@@ -1,0 +1,129 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import type { CartLine } from "@/lib/types";
+
+const STORAGE_KEY = "doughbie-cart";
+
+type CartContextValue = {
+  lines: CartLine[];
+  count: number;
+  /**
+   * Increment a line. `max` is the per-product ceiling (typically `remaining`
+   * loaves in the drop) — without it the global 20-per-line cap applies. Using
+   * a functional setState here is what makes rapid-fire clicks safe: each
+   * queued update sees the previous queued quantity, not a stale snapshot.
+   */
+  add: (slug: string, quantity?: number, max?: number) => void;
+  setQuantity: (slug: string, quantity: number) => void;
+  remove: (slug: string) => void;
+  clear: () => void;
+  ready: boolean;
+};
+
+const CartContext = createContext<CartContextValue | null>(null);
+
+function sanitize(raw: unknown): CartLine[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: CartLine[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const slug = (item as { slug?: unknown }).slug;
+    const quantity = Math.floor(Number((item as { quantity?: unknown }).quantity));
+    if (typeof slug !== "string" || seen.has(slug)) continue;
+    if (!Number.isFinite(quantity) || quantity < 1) continue;
+    seen.add(slug);
+    out.push({ slug, quantity: Math.min(quantity, 20) });
+  }
+  return out;
+}
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [lines, setLines] = useState<CartLine[]>([]);
+  const [ready, setReady] = useState(false);
+
+  // One-time hydration from localStorage after mount. We deliberately render an
+  // empty cart on the server (and on the first client render) to avoid a
+  // hydration mismatch, then sync from storage here.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) setLines(sanitize(JSON.parse(stored)));
+    } catch {
+      /* ignore */
+    }
+    setReady(true);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+    } catch {
+      /* ignore */
+    }
+  }, [lines, ready]);
+
+  const add = useCallback((slug: string, quantity = 1, max?: number) => {
+    setLines((prev) => {
+      const cap = Math.min(20, max ?? 20);
+      const existing = prev.find((l) => l.slug === slug);
+      if (existing) {
+        return prev.map((l) =>
+          l.slug === slug
+            ? { ...l, quantity: Math.min(cap, l.quantity + quantity) }
+            : l,
+        );
+      }
+      return [...prev, { slug, quantity: Math.min(cap, Math.max(1, quantity)) }];
+    });
+  }, []);
+
+  const setQuantity = useCallback((slug: string, quantity: number) => {
+    setLines((prev) =>
+      quantity <= 0
+        ? prev.filter((l) => l.slug !== slug)
+        : prev.map((l) =>
+            l.slug === slug ? { ...l, quantity: Math.min(20, quantity) } : l,
+          ),
+    );
+  }, []);
+
+  const remove = useCallback((slug: string) => {
+    setLines((prev) => prev.filter((l) => l.slug !== slug));
+  }, []);
+
+  const clear = useCallback(() => setLines([]), []);
+
+  const value = useMemo<CartContextValue>(
+    () => ({
+      lines,
+      count: lines.reduce((sum, l) => sum + l.quantity, 0),
+      add,
+      setQuantity,
+      remove,
+      clear,
+      ready,
+    }),
+    [lines, add, setQuantity, remove, clear, ready],
+  );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart(): CartContextValue {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used within <CartProvider>");
+  return ctx;
+}

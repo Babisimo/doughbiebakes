@@ -1,0 +1,163 @@
+import type Stripe from "stripe";
+
+import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
+import { shippingOptions } from "@/lib/site";
+import { getStripe } from "@/lib/stripe";
+import { siteUrl } from "@/lib/url";
+
+export const runtime = "nodejs";
+
+type IncomingItem = { slug: string; quantity: number };
+
+function parseCart(body: unknown): IncomingItem[] {
+  if (!body || typeof body !== "object") return [];
+  const items = (body as { items?: unknown }).items;
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((it): IncomingItem | null => {
+      if (!it || typeof it !== "object") return null;
+      const slug = (it as { slug?: unknown }).slug;
+      const quantity = (it as { quantity?: unknown }).quantity;
+      if (typeof slug !== "string") return null;
+      const qty = Math.floor(Number(quantity));
+      if (!Number.isFinite(qty) || qty < 1) return null;
+      return { slug, quantity: Math.min(qty, 20) };
+    })
+    .filter((it): it is IncomingItem => it !== null);
+}
+
+export async function POST(request: Request) {
+  const stripe = getStripe();
+  if (!stripe) {
+    return Response.json(
+      { error: "Payments are not configured yet. Set STRIPE_SECRET_KEY." },
+      { status: 503 },
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const cart = parseCart(body);
+  if (cart.length === 0) {
+    return Response.json({ error: "Your cart is empty." }, { status: 400 });
+  }
+
+  // The open drop is the single source of truth: only its line items are
+  // sellable, only while it's open, and only up to the quantity that's left.
+  // (This is the authoritative check — the storefront UI mirrors it, but a
+  // hand-crafted request still can't buy what isn't there.) Prices are read
+  // here, server-side, so amounts sent by the browser are never trusted.
+  // Authoritative point-of-sale inventory check — read live (no CDN / no
+  // cache) so a stale snapshot can't oversell a sold-out loaf.
+  const drop = await getActiveDrop({ fresh: true });
+  if (!drop || drop.status !== "open") {
+    return Response.json(
+      { error: "Ordering isn't open right now — check the current drop." },
+      { status: 409 },
+    );
+  }
+  const dropBySlug = new Map(drop.lineItems.map((li) => [li.product.slug, li]));
+
+  // Member-club picks reserve a loaf out of the public quantity. Subtract them
+  // here so the public never checks out a loaf a member has already claimed.
+  const memberSelections = await getMemberSelectionsForDrop(drop, { fresh: true });
+  const claimedBySlug = new Map<string, number>();
+  for (const sel of memberSelections) {
+    claimedBySlug.set(sel.productSlug, (claimedBySlug.get(sel.productSlug) ?? 0) + 1);
+  }
+
+  const lineItems: NonNullable<
+    Stripe.Checkout.SessionCreateParams["line_items"]
+  > = [];
+  for (const item of cart) {
+    const li = dropBySlug.get(item.slug);
+    if (!li || !li.product.available) {
+      return Response.json(
+        { error: `"${item.slug}" isn't part of this week's drop.` },
+        { status: 409 },
+      );
+    }
+    const raw = Math.max(0, Math.floor(li.quantity ?? 0));
+    const claimed = claimedBySlug.get(item.slug) ?? 0;
+    const left = Math.max(0, raw - claimed);
+    if (left <= 0) {
+      return Response.json(
+        { error: `"${li.product.name}" is sold out.` },
+        { status: 409 },
+      );
+    }
+    if (item.quantity > left) {
+      return Response.json(
+        {
+          error: `Only ${left} ${left === 1 ? "loaf" : "loaves"} of "${li.product.name}" left — please lower the quantity.`,
+        },
+        { status: 409 },
+      );
+    }
+    lineItems.push({
+      quantity: item.quantity,
+      price_data: {
+        currency: "usd",
+        unit_amount: li.product.priceCents,
+        product_data: {
+          name: li.product.name,
+          description: li.product.tagline ?? undefined,
+          metadata: { slug: li.product.slug },
+          ...(li.product.imageUrl ? { images: [li.product.imageUrl] } : {}),
+        },
+      },
+    });
+  }
+
+  const base = siteUrl();
+  const cartSummary = JSON.stringify(
+    cart.map((c) => ({ s: c.slug, q: c.quantity })),
+  ).slice(0, 480);
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: lineItems,
+      // Cottage Food: intrastate only. Stripe can't filter to a single state,
+      // so we collect a US address, warn clearly, and verify CA in the webhook.
+      shipping_address_collection: { allowed_countries: ["US"] },
+      phone_number_collection: { enabled: true },
+      billing_address_collection: "auto",
+      allow_promotion_codes: true,
+      shipping_options: shippingOptions.map((opt) => ({
+        shipping_rate_data: {
+          // Required by the Stripe API (the only allowed value).
+          type: "fixed_amount",
+          display_name: opt.label,
+          fixed_amount: { amount: opt.amountCents, currency: "usd" },
+        },
+      })),
+      custom_text: {
+        shipping_address: {
+          message:
+            "California addresses only — Cottage Food rules prohibit shipping out of state. Choose Local Pickup if you're in the Corona area.",
+        },
+        submit: {
+          message:
+            "You're pre-ordering from a home kitchen. We'll confirm pickup/ship details by email.",
+        },
+      },
+      metadata: { cart: cartSummary },
+      success_url: `${base}/order/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}/order/canceled`,
+    });
+
+    return Response.json({ url: session.url });
+  } catch (err) {
+    console.error("[checkout] Stripe error:", err);
+    return Response.json(
+      { error: "Could not start checkout. Please try again." },
+      { status: 502 },
+    );
+  }
+}

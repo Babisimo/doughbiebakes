@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# secrets handed over out of band — never commit these
+sanity_token_api.txt
+*token*.txt
+
+# sanity
+/dist
+.sanity/
 
 # vercel
 .vercel
@@ -39,3 +48,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local tooling / scratch — not for the deploy repo
+.claude/
+resume gemini*.txt

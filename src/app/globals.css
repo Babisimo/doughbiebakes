@@ -1,26 +1,363 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+   "BERRY PROOF" layout × "OLIVE GARDEN FEAST" palette
+   Same playful kit — glassmorphism cards floating over soft blurred blobs,
+   squircle radii, bouncy spring hovers, fat retro display font — but recolored
+   to a warm, earthy, appetite-forward palette instead of neon. Sourdough's own
+   crust/crumb tones (terracotta, ochre) carry the "pop"; deep forest is the
+   ink; a soft sage from the "Golden Summer" set is the secondary/"fresh"
+   accent. Display: Caprasimo; body: Plus Jakarta Sans (loaded in layout.tsx).
+
+   Token names (--color-acid, .btn-acid, .panel-mono, …) are kept stable across
+   themes so component markup never has to change when we re-skin.
+   =========================================================================== */
+@theme {
+  /* --- core palette (Olive Garden Feast + one Golden Summer tint) --------- */
+  --color-bone: #fefae0; /* warm cream — page canvas */
+  --color-bone-200: #f0e7c8; /* deeper cream — inputs / image placeholders */
+  --color-ink: #283618; /* deep forest — headings & hairlines (AAA on cream) */
+  --color-ink-700: #36441f; /* body text (slightly lifted forest) */
+  --color-ink-500: #6c7150; /* muted khaki — captions */
+  --color-acid: #a55d1f; /* deepened terracotta — primary CTA / accent */
+  --color-acid-600: #8a4d18; /* darker terracotta — hover / link text */
+  --color-flame: #606c38; /* olive — deep secondary accent */
+  --color-sage: #ccd5ae; /* soft sage — "in stock" / success / fresh */
+  --color-ochre: #dda15e; /* warm ochre — warm chips & decoration */
+  --color-terracotta: #bc6c25; /* bright crust mid-tone — gradients only */
+  --color-paper: #fffdf2; /* warm near-white — card surface base */
+
+  /* fonts (CSS vars set by next/font) */
+  --font-display: var(--font-caprasimo), "Cooper Black", "Arial Black", serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jakarta), ui-monospace, monospace;
+
+  /* squircle-ish radii */
+  --radius-card: 1.75rem;
+  --radius-card-sm: 1.25rem;
+  --radius-pill: 999px;
+
+  /* soft, warm-tinted shadows (stable var names across themes) */
+  --shadow-hard-sm: 0 6px 18px -4px rgba(40, 54, 24, 0.18);
+  --shadow-hard: 0 14px 34px -8px rgba(40, 54, 24, 0.22);
+  --shadow-hard-lg: 0 24px 56px -12px rgba(40, 54, 24, 0.26);
+  --shadow-hard-acid: 0 12px 30px -8px rgba(165, 93, 31, 0.34);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--color-bone);
+  --foreground: var(--color-ink);
+  /* signature gradients — juicy but not neon */
+  --grad-acid: linear-gradient(135deg, #dda15e 0%, #bc6c25 100%); /* "crust"  */
+  --grad-mono: linear-gradient(135deg, #606c38 0%, #283618 100%); /* "grove"  */
+  /* used for clipped gradient text — both stops stay ≥5:1 on cream */
+  --grad-text: linear-gradient(120deg, #606c38 0%, #a55d1f 100%);
+  /* hairline border color used by `border-ink/N`-style utilities */
+  --hairline: color-mix(in srgb, var(--color-ink) 14%, transparent);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  border-color: var(--hairline);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  position: relative;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* soft blurred "crust" / "grove" blobs the glass cards refract over */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(95px);
+  opacity: 0.42;
+  pointer-events: none;
+}
+body::before {
+  width: 46rem;
+  height: 46rem;
+  top: -15rem;
+  left: -11rem;
+  background: radial-gradient(circle at 30% 30%, #dda15e, transparent 62%),
+    radial-gradient(circle at 70% 70%, #bc6c25, transparent 55%);
+}
+body::after {
+  width: 42rem;
+  height: 42rem;
+  bottom: -16rem;
+  right: -13rem;
+  background: radial-gradient(circle at 40% 40%, #606c38, transparent 60%),
+    radial-gradient(circle at 75% 60%, #ccd5ae, transparent 58%);
+}
+
+::selection {
+  background: var(--color-acid);
+  color: var(--color-paper);
+}
+
+/* Links rely on color + weight for affordance — no underlines anywhere.
+   Unlayered, so these override Tailwind's `underline` utility (which lives in
+   the utilities cascade layer) without !important. Covers <a>, link-styled
+   <button>s, and any element carrying the `underline` class. */
+a,
+.underline {
+  text-decoration: none;
+}
+
+/* --- reusable component classes ------------------------------------------ */
+@layer components {
+  /* fat, rounded display heading */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400; /* Caprasimo ships a single chunky weight */
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  /* glassmorphism card */
+  .nb-card {
+    background: color-mix(in srgb, var(--color-paper) 66%, transparent);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    border: 1.5px solid color-mix(in srgb, #ffffff 65%, transparent);
+    box-shadow:
+      var(--shadow-hard),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.55);
+    border-radius: var(--radius-card);
+  }
+  .nb-card-sm {
+    background: color-mix(in srgb, var(--color-paper) 68%, transparent);
+    backdrop-filter: blur(10px) saturate(1.15);
+    -webkit-backdrop-filter: blur(10px) saturate(1.15);
+    border: 1.5px solid color-mix(in srgb, #ffffff 65%, transparent);
+    box-shadow:
+      var(--shadow-hard-sm),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.55);
+    border-radius: var(--radius-card-sm);
+  }
+  /* page-load entrance: rise + fade with a gentle spring overshoot.
+     `both` fill mode holds the 0% (invisible) state before the delay fires,
+     so nothing flashes in then animates. Stagger with .reveal-2…-5. */
+  .reveal {
+    animation: rise-in 760ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .reveal-2 {
+    animation-delay: 90ms;
+  }
+  .reveal-3 {
+    animation-delay: 180ms;
+  }
+  .reveal-4 {
+    animation-delay: 270ms;
+  }
+  .reveal-5 {
+    animation-delay: 360ms;
+  }
+
+  /* bouncy spring lift on hover */
+  .nb-interactive {
+    transition:
+      transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .nb-interactive:hover {
+    transform: translateY(-6px) rotate(-0.6deg);
+    box-shadow: var(--shadow-hard-lg);
+  }
+
+  /* shared button base */
+  .btn-acid,
+  .btn-ink,
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    padding: 0.7rem 1.4rem;
+    border-radius: var(--radius-pill);
+    transition:
+      transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 280ms ease,
+      filter 200ms ease;
+  }
+  .btn-acid:hover,
+  .btn-ink:hover,
+  .btn-outline:hover {
+    transform: translateY(-3px) scale(1.02);
+  }
+  .btn-acid:active,
+  .btn-ink:active,
+  .btn-outline:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* primary action — solid deep terracotta, cream text (≈5.1:1) */
+  .btn-acid {
+    background-color: var(--color-acid);
+    color: var(--color-bone);
+    box-shadow: var(--shadow-hard-acid);
+  }
+  .btn-acid:hover {
+    filter: saturate(1.12);
+    box-shadow: var(--shadow-hard-lg);
+  }
+  .btn-acid:disabled {
+    background-color: var(--color-bone-200);
+    color: color-mix(in srgb, var(--color-ink) 45%, transparent);
+    box-shadow: none;
+    transform: none;
+    cursor: not-allowed;
+    filter: none;
+  }
+
+  /* secondary action — solid olive, cream text (≈5.2:1) */
+  .btn-ink {
+    background-color: var(--color-flame);
+    color: var(--color-bone);
+    box-shadow: var(--shadow-hard);
+  }
+  .btn-ink:hover {
+    filter: saturate(1.1) brightness(1.04);
+    box-shadow: var(--shadow-hard-lg);
+  }
+
+  /* tertiary — frosted outline */
+  .btn-outline {
+    background: color-mix(in srgb, var(--color-paper) 58%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-ink);
+    border: 2px solid color-mix(in srgb, var(--color-ink) 28%, transparent);
+  }
+  .btn-outline:hover {
+    border-color: var(--color-acid);
+    color: var(--color-acid-600);
+  }
+
+  /* small pill badge — neutral frosted by default */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-paper) 78%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
+    padding: 0.25rem 0.7rem;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--color-ink);
+  }
+  /* warm ochre — "X loaves left", warm tags (ink text ≈4.7:1) */
+  .badge-acid {
+    background-color: var(--color-ochre);
+    border-color: transparent;
+    color: var(--color-ink);
+  }
+  /* deep olive — "sold out", emphasis stickers (cream text ≈5.2:1) */
+  .badge-flame {
+    background-color: var(--color-flame);
+    border-color: transparent;
+    color: var(--color-bone);
+  }
+  /* soft sage — "in stock" / "open" / "fresh" (ink text ≈8.6:1) */
+  .badge-sage {
+    background-color: var(--color-sage);
+    border-color: transparent;
+    color: var(--color-ink);
+  }
+
+  /* clipped gradient text (large display only) — readable both ends on cream */
+  .text-grad-acid,
+  .text-grad-berry {
+    background-image: var(--grad-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* gradient panels: "panel-acid" = warm crust (ink text, large/decoration);
+     "panel-mono" = deep grove (cream text, ok for body). Names kept stable. */
+  .panel-acid {
+    background-image: var(--grad-acid);
+    color: var(--color-ink);
+  }
+  .panel-mono {
+    background-image: var(--grad-mono);
+    color: var(--color-bone);
+  }
+
+  /* marquee ticker.
+     The track is rendered with 6 identical copies of the message; scrolling it
+     to -50% leaves copies 4–6 in view (== copies 1–3), so the loop is seamless
+     with no gap. `width: max-content` keeps the row from wrapping. */
+  .marquee {
+    overflow: hidden;
+  }
+  .marquee .marquee__track {
+    display: flex;
+    flex-wrap: nowrap;
+    width: max-content;
+    white-space: nowrap;
+    will-change: transform;
+    animation: marquee-scroll 24s linear infinite;
+  }
+  /* let users pause it by hovering, in case it's distracting */
+  .marquee:hover .marquee__track {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    /* respect the OS setting — keep it visible but stop the motion */
+    .marquee .marquee__track {
+      animation: none;
+      transform: none;
+    }
+    .reveal {
+      animation: none;
+    }
+    .nb-interactive,
+    .btn-acid,
+    .btn-ink,
+    .btn-outline {
+      transition: none;
+    }
+  }
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(0.965);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

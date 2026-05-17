@@ -904,6 +904,8 @@ export async function decideReservation(
 ```
 
 > Because `setReservationStatus` now re-throws non-409 failures (network/auth), wrap the body of `decideReservation` in a `try { … } catch (err) { console.error("[reservations] decide failed", err); return { ok: false, error: "Couldn't process the reservation — please try again." }; }` so a transient failure surfaces as a clean negative result (and a route error page/JSON), never a silent "idempotent". Keep the inner logic exactly as written.
+>
+> Three review-driven refinements to the approve path: (1) when the drop fetch returns `null` (drop deleted after the request), `console.error("[reservations] drop not found for reservation", r.id, r.dropId)` BEFORE calling `evaluateReservation`, so the resulting auto-decline is diagnosable in logs (this silent-failure class bit us earlier). (2) Add a one-line comment on the `claimed` success block naming the accepted tradeoff: status is set `confirmed` before `decrementDropQuantities`; if the decrement throws, the reservation stays `confirmed` with stock not decremented — baker-visible, and a retry is an idempotent no-op (no double-decrement) but won't re-send the confirm email. (3) Narrow the `!claimed` re-fetch status to avoid a lying cast: `(fresh?.status === "confirmed" || fresh?.status === "declined") ? fresh.status : "confirmed"`.
 
 > `getMemberSelectionsForDrop(drop, { fresh: true })` accepts a `Drop` (used that way in `catalog.ts`/`page.tsx`) and returns `MemberSelection[]`. `getActiveDrop({ fresh: true })` is the same fresh, uncached read the Stripe checkout route uses. Both are exported from `src/lib/catalog.ts`.
 

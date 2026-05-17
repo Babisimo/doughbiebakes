@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "seed:sanity": "node --env-file=.env.local scripts/seed-sanity.mjs",
     "club:emails": "node --env-file=.env.local scripts/club-emails.mjs",
-    "club:link": "node --env-file=.env.local scripts/club-link.mjs"
+    "club:link": "node --env-file=.env.local scripts/club-link.mjs",
+    "test": "node --test --experimental-strip-types"
   },
   "dependencies": {
     "@sanity/image-url": "^2.1.1",

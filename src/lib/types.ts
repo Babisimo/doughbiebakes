@@ -36,6 +36,8 @@ export type Drop = {
   ordersOpenAt?: string;
   ordersCloseAt?: string;
   pickupOrShipDate?: string;
+  /** Sanity `_createdAt` — final fallback for recency sorting. */
+  createdAt?: string;
   note?: string;
   lineItems: DropLineItem[];
 };

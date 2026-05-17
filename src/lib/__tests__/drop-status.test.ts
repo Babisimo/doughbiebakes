@@ -120,6 +120,12 @@ test("predicates partition current vs previous", () => {
   assert.equal(isPreviousDrop(ended, NOW), true);
 });
 
+test("draft is neither current nor previous", () => {
+  const d = drop({ status: "draft" });
+  assert.equal(isCurrentDrop(d, NOW), false);
+  assert.equal(isPreviousDrop(d, NOW), false);
+});
+
 test("dropRecencyKey prefers close, then pickup, then createdAt", () => {
   assert.equal(
     dropRecencyKey(drop({ ordersCloseAt: PAST, pickupOrShipDate: FUTURE })),

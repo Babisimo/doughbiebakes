@@ -29,7 +29,7 @@ export function evaluateReservation(
   items: ReqItem[],
   now: Date,
 ): EvalResult {
-  if (!items || items.length === 0) {
+  if (items.length === 0) {
     return { ok: false, reason: "empty", message: "Your order is empty." };
   }
   if (!drop || effectiveDropStatus(drop, now) !== "open") {
@@ -45,7 +45,7 @@ export function evaluateReservation(
   for (const item of items) {
     const product = bySlug.get(item.slug);
     const a = availabilityOf(availability, item.slug);
-    if (!product || a.reason === "not-in-drop") {
+    if (!product) {
       return {
         ok: false,
         reason: "not-in-drop",

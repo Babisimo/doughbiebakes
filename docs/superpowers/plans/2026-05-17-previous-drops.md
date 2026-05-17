@@ -102,8 +102,8 @@ import {
   effectiveDropStatus,
   isCurrentDrop,
   isPreviousDrop,
-} from "../drop-status";
-import type { Drop } from "../types";
+} from "../drop-status.ts";
+import type { Drop } from "../types.ts";
 
 const NOW = new Date("2026-05-17T12:00:00.000Z");
 const PAST = "2026-05-10T12:00:00.000Z";
@@ -233,10 +233,18 @@ test("dropRecencyKey prefers close, then pickup, then createdAt", () => {
 });
 ```
 
+> **Node 24 / native ESM note:** `node --test --experimental-strip-types` runs
+> the `.ts` test through Node's native resolver, which requires **explicit
+> file extensions** on relative imports (hence `../drop-status.ts` /
+> `../types.ts` above). This in turn requires `"allowImportingTsExtensions":
+> true` in `tsconfig.json` so `tsc --noEmit` still passes. Add that compiler
+> option (alongside the existing options) as part of this task and stage
+> `tsconfig.json` with the commit.
+
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `npm test`
-Expected: FAIL — cannot find module `../drop-status` (file does not exist yet).
+Expected: FAIL — cannot find module `../drop-status.ts` (file does not exist yet).
 
 - [ ] **Step 3: Implement `src/lib/drop-status.ts`**
 
@@ -318,7 +326,7 @@ Expected: exits 0.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/lib/drop-status.ts src/lib/__tests__/drop-status.test.ts
+git add src/lib/drop-status.ts src/lib/__tests__/drop-status.test.ts tsconfig.json
 git commit -m "feat: add effectiveDropStatus + recency helpers (tested)"
 ```
 
@@ -1101,3 +1109,4 @@ git commit -m "chore: verification fixups for previous-drops feature"
 - **Soft close is intentional.** A checkout completing milliseconds after `ordersCloseAt` can still decrement inventory via the unchanged Stripe webhook. Acceptable at Cottage Food scale; do not add locking.
 - **Backward compatible.** A drop with no `ordersOpenAt`/`ordersCloseAt` behaves exactly as its stored status — verified by the "no dates" test in Task 2.
 - Storefront freshness is bounded by the existing 60s `revalidate`; the money path (`/api/checkout`) uses `{ fresh: true }` so it is exact.
+- **TypeScript test imports use explicit `.ts` extensions** and `tsconfig.json` carries `allowImportingTsExtensions: true` (added in Task 2) — required because the `node:test` runner uses Node's native ESM resolver. Only Task 2 adds test files, so this is contained.

@@ -5,9 +5,11 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { Countdown } from "@/components/countdown";
+import { PreviousDrops } from "@/components/previous-drops";
 import { ProductImage } from "@/components/product-image";
 import { availabilityOf, buildAvailability, unavailableLabel } from "@/lib/availability";
-import { getActiveDrop, getMemberSelectionsForDrop, getProducts } from "@/lib/catalog";
+import { getDropsView, getMemberSelectionsForDrop, getProducts } from "@/lib/catalog";
+import { effectiveDropStatus } from "@/lib/drop-status";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import type { DropStatus } from "@/lib/types";
@@ -30,9 +32,14 @@ function formatDate(value?: string) {
 }
 
 export default async function HomePage() {
-  const [drop, products] = await Promise.all([getActiveDrop(), getProducts()]);
+  const [{ current: drop, previous }, products] = await Promise.all([
+    getDropsView(),
+    getProducts(),
+  ]);
+  const now = new Date();
+  const eff = drop ? effectiveDropStatus(drop, now) : null;
   const memberSelections = await getMemberSelectionsForDrop(drop);
-  const availability = buildAvailability(drop, memberSelections);
+  const availability = buildAvailability(drop, memberSelections, now);
   const featured = products.slice(0, 3);
 
   return (
@@ -107,17 +114,17 @@ export default async function HomePage() {
               {drop ? drop.title : "Next drop"}
             </h2>
           </div>
-          {drop ? (
+          {drop && eff ? (
             <span
               className={`badge ${
-                drop.status === "open"
+                eff === "open"
                   ? "badge-sage"
-                  : drop.status === "soldout"
+                  : eff === "soldout"
                     ? "badge-flame"
                     : ""
               }`}
             >
-              {DROP_STATUS_LABEL[drop.status]}
+              {DROP_STATUS_LABEL[eff]}
             </span>
           ) : null}
         </div>
@@ -129,7 +136,7 @@ export default async function HomePage() {
                 reassurance in the trust strip below, not extra pressure. */}
             {(() => {
               let timer: ReactNode = null;
-              if (drop.status === "open" && drop.ordersCloseAt) {
+              if (eff === "open" && drop.ordersCloseAt) {
                 timer = (
                   <Countdown
                     to={drop.ordersCloseAt}
@@ -139,7 +146,7 @@ export default async function HomePage() {
                     prominent
                   />
                 );
-              } else if (drop.status === "announced" && drop.ordersOpenAt) {
+              } else if (eff === "announced" && drop.ordersOpenAt) {
                 timer = (
                   <Countdown
                     to={drop.ordersOpenAt}
@@ -156,7 +163,7 @@ export default async function HomePage() {
             })()}
 
             {/* trust strip — reassurance, not a second clock */}
-            {drop.status !== "closed" ? (
+            {eff !== "closed" ? (
               <ul className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 <li className="badge">🍞 Baked to order</li>
                 <li className="badge">📍 Free Corona pickup</li>
@@ -254,6 +261,8 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      <PreviousDrops drops={previous} />
 
       {/* ======================== HOW DROPS WORK ========================= */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6">

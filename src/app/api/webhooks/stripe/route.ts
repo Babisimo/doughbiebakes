@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 
 import { applyOrderToActiveDrop, upsertMember } from "@/sanity/lib/mutations";
+import { sendOrderEmails, type OrderEmailLine } from "@/lib/order-email";
 import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -170,5 +171,49 @@ async function handleCompletedCheckout(
     console.error("[webhook] failed to update drop inventory:", err);
   }
 
-  // TODO: send a confirmation email (Resend/Postmark) and/or notify yourself.
+  const customerEmail = session.customer_details?.email;
+  if (!customerEmail) {
+    console.warn(
+      `[webhook] order ${session.id} has no customer email — skipping confirmation`,
+    );
+    return;
+  }
+
+  // Prefer Stripe's line items for the email — they carry the names and the
+  // exact amounts the customer was actually charged.
+  let emailLines: OrderEmailLine[] = [];
+  try {
+    const li = await stripe.checkout.sessions.listLineItems(session.id, {
+      limit: 100,
+      expand: ["data.price.product"],
+    });
+    emailLines = li.data.map((item) => {
+      const product = item.price?.product;
+      const name =
+        item.description ??
+        (product && typeof product !== "string" && !("deleted" in product)
+          ? product.name
+          : "Loaf");
+      return {
+        name,
+        quantity: item.quantity ?? 1,
+        amountCents: item.amount_total ?? 0,
+      };
+    });
+  } catch (err) {
+    console.error("[webhook] failed to list line items for email:", err);
+  }
+
+  // Best-effort: never blocks the 200 (sendOrderEmails swallows its own errors).
+  await sendOrderEmails({
+    to: customerEmail,
+    customerName: session.customer_details?.name,
+    orderRef: session.id.slice(-8).toUpperCase(),
+    lines: emailLines,
+    subtotalCents: session.amount_subtotal ?? 0,
+    shippingCents: session.shipping_cost?.amount_total ?? 0,
+    totalCents: session.amount_total ?? 0,
+    isPickup,
+    shipState: state,
+  });
 }

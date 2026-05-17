@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { HeaderCartLink } from "@/components/header-cart-link";
+import { MobileNav } from "@/components/mobile-nav";
 import { site } from "@/lib/site";
 
 const nav = [
@@ -34,7 +35,10 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <HeaderCartLink />
+        <div className="flex items-center gap-2">
+          <MobileNav items={nav} />
+          <HeaderCartLink />
+        </div>
       </div>
     </header>
   );

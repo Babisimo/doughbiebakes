@@ -235,6 +235,14 @@ export function CartContents({
         <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
           Pre-order from a home kitchen · we email to confirm pickup/shipping
         </p>
+        {canCheckout ? (
+          <Link
+            href="/reserve"
+            className="btn-outline w-full justify-center text-sm"
+          >
+            Or reserve &amp; pay at pickup (local only)
+          </Link>
+        ) : null}
       </aside>
     </div>
   );

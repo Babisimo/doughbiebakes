@@ -1,6 +1,13 @@
 import "server-only";
 
 import { sendEmail } from "./email";
+import {
+  emailButton,
+  escapeHtml,
+  infoCard,
+  lineItemsTable,
+  renderEmail,
+} from "./email-layout";
 import { formatPrice } from "./money";
 import { signReservationToken } from "./reservation-token";
 import { site } from "./site";
@@ -17,11 +24,6 @@ export type ReservationEmailInput = {
   pickupDate?: string;
 };
 
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
-  );
-}
 function lines(ls: ReservationLine[]): string {
   return ls
     .map((l) => `  ${l.quantity}x ${l.productName} — ${formatPrice(l.priceCents * l.quantity)}`)
@@ -44,11 +46,31 @@ export async function sendReservationReceived(input: ReservationEmailInput): Pro
     "",
     `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}.`,
   ].join("\n");
+  const itemRows = input.lines.map((l) => ({
+    label: `${l.quantity}× ${l.productName}`,
+    amount: formatPrice(l.priceCents * l.quantity),
+  }));
+  const html = renderEmail({
+    preheader: `We received your ${site.name} pickup reservation request`,
+    eyebrow: "Reservation requested",
+    heading: `Thanks ${input.customerName} — request received`,
+    bodyHtml:
+      infoCard(
+        "It&#39;s not confirmed yet — we&#39;ll email you once it&#39;s approved.",
+      ) +
+      lineItemsTable(itemRows, {
+        label: "Total due at pickup",
+        amount: formatPrice(input.totalCents),
+      }) +
+      `<p style="margin:14px 0 0;">Pickup in ${escapeHtml(site.city)} on ${escapeHtml(
+        when(input),
+      )}. ${escapeHtml(site.cottageFood.madeIn)}.</p>`,
+  });
   try {
     await sendEmail({
       to: input.customerEmail,
       subject: `${site.name} — reservation request received`,
-      html: `<pre style="font:14px ui-monospace,monospace">${esc(body)}</pre>`,
+      html,
       text: body,
     });
   } catch (err) {
@@ -67,10 +89,28 @@ export async function sendReservationBakerAlert(input: ReservationEmailInput): P
     "",
     lines(input.lines),
   ].join("\n");
-  const html =
-    `<pre style="font:14px ui-monospace,monospace">${esc(body)}</pre>` +
-    `<p><a href="${link("approve")}">✅ Approve &amp; hold stock</a> &nbsp;|&nbsp; ` +
-    `<a href="${link("decline")}">❌ Decline</a></p>`;
+  const itemRows = input.lines.map((l) => ({
+    label: `${l.quantity}× ${l.productName}`,
+    amount: formatPrice(l.priceCents * l.quantity),
+  }));
+  const html = renderEmail({
+    preheader: `New pickup reservation — ${formatPrice(input.totalCents)}`,
+    eyebrow: "New pickup reservation",
+    heading: `${input.customerName} · ${formatPrice(input.totalCents)}`,
+    bodyHtml:
+      `<p style="margin:0 0 6px;">${escapeHtml(input.customerName)} &lt;${escapeHtml(
+        input.customerEmail,
+      )}&gt;</p>` +
+      `<p style="margin:0 0 12px;">${escapeHtml(input.customerPhone)}</p>` +
+      lineItemsTable(itemRows, {
+        label: "Total at pickup",
+        amount: formatPrice(input.totalCents),
+      }) +
+      `<p style="margin:18px 0 0;">` +
+      emailButton(link("approve"), "✅ Approve & hold stock", "primary") +
+      emailButton(link("decline"), "Decline", "secondary") +
+      `</p>`,
+  });
   try {
     await sendEmail({
       to: site.email,
@@ -93,11 +133,30 @@ export async function sendReservationConfirmed(input: ReservationEmailInput): Pr
     "",
     `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}. ${site.cottageFood.permitNumber}.`,
   ].join("\n");
+  const itemRows = input.lines.map((l) => ({
+    label: `${l.quantity}× ${l.productName}`,
+    amount: formatPrice(l.priceCents * l.quantity),
+  }));
+  const html = renderEmail({
+    preheader: `Your ${site.name} pickup reservation is confirmed`,
+    eyebrow: "Reservation confirmed",
+    heading: `You&#39;re confirmed, ${input.customerName}! 🍞`,
+    bodyHtml:
+      infoCard(
+        `Pay <strong>${formatPrice(input.totalCents)}</strong> at pickup (cash or card) · ` +
+          `pickup ${escapeHtml(when(input))} in ${escapeHtml(site.city)}.`,
+        "sage",
+      ) +
+      lineItemsTable(itemRows, {
+        label: "Total at pickup",
+        amount: formatPrice(input.totalCents),
+      }),
+  });
   try {
     await sendEmail({
       to: input.customerEmail,
       subject: `${site.name} — pickup reservation confirmed`,
-      html: `<pre style="font:14px ui-monospace,monospace">${esc(body)}</pre>`,
+      html,
       text: body,
     });
   } catch (err) {
@@ -120,11 +179,21 @@ export async function sendReservationDeclined(
     `Hi ${input.customerName} — sorry, ${why}.`,
     `No charge was made. Catch the next ${site.name} drop!`,
   ].join("\n");
+  const html = renderEmail({
+    preheader: `${site.name} reservation update`,
+    eyebrow: "Reservation update",
+    heading: `Sorry, ${input.customerName}`,
+    bodyHtml:
+      `<p style="margin:0 0 12px;">Unfortunately ${escapeHtml(why)}.</p>` +
+      `<p style="margin:0;">No charge was made. Catch the next ${escapeHtml(
+        site.name,
+      )} drop!</p>`,
+  });
   try {
     await sendEmail({
       to: input.customerEmail,
       subject: `${site.name} — reservation update`,
-      html: `<pre style="font:14px ui-monospace,monospace">${esc(body)}</pre>`,
+      html,
       text: body,
     });
   } catch (err) {

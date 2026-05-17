@@ -64,10 +64,12 @@ export function buildOrderRecord(input: BuildOrderInput): OrderRecord | null {
   for (const s of input.sold) {
     const p = input.productLookup.get(s.slug);
     if (!p) continue;
+    const quantity = Math.floor(s.quantity);
+    if (quantity <= 0) continue; // never fabricate a unit from a 0/neg qty
     items.push({
       productSlug: s.slug,
       productName: p.name,
-      quantity: Math.max(1, Math.floor(s.quantity)),
+      quantity,
       priceCents: cents(p.priceCents),
     });
   }

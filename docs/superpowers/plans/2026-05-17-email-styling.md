@@ -420,7 +420,7 @@ Inside `sendReservationReceived`, keep the existing `const body = [...]` (used b
     heading: `Thanks ${input.customerName} — request received`,
     bodyHtml:
       infoCard(
-        "It&#39;s not confirmed yet — we&#39;ll email you once it&#39;s approved.",
+        "It's not confirmed yet — we'll email you once it's approved.",
       ) +
       lineItemsTable(itemRows, {
         label: "Total due at pickup",
@@ -495,7 +495,7 @@ Keep the existing `const body = [...]`. Replace the `sendEmail` call's `html`:
   const html = renderEmail({
     preheader: `Your ${site.name} pickup reservation is confirmed`,
     eyebrow: "Reservation confirmed",
-    heading: `You&#39;re confirmed, ${input.customerName}! 🍞`,
+    heading: `You're confirmed, ${input.customerName}! 🍞`,
     bodyHtml:
       infoCard(
         `Pay <strong>${formatPrice(input.totalCents)}</strong> at pickup (cash or card) · ` +
@@ -519,7 +519,7 @@ Keep the existing `const body = [...]`. Replace the `sendEmail` call's `html`:
   }
 ```
 
-> Note: the `heading` here contains `You're` written as `You&#39;re` deliberately — `renderEmail` escapes `heading`, and escaping an apostrophe is a no-op visually in the rendered email, but writing the entity keeps the source unambiguous. Either `You're` or `You&#39;re` renders identically; do NOT also wrap it in `escapeHtml` (that would double-escape via renderEmail).
+> Note: `renderEmail` runs `escapeHtml` on `heading`, so the heading must use a **literal apostrophe** (`You're`), NOT the entity `You&#39;re` — escaping a literal `'` yields `&#39;` (correct, renders as `'`), but escaping the entity `&#39;` yields `&amp;#39;` (renders as the visible text `&#39;`). Static text inside `infoCard`/`bodyHtml` (which are NOT escaped) may use either; prefer literal apostrophes there too for consistency.
 
 - [ ] **Step 5: `sendReservationDeclined` — replace its `html:`**
 
@@ -695,5 +695,10 @@ git commit -m "chore: verification fixups for email restyle"
   EXTENSIONLESS (`./email-layout`). Build-verified safe (run `npm run build`
   in each task).
 - Emojis (🍞, ✅) are intentional brand accents — keep them.
+- In `reservation-email.ts`, the identical `input.lines.map(...) → {label,amount}`
+  appears in 3 functions — extract a private
+  `function toItemRows(input: ReservationEmailInput) { return input.lines.map((l) => ({ label: \`${l.quantity}× ${l.productName}\`, amount: formatPrice(l.priceCents * l.quantity) })); }`
+  and call it in received/baker/confirmed (declined has no item table). Pure
+  refactor, no behavior change.
 - Outlook may square button corners / Gmail strips `box-shadow`; the 2px
   forest border carries the card. No VML — accepted at this scale.

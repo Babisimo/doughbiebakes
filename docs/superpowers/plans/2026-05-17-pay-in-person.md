@@ -472,6 +472,8 @@ export const RESERVATION_BY_ID_QUERY = groq`
     items[]{ productSlug, productName, quantity, priceCents }
   }`;
 
+// Intentionally unfiltered (MVP, low Cottage-Food volume): the admin list
+// shows all reservations, pending first. Add a $limit/cutoff if it grows.
 export const RESERVATIONS_QUERY = groq`
   *[_type == "reservation"] | order(
     select(status == "pending" => 0, 1) asc, createdAt desc
@@ -602,8 +604,19 @@ export async function setReservationStatus(
       .set({ status: toStatus, decidedAt: new Date().toISOString() })
       .commit();
     return true;
-  } catch {
-    return false; // revision mismatch — another actor decided it first
+  } catch (err) {
+    // Swallow ONLY a revision conflict (HTTP 409 — another actor decided it
+    // first → idempotent no-op). Re-throw real failures (network/auth) so a
+    // transient error is never silently treated as "already decided".
+    if (
+      err &&
+      typeof err === "object" &&
+      "statusCode" in err &&
+      (err as { statusCode?: number }).statusCode === 409
+    ) {
+      return false;
+    }
+    throw err;
   }
 }
 ```
@@ -889,6 +902,8 @@ export async function decideReservation(
   return { ok: true, status: "confirmed" };
 }
 ```
+
+> Because `setReservationStatus` now re-throws non-409 failures (network/auth), wrap the body of `decideReservation` in a `try { … } catch (err) { console.error("[reservations] decide failed", err); return { ok: false, error: "Couldn't process the reservation — please try again." }; }` so a transient failure surfaces as a clean negative result (and a route error page/JSON), never a silent "idempotent". Keep the inner logic exactly as written.
 
 > `getMemberSelectionsForDrop(drop, { fresh: true })` accepts a `Drop` (used that way in `catalog.ts`/`page.tsx`) and returns `MemberSelection[]`. `getActiveDrop({ fresh: true })` is the same fresh, uncached read the Stripe checkout route uses. Both are exported from `src/lib/catalog.ts`.
 

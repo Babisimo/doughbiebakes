@@ -65,20 +65,22 @@ test("emailButton: variant styling + escaped href", () => {
   assert.ok(s.includes("#fffdf2")); // secondary paper fill
 });
 
-test("lineItemsTable: row per item + total, escapes label", () => {
+test("lineItemsTable: row per item + total, escapes label and amount", () => {
   const t = lineItemsTable(
     [
       { label: "2× A<b>", amount: "$2.00" },
-      { label: "1× B", amount: "$1.00" },
+      { label: "1× B", amount: "10 & 20" },
     ],
     { label: "Total", amount: "$3.00" },
   );
   assert.equal((t.match(/<tr>/g) ?? []).length, 3);
   assert.ok(t.includes("2× A&lt;b&gt;")); // label escaped
+  assert.ok(t.includes("10 &amp; 20")); // amount escaped too
   assert.ok(t.includes("$3.00"));
 });
 
-test("infoCard: tone backgrounds", () => {
+test("infoCard: tone backgrounds + injects markup", () => {
+  assert.ok(infoCard("<b>hi</b>").includes("<b>hi</b>")); // innerHtml is markup
   assert.ok(infoCard("hi").includes("#fbedd6")); // default ochre tint
   assert.ok(infoCard("hi", "sage").includes("#eef3df")); // sage tint
 });
@@ -147,13 +149,13 @@ export function lineItemsTable(
     .map(
       (r) =>
         `<tr><td style="${cell}">${escapeHtml(r.label)}</td>` +
-        `<td style="${cell}text-align:right;white-space:nowrap;">${r.amount}</td></tr>`,
+        `<td style="${cell}text-align:right;white-space:nowrap;">${escapeHtml(r.amount)}</td></tr>`,
     )
     .join("");
   const tcell = `padding:12px 0 0;font-size:16px;font-weight:700;color:${INK};`;
   const total = totalRow
     ? `<tr><td style="${tcell}">${escapeHtml(totalRow.label)}</td>` +
-      `<td style="${tcell}text-align:right;">${totalRow.amount}</td></tr>`
+      `<td style="${tcell}text-align:right;">${escapeHtml(totalRow.amount)}</td></tr>`
     : "";
   return (
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" ` +
@@ -683,8 +685,10 @@ git commit -m "chore: verification fixups for email restyle"
   `bodyHtml` is markup (NOT escaped) — callers escape customer-controlled
   values they put into `bodyHtml` with the shared `escapeHtml`. Do not
   double-escape values already handled by `renderEmail` (e.g. `heading`).
-- **`lineItemsTable` escapes `label` itself**; pass raw text. `amount` is a
-  pre-formatted currency string (`formatPrice`) emitted as-is.
+- **`lineItemsTable` escapes BOTH `label` and `amount` itself**; pass raw
+  text (callers pass `formatPrice(...)` for `amount` — escaping is a no-op
+  for currency strings and hardens the helper). Only `infoCard.innerHtml`
+  and `renderEmail.bodyHtml` are markup (NOT escaped — callers escape).
 - **node:test import rule:** `email-layout.ts` imports `./site.ts` (value
   import in a node-tested chain); the test imports `../email-layout.ts`. The
   three composers are server-only, not node-tested → keep their imports

@@ -65,9 +65,11 @@ send/orchestration logic are untouched.
 - `lineItemsTable(rows: { label: string; amount: string }[], totalRow?:
   { label: string; amount: string }): string` — 100%-width table, label
   left / amount right, hairline row borders, bold total row. The helper
-  **escapes `label` internally** (callers pass raw text like
+  **escapes BOTH `label` and `amount` internally** (callers pass raw text like
   `` `${qty}× ${name}` ``); `amount` is a pre-formatted currency string
-  (e.g. `formatPrice(...)`) and is emitted as-is (not escaped).
+  (e.g. `formatPrice(...)`); escaping `amount` is a no-op for currency
+  strings and hardens the helper against a value ever reaching HTML
+  unescaped.
 - `infoCard(innerHtml: string, tone?: "ochre" | "sage"): string` — callout
   box, tinted background + matching border, rounded. `tone` defaults to
   `"ochre"`. `innerHtml` is markup — callers escape any customer values.

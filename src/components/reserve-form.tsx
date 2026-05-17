@@ -1,0 +1,118 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+
+import { useCart } from "@/components/cart-provider";
+import { type Availability } from "@/lib/availability";
+import { formatPrice } from "@/lib/money";
+import type { Product } from "@/lib/types";
+
+export function ReserveForm({
+  products,
+  availability,
+}: {
+  products: Product[];
+  availability: Record<string, Availability>;
+}) {
+  const { lines, ready } = useCart();
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+
+  const catalog = useMemo(() => new Map(products.map((p) => [p.slug, p])), [products]);
+  const rows = lines
+    .map((l) => {
+      const product = catalog.get(l.slug);
+      const a = availability[l.slug];
+      if (!product || !a?.canOrder) return null;
+      const qty = a.remaining != null ? Math.min(l.quantity, a.remaining) : l.quantity;
+      return { product, quantity: qty };
+    })
+    .filter((r): r is { product: Product; quantity: number } => r !== null);
+  const total = rows.reduce((s, r) => s + r.product.priceCents * r.quantity, 0);
+
+  async function submit() {
+    setError(null);
+    if (rows.length === 0) {
+      setError("Nothing in your order is in this week's drop.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/reserve", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          items: rows.map((r) => ({ slug: r.product.slug, quantity: r.quantity })),
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? "Could not submit your reservation.");
+        setSubmitting(false);
+        return;
+      }
+      router.push("/reserve/received");
+    } catch {
+      setError("Network error. Please try again.");
+      setSubmitting(false);
+    }
+  }
+
+  if (!ready) return <p className="text-ink-500">Loading your order…</p>;
+  if (rows.length === 0)
+    return (
+      <div className="nb-card p-8 text-center">
+        <p className="display text-2xl">Nothing to reserve</p>
+        <p className="mt-2 text-ink-700">Add loaves from this week&apos;s drop first.</p>
+      </div>
+    );
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+      <div className="nb-card space-y-4 p-6">
+        <h2 className="display text-xl">Your details</h2>
+        {(["name", "email", "phone"] as const).map((f) => (
+          <label key={f} className="block">
+            <span className="text-xs font-semibold uppercase text-ink-500">{f}</span>
+            <input
+              type={f === "email" ? "email" : f === "phone" ? "tel" : "text"}
+              value={form[f]}
+              onChange={(e) => setForm((s) => ({ ...s, [f]: e.target.value }))}
+              className="mt-1 w-full rounded-2xl border border-ink/20 bg-paper px-3 py-2"
+              required
+            />
+          </label>
+        ))}
+        {error ? <p className="rounded-2xl panel-mono px-3 py-2 text-sm">{error}</p> : null}
+        <button
+          type="button"
+          onClick={submit}
+          disabled={submitting || !form.name || !form.email || !form.phone}
+          className="btn-acid w-full text-sm"
+        >
+          {submitting ? "Submitting…" : "Request reservation (pay at pickup)"}
+        </button>
+        <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
+          We&apos;ll email you once it&apos;s confirmed · pay cash/card at pickup
+        </p>
+      </div>
+      <aside className="nb-card h-fit space-y-3 p-6">
+        <h2 className="display text-xl">Reserving</h2>
+        {rows.map((r) => (
+          <div key={r.product.slug} className="flex justify-between text-sm">
+            <span>{r.quantity}× {r.product.name}</span>
+            <span>{formatPrice(r.product.priceCents * r.quantity)}</span>
+          </div>
+        ))}
+        <div className="flex justify-between border-t border-ink/15 pt-2 text-sm font-bold">
+          <span>Due at pickup</span>
+          <span>{formatPrice(total)}</span>
+        </div>
+      </aside>
+    </div>
+  );
+}

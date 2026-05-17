@@ -1,5 +1,5 @@
-import type { Drop } from "./types";
-import { effectiveDropStatus } from "./drop-status";
+import type { Drop } from "./types.ts";
+import { effectiveDropStatus } from "./drop-status.ts";
 
 /**
  * Whether a loaf can be added to an order right now, and why not if it can't.

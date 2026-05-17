@@ -2,7 +2,6 @@ import "server-only";
 
 import { sanityClient } from "@/sanity/client";
 import {
-  ACTIVE_DROP_QUERY,
   ACTIVE_MEMBER_COUNT_QUERY,
   ACTIVE_MEMBERS_QUERY,
   ALL_PRODUCTS_QUERY,
@@ -10,10 +9,17 @@ import {
   MEMBER_SELECTIONS_FOR_DROP_QUERY,
   PRODUCT_BY_SLUG_QUERY,
   PRODUCTS_BY_SLUGS_QUERY,
+  RECENT_DROPS_QUERY,
 } from "@/sanity/lib/queries";
 
 import type { MemberSelection } from "./availability";
-import { seedDrop, seedProducts } from "./seed-products";
+import {
+  dropRecencyKey,
+  effectiveDropStatus,
+  isCurrentDrop,
+  isPreviousDrop,
+} from "./drop-status";
+import { seedDrop, seedPreviousDrops, seedProducts } from "./seed-products";
 import { site } from "./site";
 import type { Drop, Product } from "./types";
 
@@ -100,26 +106,61 @@ export async function getProductsBySlugs(slugs: string[]): Promise<Product[]> {
   return seedProducts.filter((p) => slugs.includes(p.slug));
 }
 
-export async function getActiveDrop(opts: FetchOpts = {}): Promise<Drop | null> {
-  const fromSanity = await fetchSanity<Drop | null>(ACTIVE_DROP_QUERY, {}, opts);
-  if (fromSanity && Array.isArray(fromSanity.lineItems)) {
-    const lineItems = fromSanity.lineItems
-      .map((li) => {
-        const product = normalizeProduct(
-          li.product as unknown as Partial<Product>,
-        );
-        return product ? { product, quantity: li.quantity ?? 0 } : null;
-      })
-      .filter((li): li is Drop["lineItems"][number] => li !== null);
-    // A drop with no usable line items is misconfigured — fall through to the
-    // demo drop rather than showing an empty (and unbuyable) storefront.
-    if (lineItems.length > 0) return { ...fromSanity, lineItems };
+function normalizeDrop(raw: Drop | null | undefined): Drop | null {
+  if (!raw || !Array.isArray(raw.lineItems)) return null;
+  const lineItems = raw.lineItems
+    .map((li) => {
+      const product = normalizeProduct(
+        li.product as unknown as Partial<Product>,
+      );
+      return product ? { product, quantity: li.quantity ?? 0 } : null;
+    })
+    .filter((li): li is Drop["lineItems"][number] => li !== null);
+  // A drop with no usable line items is misconfigured — skip it.
+  if (lineItems.length === 0) return null;
+  return { ...raw, lineItems };
+}
+
+async function getRecentDrops(opts: FetchOpts = {}): Promise<Drop[]> {
+  const fromSanity = await fetchSanity<Drop[]>(RECENT_DROPS_QUERY, {}, opts);
+  if (!Array.isArray(fromSanity)) return [];
+  return fromSanity
+    .map(normalizeDrop)
+    .filter((d): d is Drop => d !== null);
+}
+
+/**
+ * The home page's view of drops: the effective-current drop plus up to 2
+ * most-recently-ended ones. One Sanity round-trip, split in memory. Falls
+ * back to bundled seed data when Sanity has no usable drops (zero-config).
+ */
+export async function getDropsView(
+  opts: FetchOpts = {},
+): Promise<{ current: Drop | null; previous: Drop[] }> {
+  const now = new Date();
+  const drops = await getRecentDrops(opts);
+  if (drops.length === 0) {
+    return { current: seedDrop(), previous: seedPreviousDrops() };
   }
-  // Same policy as getProducts(): if there's no usable drop in Sanity (not yet
-  // configured, or configured but no `drop` document), fall back to the demo
-  // drop so the home page — and its countdowns — always have something to show.
-  // Replace it by publishing a real Drop in the Studio.
-  return seedDrop();
+  const current = drops.find((d) => isCurrentDrop(d, now)) ?? null;
+  const previous = drops
+    .filter((d) => isPreviousDrop(d, now))
+    .sort((a, b) => dropRecencyKey(b) - dropRecencyKey(a))
+    .slice(0, 2);
+  return { current, previous };
+}
+
+/**
+ * The single effective-current drop (effective status announced/open/soldout),
+ * or null. Signature unchanged so all existing callers keep working; they now
+ * transparently get time-correct open/close behavior. Falls back to the demo
+ * drop only when Sanity has no usable drops at all.
+ */
+export async function getActiveDrop(opts: FetchOpts = {}): Promise<Drop | null> {
+  const now = new Date();
+  const drops = await getRecentDrops(opts);
+  if (drops.length === 0) return seedDrop();
+  return drops.find((d) => isCurrentDrop(d, now)) ?? null;
 }
 
 /**
@@ -147,7 +188,8 @@ export async function getMemberSelectionsForDrop(
   const explicit = (fromSanity ?? []).map((s) => ({ ...s, source: "explicit" as const }));
 
   const drop = typeof dropOrId === "object" ? dropOrId : null;
-  if (!drop || drop.status === "announced" || drop.status === "draft") {
+  const eff = drop ? effectiveDropStatus(drop, new Date()) : null;
+  if (!drop || eff === "announced" || eff === "draft") {
     // Selection window is still open (or not yet opened) — defaults haven't
     // crystallized yet.
     return explicit;

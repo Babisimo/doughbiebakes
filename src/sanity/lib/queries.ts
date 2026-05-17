@@ -34,6 +34,7 @@ const DROP_FIELDS = groq`
   ordersOpenAt,
   ordersCloseAt,
   pickupOrShipDate,
+  "createdAt": _createdAt,
   note,
   "lineItems": lineItems[]{
     quantity,
@@ -41,9 +42,11 @@ const DROP_FIELDS = groq`
   }
 `;
 
-export const ACTIVE_DROP_QUERY = groq`
-  *[_type == "drop" && status in ["open", "announced", "soldout"]]
-    | order(pickupOrShipDate asc)[0] { ${DROP_FIELDS} }
+export const RECENT_DROPS_QUERY = groq`
+  *[_type == "drop" && status != "draft"]
+    | order(coalesce(ordersCloseAt, pickupOrShipDate, _createdAt) desc)[0...8] {
+    ${DROP_FIELDS}
+  }
 `;
 
 export const MEMBER_SELECTIONS_FOR_DROP_QUERY = groq`

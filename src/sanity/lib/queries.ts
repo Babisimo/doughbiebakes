@@ -101,8 +101,8 @@ export const OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY = groq`
     && customerEmail == $email
     && status in ["unverified", "pending"]][0]{ "id": _id }`;
 
-// Intentionally unfiltered (MVP, low Cottage-Food volume): the admin list
-// shows all reservations, pending first. Add a $limit/cutoff if it grows.
+// Admin list: excludes unverified (not yet email-confirmed) reservations.
+// Pending floats first; add a $limit/cutoff if volume grows.
 export const RESERVATIONS_QUERY = groq`
   *[_type == "reservation" && status != "unverified"] | order(
     select(status == "pending" => 0, 1) asc, createdAt desc

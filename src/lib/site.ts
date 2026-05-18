@@ -65,3 +65,7 @@ export const shippingOptions = [
 ] as const;
 
 export type ShippingOptionId = (typeof shippingOptions)[number]["id"];
+
+/** Max loaves a single pay-at-pickup reservation may request. Sized against
+ * the ~8–10 loaves/drop home-kitchen capacity (abuse cap, not a price rule). */
+export const RESERVATION_MAX_LOAVES = 6;

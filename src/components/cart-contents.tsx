@@ -224,25 +224,28 @@ export function CartContents({
         {error ? (
           <p className="rounded-2xl panel-mono px-3 py-2 text-sm">{error}</p>
         ) : null}
+        {canCheckout ? (
+          <Link
+            href="/reserve"
+            className="btn-acid w-full justify-center text-sm"
+          >
+            Reserve &amp; pay at pickup
+          </Link>
+        ) : null}
+        <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
+          Local pickup · pay cash or card when you pick up
+        </p>
         <button
           type="button"
           onClick={checkout}
           disabled={submitting || !canCheckout}
-          className="btn-acid w-full text-sm"
+          className="btn-outline w-full text-sm"
         >
-          {submitting ? "Redirecting…" : "Pre-order with Stripe ＋"}
+          {submitting ? "Redirecting…" : "Pre-order & pay online ＋"}
         </button>
         <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
-          Pre-order from a home kitchen · we email to confirm pickup/shipping
+          Pay now with Stripe · needed for California shipping
         </p>
-        {canCheckout ? (
-          <Link
-            href="/reserve"
-            className="btn-outline w-full justify-center text-sm"
-          >
-            Or reserve &amp; pay at pickup (local only)
-          </Link>
-        ) : null}
       </aside>
     </div>
   );

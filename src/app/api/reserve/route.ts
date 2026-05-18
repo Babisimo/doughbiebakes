@@ -1,15 +1,30 @@
 import { createReservation } from "@/sanity/lib/mutations";
-import {
-  sendReservationBakerAlert,
-  sendReservationReceived,
-} from "@/lib/reservation-email";
+import { sendReservationVerify } from "@/lib/reservation-email";
 import { validateReservationCart } from "@/lib/reservations";
 import { getActiveDrop } from "@/lib/catalog";
 import { SEED_DROP_ID } from "@/lib/seed-products";
+import { looksLikeBot, reservationCapError } from "@/lib/reserve-guard";
+import { rateLimited } from "@/lib/rate-limit";
+import { sanityClient } from "@/sanity/client";
+import { OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY } from "@/sanity/lib/queries";
 
 export const runtime = "nodejs";
 
-type Body = { name?: unknown; email?: unknown; phone?: unknown; items?: unknown };
+const fresh = sanityClient?.withConfig({ useCdn: false }) ?? null;
+
+type Body = {
+  name?: unknown;
+  email?: unknown;
+  phone?: unknown;
+  items?: unknown;
+  company?: unknown; // honeypot
+  elapsedMs?: unknown;
+};
+
+function clientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  return (xff?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown");
+}
 
 export async function POST(req: Request) {
   let body: Body;
@@ -18,9 +33,12 @@ export async function POST(req: Request) {
   } catch {
     return Response.json({ error: "Invalid JSON body." }, { status: 400 });
   }
+
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const honeypot = typeof body.company === "string" ? body.company : "";
+  const elapsedMs = Number(body.elapsedMs);
   const rawItems = Array.isArray(body.items) ? body.items : [];
   const items = rawItems
     .map((it) => {
@@ -32,12 +50,30 @@ export async function POST(req: Request) {
     })
     .filter((x): x is { slug: string; quantity: number } => x !== null);
 
+  // Layer 1 — silent bot drop: never signal the bot (fake success).
+  if (looksLikeBot(honeypot, elapsedMs)) {
+    return Response.json({ ok: true });
+  }
+
+  // Layer 2 — best-effort per-IP burst guard (3 / 10 min).
+  if (rateLimited(`reserve:${clientIp(req)}`, 3, 600_000)) {
+    return Response.json(
+      { error: "Too many reservation attempts — please try again in a few minutes." },
+      { status: 429 },
+    );
+  }
+
   if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !phone) {
     return Response.json(
       { error: "Name, a valid email, and phone are required." },
       { status: 400 },
     );
   }
+
+  // Layer 1 — input caps.
+  const capMsg = reservationCapError(name, email, phone, items);
+  if (capMsg) return Response.json({ error: capMsg }, { status: 400 });
+
   if (items.length === 0) {
     return Response.json({ error: "Your order is empty." }, { status: 400 });
   }
@@ -53,6 +89,24 @@ export async function POST(req: Request) {
       { error: "Ordering isn't open right now." },
       { status: 409 },
     );
+  }
+
+  // Layer 2 — one open (unverified|pending) reservation per email per drop.
+  if (fresh) {
+    const existing = await fresh.fetch<{ id: string } | null>(
+      OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY,
+      { dropId: drop.id, email: email.toLowerCase() },
+      { cache: "no-store" as const },
+    );
+    if (existing) {
+      return Response.json(
+        {
+          error:
+            "You already have a reservation in for this drop — check your email to confirm it, then we'll email you once it's approved.",
+        },
+        { status: 409 },
+      );
+    }
   }
 
   const id = await createReservation({
@@ -84,12 +138,13 @@ export async function POST(req: Request) {
     pickupDate: drop.pickupOrShipDate,
   };
   console.info(
-    `[reserve] new reservation ${id} — ${name} <${email}> — ` +
+    `[reserve] unverified reservation ${id} — ${name} <${email}> — ` +
       `$${(result.totalCents / 100).toFixed(2)} — ` +
       result.items.map((i) => `${i.quantity}× ${i.productSlug}`).join(", "),
   );
-  await sendReservationReceived(emailInput);
-  await sendReservationBakerAlert(emailInput);
+  // Double opt-in: only the verify email goes out now. Baker alert + "received"
+  // fire from /api/reservations/verify once the customer clicks.
+  await sendReservationVerify(emailInput);
 
-  return Response.json({ ok: true });
+  return Response.json({ ok: true, pendingVerification: true });
 }

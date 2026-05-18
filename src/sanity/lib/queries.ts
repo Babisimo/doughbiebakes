@@ -105,3 +105,33 @@ export const RESERVATIONS_QUERY = groq`
     "dropTitle": drop->title, status, totalCents, createdAt, decidedAt,
     items[]{ productSlug, productName, quantity, priceCents }
   }`;
+
+// Live (real-money) public orders for one drop, oldest first. Test-mode
+// orders (livemode == false) are intentionally excluded from the bake list.
+export const LIVE_ORDERS_FOR_DROP_QUERY = groq`
+  *[_type == "order" && drop._ref == $dropId && livemode == true]
+    | order(createdAt asc){
+      "customerEmail": customerEmail,
+      "customerName": customerName,
+      "customerPhone": customerPhone,
+      fulfillment,
+      "shipAddress": shipAddress{ line1, line2, city, state, postalCode },
+      totalCents,
+      "items": items[]{ productSlug, productName, quantity }
+    }`;
+
+// Confirmed reservations for one drop, oldest first. Pending/declined are
+// excluded from the bake tally (pending is surfaced as a separate count).
+export const CONFIRMED_RESERVATIONS_FOR_DROP_QUERY = groq`
+  *[_type == "reservation" && drop._ref == $dropId && status == "confirmed"]
+    | order(createdAt asc){
+      "customerEmail": customerEmail,
+      "customerName": customerName,
+      "customerPhone": customerPhone,
+      totalCents,
+      "items": items[]{ productSlug, productName, quantity }
+    }`;
+
+// Heads-up count only — pending reservations the baker hasn't decided yet.
+export const PENDING_RESERVATION_COUNT_FOR_DROP_QUERY = groq`
+  count(*[_type == "reservation" && drop._ref == $dropId && status == "pending"])`;

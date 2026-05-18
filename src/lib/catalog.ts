@@ -5,14 +5,18 @@ import {
   ACTIVE_MEMBER_COUNT_QUERY,
   ACTIVE_MEMBERS_QUERY,
   ALL_PRODUCTS_QUERY,
+  CONFIRMED_RESERVATIONS_FOR_DROP_QUERY,
+  LIVE_ORDERS_FOR_DROP_QUERY,
   MEMBER_BY_EMAIL_QUERY,
   MEMBER_SELECTIONS_FOR_DROP_QUERY,
+  PENDING_RESERVATION_COUNT_FOR_DROP_QUERY,
   PRODUCT_BY_SLUG_QUERY,
   PRODUCTS_BY_SLUGS_QUERY,
   RECENT_DROPS_QUERY,
 } from "@/sanity/lib/queries";
 
 import type { MemberSelection } from "./availability";
+import type { BakeListItem, OrderSource, ReservationSource } from "./bake-list";
 import {
   dropRecencyKey,
   effectiveDropStatus,
@@ -268,4 +272,101 @@ export async function getMemberByEmail(
     opts,
   );
   return fromSanity ?? null;
+}
+
+/** Coerce a Sanity-fetched item list so `quantity` is always a finite number
+ * (the GROQ cast is unchecked; a null/missing qty would violate the
+ * BakeListItem contract the pure aggregator relies on). */
+function normItems(items: unknown): BakeListItem[] {
+  if (!Array.isArray(items)) return [];
+  return items.map((it) => {
+    const o = (it ?? {}) as Record<string, unknown>;
+    const q = Number(o.quantity);
+    return {
+      productSlug: typeof o.productSlug === "string" ? o.productSlug : "",
+      productName: typeof o.productName === "string" ? o.productName : "",
+      quantity: Number.isFinite(q) ? q : 0,
+    };
+  });
+}
+
+/**
+ * Live (real-money) public orders for a drop, oldest first. `[]` in demo
+ * mode or if the query throws (degrade-to-empty so the bake list still
+ * renders members/reservations).
+ */
+export async function getLiveOrdersForDrop(
+  dropId: string,
+  opts: FetchOpts = {},
+): Promise<OrderSource[]> {
+  if (!sanityClient || !dropId) return [];
+  try {
+    const rows = await fetchSanity<Record<string, unknown>[]>(
+      LIVE_ORDERS_FOR_DROP_QUERY,
+      { dropId },
+      opts,
+    );
+    if (!Array.isArray(rows)) return [];
+    return rows.map((r) => ({
+      customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
+      customerName: (r.customerName as string | null | undefined) ?? null,
+      customerPhone: (r.customerPhone as string | null | undefined) ?? null,
+      items: normItems(r.items),
+      fulfillment: r.fulfillment === "ship" ? "ship" : "pickup",
+      shipAddress: (r.shipAddress as OrderSource["shipAddress"]) ?? null,
+      totalCents: Number.isFinite(Number(r.totalCents)) ? Number(r.totalCents) : 0,
+    }));
+  } catch (err) {
+    console.error("[admin/club] orders fetch failed", err);
+    return [];
+  }
+}
+
+/**
+ * Confirmed reservations for a drop, oldest first. `[]` in demo mode or on
+ * query failure.
+ */
+export async function getConfirmedReservationsForDrop(
+  dropId: string,
+  opts: FetchOpts = {},
+): Promise<ReservationSource[]> {
+  if (!sanityClient || !dropId) return [];
+  try {
+    const rows = await fetchSanity<Record<string, unknown>[]>(
+      CONFIRMED_RESERVATIONS_FOR_DROP_QUERY,
+      { dropId },
+      opts,
+    );
+    if (!Array.isArray(rows)) return [];
+    return rows.map((r) => ({
+      customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
+      customerName: typeof r.customerName === "string" ? r.customerName : "",
+      customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : "",
+      items: normItems(r.items),
+      totalCents: Number.isFinite(Number(r.totalCents)) ? Number(r.totalCents) : 0,
+    }));
+  } catch (err) {
+    console.error("[admin/club] reservations fetch failed", err);
+    return [];
+  }
+}
+
+/** Count of still-pending reservations for a drop. `0` in demo mode or on
+ * failure (a heads-up number — under-reporting is acceptable). */
+export async function getPendingReservationCountForDrop(
+  dropId: string,
+  opts: FetchOpts = {},
+): Promise<number> {
+  if (!sanityClient || !dropId) return 0;
+  try {
+    const n = await fetchSanity<number>(
+      PENDING_RESERVATION_COUNT_FOR_DROP_QUERY,
+      { dropId },
+      opts,
+    );
+    return typeof n === "number" && Number.isFinite(n) ? n : 0;
+  } catch (err) {
+    console.error("[admin/club] pending reservation count failed", err);
+    return 0;
+  }
 }

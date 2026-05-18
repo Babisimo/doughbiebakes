@@ -64,6 +64,7 @@ export const reservationType = defineType({
       type: "string",
       options: {
         list: [
+          { title: "Unverified (awaiting email confirm)", value: "unverified" },
           { title: "Pending", value: "pending" },
           { title: "Confirmed", value: "confirmed" },
           { title: "Declined", value: "declined" },

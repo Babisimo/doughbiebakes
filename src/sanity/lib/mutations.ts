@@ -207,7 +207,7 @@ export async function createReservation(input: {
     drop: { _type: "reference", _ref: input.dropId },
     items: input.items.map((i) => ({ _type: "reservationItem", ...i })),
     totalCents: input.totalCents,
-    status: "pending",
+    status: "unverified",
     createdAt: now,
   });
   return doc._id;
@@ -241,6 +241,39 @@ export async function setReservationStatus(
     // Swallow ONLY a revision conflict (HTTP 409 — another actor decided it
     // first → idempotent no-op). Re-throw real failures (network/auth) so a
     // transient error is never silently treated as "already decided".
+    if (
+      err &&
+      typeof err === "object" &&
+      "statusCode" in err &&
+      (err as { statusCode?: number }).statusCode === 409
+    ) {
+      return false;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Promote a double-opt-in reservation from `unverified` to `pending`. Does
+ * NOT set `decidedAt` (that belongs to approve/decline). Rev-guarded exactly
+ * like `setReservationStatus`: a 409 is an idempotent no-op (returns false);
+ * real errors re-throw.
+ */
+export async function markReservationVerified(id: string): Promise<boolean> {
+  if (!writeClient) return false;
+  const cur = await writeClient.fetch<{ _rev: string; status: string } | null>(
+    `*[_type == "reservation" && _id == $id][0]{ _rev, status }`,
+    { id },
+  );
+  if (!cur || cur.status !== "unverified") return false;
+  try {
+    await writeClient
+      .patch(id)
+      .ifRevisionId(cur._rev)
+      .set({ status: "pending" })
+      .commit();
+    return true;
+  } catch (err) {
     if (
       err &&
       typeof err === "object" &&

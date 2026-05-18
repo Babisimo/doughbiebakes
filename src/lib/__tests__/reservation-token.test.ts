@@ -27,3 +27,9 @@ test("rejects tampered/garbage token", () => {
   assert.equal(verifyReservationToken("res123", "approve", "deadbeef"), false);
   assert.equal(verifyReservationToken("res123", "approve", ""), false);
 });
+
+test("verify action round-trips and is distinct", () => {
+  const v = signReservationToken("res123", "verify");
+  assert.equal(verifyReservationToken("res123", "verify", v), true);
+  assert.equal(verifyReservationToken("res123", "approve", v), false);
+});

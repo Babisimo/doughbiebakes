@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export type ReservationAction = "approve" | "decline";
+export type ReservationAction = "approve" | "decline" | "verify";
 
 function getSecret(): string {
   const secret = process.env.CLUB_LINK_SECRET;

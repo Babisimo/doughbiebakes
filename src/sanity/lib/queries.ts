@@ -111,6 +111,8 @@ export const RESERVATIONS_QUERY = groq`
 export const LIVE_ORDERS_FOR_DROP_QUERY = groq`
   *[_type == "order" && drop._ref == $dropId && livemode == true]
     | order(createdAt asc){
+      "id": _id,
+      "fulfillmentStatus": coalesce(fulfillmentStatus, "new"),
       "customerEmail": customerEmail,
       "customerName": customerName,
       "customerPhone": customerPhone,
@@ -125,6 +127,8 @@ export const LIVE_ORDERS_FOR_DROP_QUERY = groq`
 export const CONFIRMED_RESERVATIONS_FOR_DROP_QUERY = groq`
   *[_type == "reservation" && drop._ref == $dropId && status == "confirmed"]
     | order(createdAt asc){
+      "id": _id,
+      "fulfillmentStatus": coalesce(fulfillmentStatus, "new"),
       "customerEmail": customerEmail,
       "customerName": customerName,
       "customerPhone": customerPhone,

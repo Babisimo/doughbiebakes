@@ -1,3 +1,5 @@
+import type { FulfillmentStage } from "./fulfillment.ts";
+
 export type BakeListItem = {
   productSlug: string;
   productName: string;
@@ -22,6 +24,8 @@ export type MemberSource = {
 };
 
 export type OrderSource = {
+  id?: string;
+  fulfillmentStatus?: FulfillmentStage;
   customerEmail: string;
   customerName?: string | null;
   customerPhone?: string | null;
@@ -32,6 +36,8 @@ export type OrderSource = {
 };
 
 export type ReservationSource = {
+  id?: string;
+  fulfillmentStatus?: FulfillmentStage;
   customerEmail: string;
   customerName: string;
   customerPhone: string;
@@ -67,6 +73,8 @@ export type BakeMemberRow = {
 };
 
 export type BakeOrderRow = {
+  id: string;
+  fulfillmentStatus: FulfillmentStage;
   email: string;
   name: string | null;
   phone: string | null;
@@ -77,6 +85,8 @@ export type BakeOrderRow = {
 };
 
 export type BakeReservationRow = {
+  id: string;
+  fulfillmentStatus: FulfillmentStage;
   email: string;
   name: string;
   phone: string;
@@ -157,6 +167,8 @@ export function buildBakeListView(input: BakeListInput): BakeListView {
   const orderRows: BakeOrderRow[] = orders.map((o) => {
     for (const it of o.items) add(it.productSlug, it.quantity, it.productName);
     return {
+      id: o.id ?? "",
+      fulfillmentStatus: o.fulfillmentStatus ?? "new",
       email: o.customerEmail,
       name: o.customerName ?? null,
       phone: o.customerPhone ?? null,
@@ -170,6 +182,8 @@ export function buildBakeListView(input: BakeListInput): BakeListView {
   const reservationRows: BakeReservationRow[] = reservations.map((r) => {
     for (const it of r.items) add(it.productSlug, it.quantity, it.productName);
     return {
+      id: r.id ?? "",
+      fulfillmentStatus: r.fulfillmentStatus ?? "new",
       email: r.customerEmail,
       name: r.customerName,
       phone: r.customerPhone,

@@ -23,6 +23,7 @@ import {
   isCurrentDrop,
   isPreviousDrop,
 } from "./drop-status";
+import { coerceStage } from "./fulfillment";
 import { seedDrop, seedPreviousDrops, seedProducts } from "./seed-products";
 import { site } from "./site";
 import type { Drop, Product } from "./types";
@@ -310,6 +311,8 @@ export async function getLiveOrdersForDrop(
     return rows.map((r) => {
       const tc = Number(r.totalCents);
       return ({
+        id: typeof r.id === "string" ? r.id : "",
+        fulfillmentStatus: coerceStage(r.fulfillmentStatus),
         customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
         customerName: typeof r.customerName === "string" ? r.customerName : null,
         customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : null,
@@ -344,6 +347,8 @@ export async function getConfirmedReservationsForDrop(
     return rows.map((r) => {
       const tc = Number(r.totalCents);
       return ({
+        id: typeof r.id === "string" ? r.id : "",
+        fulfillmentStatus: coerceStage(r.fulfillmentStatus),
         customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
         customerName: typeof r.customerName === "string" ? r.customerName : "",
         customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : "",

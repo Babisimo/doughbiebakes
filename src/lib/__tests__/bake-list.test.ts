@@ -209,3 +209,76 @@ test("NaN quantity is treated as 0 (dropped from tally and row)", () => {
   assert.equal(v.counts.orders, 1);
   assert.deepEqual(v.orders[0].items, []);
 });
+
+test("order row carries id + fulfillmentStatus passthrough", () => {
+  const v = buildBakeListView(
+    base({
+      orders: [
+        {
+          id: "order.cs_1",
+          fulfillmentStatus: "baking",
+          customerEmail: "c@x.com",
+          customerName: "Cee",
+          customerPhone: "555",
+          items: [{ productSlug: "classic", productName: "Classic Sourdough", quantity: 1 }],
+          fulfillment: "pickup",
+          shipAddress: null,
+          totalCents: 1100,
+        },
+      ],
+    }),
+  );
+  assert.equal(v.orders[0].id, "order.cs_1");
+  assert.equal(v.orders[0].fulfillmentStatus, "baking");
+});
+
+test("reservation row carries id + fulfillmentStatus passthrough", () => {
+  const v = buildBakeListView(
+    base({
+      reservations: [
+        {
+          id: "resv_9",
+          fulfillmentStatus: "ready",
+          customerEmail: "d@x.com",
+          customerName: "Dee",
+          customerPhone: "556",
+          items: [{ productSlug: "jalapeno", productName: "Jalapeño Cheddar", quantity: 2 }],
+          totalCents: 2400,
+        },
+      ],
+    }),
+  );
+  assert.equal(v.reservations[0].id, "resv_9");
+  assert.equal(v.reservations[0].fulfillmentStatus, "ready");
+});
+
+test("absent id/fulfillmentStatus default to '' and 'new'", () => {
+  const v = buildBakeListView(
+    base({
+      orders: [
+        {
+          customerEmail: "c@x.com",
+          customerName: "Cee",
+          customerPhone: "555",
+          items: [{ productSlug: "classic", productName: "Classic Sourdough", quantity: 1 }],
+          fulfillment: "pickup",
+          shipAddress: null,
+          totalCents: 1100,
+        },
+      ],
+      reservations: [
+        {
+          customerEmail: "d@x.com",
+          customerName: "Dee",
+          customerPhone: "556",
+          items: [{ productSlug: "jalapeno", productName: "Jalapeño Cheddar", quantity: 1 }],
+          totalCents: 1200,
+        },
+      ],
+    }),
+  );
+  assert.equal(v.orders[0].id, "");
+  assert.equal(v.orders[0].fulfillmentStatus, "new");
+  assert.equal(v.reservations[0].id, "");
+  assert.equal(v.reservations[0].fulfillmentStatus, "new");
+});

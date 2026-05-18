@@ -10,9 +10,17 @@ import {
   getMemberSelectionsForDrop,
   getPendingReservationCountForDrop,
 } from "@/lib/catalog";
+import {
+  deriveDelay,
+  STAGE_LABELS,
+  summarize,
+  type DelayState,
+  type FulfillmentStage,
+} from "@/lib/fulfillment";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
+import { FulfillmentControl } from "@/components/fulfillment-control";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -46,6 +54,28 @@ function itemsLabel(items: { name: string; qty: number }[]) {
   return items.map((i) => `${i.qty}× ${i.name}`).join(", ");
 }
 
+function stageBadgeClass(s: FulfillmentStage) {
+  if (s === "baking") return "badge badge-acid";
+  if (s === "ready") return "badge badge-sage";
+  return "badge";
+}
+
+function DelayChip({ d }: { d: DelayState }) {
+  if (d === "behind")
+    return (
+      <span className="ml-2 text-xs font-bold text-flame-700">⚠ BEHIND</span>
+    );
+  if (d === "due-soon")
+    return (
+      <span className="ml-2 text-xs font-semibold text-acid-600">
+        ⚠ due soon
+      </span>
+    );
+  if (d === "done")
+    return <span className="ml-2 text-xs text-ink-500">✓ done</span>;
+  return null;
+}
+
 export default async function BakeListPage({
   params,
 }: {
@@ -75,6 +105,14 @@ export default async function BakeListPage({
     reservations,
     pendingReservationCount,
   });
+
+  const now = new Date();
+  const fSummary = summarize(
+    [...view.orders, ...view.reservations],
+    drop.pickupOrShipDate,
+    now,
+  );
+  const trackedCount = view.orders.length + view.reservations.length;
 
   const stripe = getStripe();
   const enriched = await Promise.all(
@@ -147,6 +185,29 @@ export default async function BakeListPage({
           {view.counts.reservations} confirmed reservation
           {view.counts.reservations === 1 ? "" : "s"}.
         </p>
+        {trackedCount > 0 ? (
+          <p className="mt-2 text-sm text-ink-700">
+            Fulfillment: {fSummary.byStage.new} new · {fSummary.byStage.baking}{" "}
+            baking · {fSummary.byStage.ready} ready · {fSummary.byStage.sent}{" "}
+            sent
+            {fSummary.behind > 0 || fSummary.dueSoon > 0 ? (
+              <>
+                {" — "}
+                {fSummary.behind > 0 ? (
+                  <strong className="text-flame-700">
+                    ⚠ {fSummary.behind} behind
+                  </strong>
+                ) : null}
+                {fSummary.behind > 0 && fSummary.dueSoon > 0 ? ", " : ""}
+                {fSummary.dueSoon > 0 ? (
+                  <strong className="text-acid-600">
+                    {fSummary.dueSoon} due soon
+                  </strong>
+                ) : null}
+              </>
+            ) : null}
+          </p>
+        ) : null}
         {view.totals.length === 0 ? (
           <p className="nb-card mt-4 p-6 text-ink-700">
             Nobody&apos;s picked yet. Member picks, public orders, and confirmed
@@ -289,63 +350,96 @@ export default async function BakeListPage({
                   <th className="px-4 py-3">Get it via</th>
                   <th className="px-4 py-3">Phone</th>
                   <th className="px-4 py-3">Where</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {view.orders.map((o, i) => (
-                  <tr
-                    key={`${o.email}-${i}`}
-                    className="border-b border-ink/10 align-top last:border-0"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-semibold">{o.name ?? "(no name)"}</div>
-                      <div className="text-ink-700">{o.email || "(no email)"}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-semibold">{itemsLabel(o.items)}</div>
-                      <div className="text-ink-500">
-                        {formatPrice(o.totalCents)}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {o.fulfillment === "pickup" ? (
-                        <span className="badge badge-sage">📍 Pickup</span>
-                      ) : (
-                        <span className="badge badge-flame">📦 Ship</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-ink-700">{o.phone ?? "—"}</td>
-                    <td className="px-4 py-3 text-ink-700">
-                      {o.fulfillment === "pickup" ? (
-                        <span className="text-ink-500">
-                          Local pickup — no address needed
-                        </span>
-                      ) : o.shipAddress ? (
-                        <address className="not-italic">
-                          {o.shipAddress.line1}
-                          {o.shipAddress.line2 ? (
-                            <>
-                              <br />
-                              {o.shipAddress.line2}
-                            </>
+                {view.orders.map((o, i) => {
+                  const d = deriveDelay(
+                    o.fulfillmentStatus,
+                    drop.pickupOrShipDate,
+                    now,
+                  );
+                  return (
+                    <tr
+                      key={o.id || `${o.email}-${i}`}
+                      className="border-b border-ink/10 align-top last:border-0"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">
+                          {o.name ?? "(no name)"}
+                        </div>
+                        <div className="text-ink-700">
+                          {o.email || "(no email)"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">
+                          {itemsLabel(o.items)}
+                        </div>
+                        <div className="text-ink-500">
+                          {formatPrice(o.totalCents)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {o.fulfillment === "pickup" ? (
+                          <span className="badge badge-sage">📍 Pickup</span>
+                        ) : (
+                          <span className="badge badge-flame">📦 Ship</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-ink-700">
+                        {o.phone ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-ink-700">
+                        {o.fulfillment === "pickup" ? (
+                          <span className="text-ink-500">
+                            Local pickup — no address needed
+                          </span>
+                        ) : o.shipAddress ? (
+                          <address className="not-italic">
+                            {o.shipAddress.line1}
+                            {o.shipAddress.line2 ? (
+                              <>
+                                <br />
+                                {o.shipAddress.line2}
+                              </>
+                            ) : null}
+                            <br />
+                            {[
+                              o.shipAddress.city,
+                              o.shipAddress.state,
+                              o.shipAddress.postalCode,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </address>
+                        ) : (
+                          <span className="text-flame-700">
+                            ⚠ Wants shipping but no address on order
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span>
+                            <span className={stageBadgeClass(o.fulfillmentStatus)}>
+                              {STAGE_LABELS[o.fulfillmentStatus]}
+                            </span>
+                            <DelayChip d={d} />
+                          </span>
+                          {o.id ? (
+                            <FulfillmentControl
+                              type="order"
+                              id={o.id}
+                              from={o.fulfillmentStatus}
+                            />
                           ) : null}
-                          <br />
-                          {[
-                            o.shipAddress.city,
-                            o.shipAddress.state,
-                            o.shipAddress.postalCode,
-                          ]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </address>
-                      ) : (
-                        <span className="text-flame-700">
-                          ⚠ Wants shipping but no address on order
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -383,27 +477,58 @@ export default async function BakeListPage({
                   <th className="px-4 py-3">Reserved</th>
                   <th className="px-4 py-3">Phone</th>
                   <th className="px-4 py-3">Due at pickup</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {view.reservations.map((r, i) => (
-                  <tr
-                    key={`${r.email}-${i}`}
-                    className="border-b border-ink/10 align-top last:border-0"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-semibold">{r.name || "(no name)"}</div>
-                      <div className="text-ink-700">{r.email || "(no email)"}</div>
-                    </td>
-                    <td className="px-4 py-3 font-semibold">
-                      {itemsLabel(r.items)}
-                    </td>
-                    <td className="px-4 py-3 text-ink-700">{r.phone || "—"}</td>
-                    <td className="px-4 py-3 text-ink-700">
-                      {formatPrice(r.totalCents)}
-                    </td>
-                  </tr>
-                ))}
+                {view.reservations.map((r, i) => {
+                  const d = deriveDelay(
+                    r.fulfillmentStatus,
+                    drop.pickupOrShipDate,
+                    now,
+                  );
+                  return (
+                    <tr
+                      key={r.id || `${r.email}-${i}`}
+                      className="border-b border-ink/10 align-top last:border-0"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">
+                          {r.name || "(no name)"}
+                        </div>
+                        <div className="text-ink-700">
+                          {r.email || "(no email)"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-semibold">
+                        {itemsLabel(r.items)}
+                      </td>
+                      <td className="px-4 py-3 text-ink-700">
+                        {r.phone || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-ink-700">
+                        {formatPrice(r.totalCents)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span>
+                            <span className={stageBadgeClass(r.fulfillmentStatus)}>
+                              {STAGE_LABELS[r.fulfillmentStatus]}
+                            </span>
+                            <DelayChip d={d} />
+                          </span>
+                          {r.id ? (
+                            <FulfillmentControl
+                              type="reservation"
+                              id={r.id}
+                              from={r.fulfillmentStatus}
+                            />
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

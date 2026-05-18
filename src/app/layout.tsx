@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Caprasimo, Plus_Jakarta_Sans } from "next/font/google";
+import { Archivo_Black, Caprasimo, Plus_Jakarta_Sans } from "next/font/google";
 
 import { CartProvider } from "@/components/cart-provider";
 import { SiteFooter } from "@/components/site-footer";
@@ -19,6 +19,13 @@ const caprasimo = Caprasimo({
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
+});
+// Stock stickers only: a stamped-label black face with crisp, punchy numerals.
+const archivoBlack = Archivo_Black({
+  variable: "--font-archivo-black",
+  subsets: ["latin"],
+  weight: "400",
   display: "swap",
 });
 
@@ -42,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${caprasimo.variable} ${jakarta.variable} h-full antialiased`}
+      className={`${caprasimo.variable} ${jakarta.variable} ${archivoBlack.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <CartProvider>

@@ -31,6 +31,7 @@
   --font-display: var(--font-caprasimo), "Cooper Black", "Arial Black", serif;
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jakarta), ui-monospace, monospace;
+  --font-sticker: var(--font-archivo-black), "Arial Black", system-ui, sans-serif;
 
   /* squircle-ish radii */
   --radius-card: 1.75rem;
@@ -281,6 +282,16 @@ a,
     background-color: var(--color-sage);
     border-color: transparent;
     color: var(--color-ink);
+  }
+  /* stock sticker only — swap the fat display face for a stamped-label
+     black face so the count reads instantly at small size. Defined after
+     .badge so it wins the font-family on elements carrying both classes. */
+  .badge-count {
+    font-family: var(--font-sticker);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* clipped gradient text (large display only) — readable both ends on cream */

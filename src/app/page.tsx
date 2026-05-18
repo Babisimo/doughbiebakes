@@ -191,11 +191,11 @@ export default async function HomePage() {
                 const a = availabilityOf(availability, product.slug);
                 const soldOut = !a.canOrder;
                 const badge = a.canOrder
-                  ? `${a.remaining} loaf${a.remaining === 1 ? "" : "ves"} left`
+                  ? `${a.remaining} Loaf${a.remaining === 1 ? "" : "s"} Left`
                   : unavailableLabel(a.reason);
                 return (
-                  <li key={product.slug} className="nb-card nb-interactive flex flex-col overflow-hidden">
-                    <div className="relative">
+                  <li key={product.slug} className="nb-card nb-interactive relative flex flex-col">
+                    <div className="relative overflow-hidden rounded-t-[1.75rem]">
                       <Link href={`/product/${product.slug}`}>
                         <ProductImage
                           src={product.imageUrl}
@@ -203,14 +203,14 @@ export default async function HomePage() {
                           priority={i === 0}
                         />
                       </Link>
-                      <span
-                        className={`badge absolute right-3 top-3 ${
-                          soldOut ? "badge-flame" : "badge-acid"
-                        }`}
-                      >
-                        {badge}
-                      </span>
                     </div>
+                    <span
+                      className={`badge badge-count absolute -right-3 -top-3 z-10 rotate-[-6deg] text-sm uppercase shadow-[var(--shadow-hard-acid)] ${
+                        soldOut ? "badge-flame" : "badge-acid"
+                      }`}
+                    >
+                      {badge}
+                    </span>
                     <div className="flex flex-1 flex-col gap-2 p-5">
                       <div className="flex items-start justify-between gap-3">
                         <Link
@@ -316,23 +316,23 @@ export default async function HomePage() {
           {featured.map((product, i) => {
             const a = availabilityOf(availability, product.slug);
             return (
-              <li key={product.slug} className="nb-card nb-interactive flex flex-col overflow-hidden">
-                <div className="relative">
+              <li key={product.slug} className="nb-card nb-interactive relative flex flex-col">
+                <div className="relative overflow-hidden rounded-t-[1.75rem]">
                   <Link href={`/product/${product.slug}`}>
                     <ProductImage src={product.imageUrl} alt={product.name} priority={i === 0} />
                   </Link>
-                  <span
-                    className={`badge absolute right-3 top-3 ${
-                      a.canOrder ? "badge-acid" : "badge-flame"
-                    }`}
-                  >
-                    {a.canOrder
-                      ? a.remaining != null
-                        ? `${a.remaining} left`
-                        : "Available"
-                      : unavailableLabel(a.reason)}
-                  </span>
                 </div>
+                <span
+                  className={`badge badge-count absolute -right-3 -top-3 z-10 rotate-[-6deg] text-sm uppercase shadow-[var(--shadow-hard-acid)] ${
+                    a.canOrder ? "badge-acid" : "badge-flame"
+                  }`}
+                >
+                  {a.canOrder
+                    ? a.remaining != null
+                      ? `${a.remaining} Loaf${a.remaining === 1 ? "" : "s"} Left`
+                      : "Available"
+                    : unavailableLabel(a.reason)}
+                </span>
                 <div className="flex flex-1 flex-col gap-1 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <Link

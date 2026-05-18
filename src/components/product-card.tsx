@@ -19,26 +19,26 @@ export function ProductCard({
   const { canOrder, remaining, reason } = availability;
   const badge = canOrder
     ? remaining != null
-      ? `${remaining} left`
+      ? `${remaining} Loaf${remaining === 1 ? "" : "s"} Left`
       : null
     : unavailableLabel(reason);
 
   return (
-    <article className="nb-card nb-interactive flex flex-col overflow-hidden">
-      <div className="relative">
+    <article className="nb-card nb-interactive relative flex flex-col">
+      <div className="relative overflow-hidden rounded-t-[1.75rem]">
         <Link href={`/product/${product.slug}`} className="block">
           <ProductImage src={product.imageUrl} alt={product.name} priority={priority} />
         </Link>
-        {badge ? (
-          <span
-            className={`badge absolute right-3 top-3 ${
-              canOrder ? "badge-acid" : "badge-flame"
-            }`}
-          >
-            {badge}
-          </span>
-        ) : null}
       </div>
+      {badge ? (
+        <span
+          className={`badge badge-count absolute -right-3 -top-3 z-10 rotate-[-6deg] text-sm uppercase shadow-[var(--shadow-hard-acid)] ${
+            canOrder ? "badge-acid" : "badge-flame"
+          }`}
+        >
+          {badge}
+        </span>
+      ) : null}
       <div className="flex flex-1 flex-col gap-2 p-5">
         <div className="flex items-start justify-between gap-3">
           <h3 className="display text-xl leading-tight">

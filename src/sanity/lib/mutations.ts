@@ -295,7 +295,7 @@ export async function setFulfillmentStatus(
   toStatus: string,
 ): Promise<{ ok: boolean; conflict?: boolean }> {
   if (!writeClient) return { ok: false };
-  const docType = type === "order" ? "order" : "reservation";
+  const docType = type;
   const cur = await writeClient.fetch<
     { _rev: string; fulfillmentStatus?: string; status?: string } | null
   >(

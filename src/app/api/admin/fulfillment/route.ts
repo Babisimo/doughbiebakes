@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   }
   const type =
     body.type === "order" || body.type === "reservation" ? body.type : null;
-  const id = typeof body.id === "string" ? body.id : "";
+  const id = typeof body.id === "string" ? body.id.trim() : "";
   const { from, to } = body;
   if (!type || !id || !isStage(from) || !isStage(to)) {
     return Response.json({ error: "Bad request." }, { status: 400 });

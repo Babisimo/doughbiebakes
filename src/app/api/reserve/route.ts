@@ -50,12 +50,12 @@ export async function POST(req: Request) {
     })
     .filter((x): x is { slug: string; quantity: number } => x !== null);
 
-  // Layer 1 — silent bot drop: never signal the bot (fake success).
+  // Layer 1 (bot deterrents) — honeypot/timing silent drop: never signal the bot (fake success).
   if (looksLikeBot(honeypot, elapsedMs)) {
     return Response.json({ ok: true });
   }
 
-  // Layer 2 — best-effort per-IP burst guard (3 / 10 min).
+  // Layer 2 (anti-flood) — best-effort per-IP burst guard (3 / 10 min).
   if (rateLimited(`reserve:${clientIp(req)}`, 3, 600_000)) {
     return Response.json(
       { error: "Too many reservation attempts — please try again in a few minutes." },
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Layer 1 — input caps.
+  // Layer 1 (bot deterrents) — input length/quantity caps.
   const capMsg = reservationCapError(name, email, phone, items);
   if (capMsg) return Response.json({ error: capMsg }, { status: 400 });
 
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Layer 2 — one open (unverified|pending) reservation per email per drop.
+  // Layer 2 (anti-flood) — one open (unverified|pending) reservation per email per drop.
   if (fresh) {
     const existing = await fresh.fetch<{ id: string } | null>(
       OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY,

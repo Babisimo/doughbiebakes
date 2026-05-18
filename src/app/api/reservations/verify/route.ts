@@ -6,6 +6,7 @@ import {
   sendReservationBakerAlert,
   sendReservationReceived,
 } from "@/lib/reservation-email";
+import { siteUrl } from "@/lib/url";
 
 export const runtime = "nodejs";
 
@@ -75,5 +76,5 @@ export async function GET(req: Request) {
     }
   }
 
-  return Response.redirect(new URL("/reserve/received", req.url), 303);
+  return Response.redirect(new URL("/reserve/received", siteUrl()), 303);
 }

@@ -168,3 +168,44 @@ test("no dedup across sources — same email as member and order both count", ()
   assert.equal(v.members.length, 1);
   assert.equal(v.orders.length, 1);
 });
+
+test("duplicate drop line-item slug → first occurrence wins", () => {
+  const v = buildBakeListView({
+    drop: {
+      lineItems: [
+        { product: { slug: "classic", name: "Classic Sourdough" } },
+        { product: { slug: "classic", name: "Classic ALT" } },
+      ],
+    },
+    members: [{ customerEmail: "a@x.com", productSlug: "classic", source: "explicit" }],
+    orders: [],
+    reservations: [],
+    pendingReservationCount: 0,
+  });
+  const classics = v.totals.filter((t) => t.slug === "classic");
+  assert.equal(classics.length, 1);
+  assert.equal(classics[0].name, "Classic Sourdough");
+  assert.equal(classics[0].count, 1);
+  assert.equal(classics[0].inDrop, true);
+});
+
+test("NaN quantity is treated as 0 (dropped from tally and row)", () => {
+  const v = buildBakeListView(
+    base({
+      orders: [
+        {
+          customerEmail: "c@x.com",
+          customerName: "Cee",
+          customerPhone: "555",
+          items: [{ productSlug: "rosemary", productName: "Rosemary", quantity: NaN }],
+          fulfillment: "pickup",
+          shipAddress: null,
+          totalCents: 0,
+        },
+      ],
+    }),
+  );
+  assert.equal(v.totals.find((t) => t.slug === "rosemary"), undefined);
+  assert.equal(v.counts.orders, 1);
+  assert.deepEqual(v.orders[0].items, []);
+});

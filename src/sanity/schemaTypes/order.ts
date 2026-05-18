@@ -63,6 +63,21 @@ export const orderType = defineType({
     }),
     defineField({ name: "livemode", title: "Live mode", type: "boolean", validation: (r) => r.required() }),
     defineField({ name: "createdAt", title: "Created at", type: "datetime", readOnly: true, validation: (r) => r.required() }),
+    defineField({
+      name: "fulfillmentStatus",
+      title: "Fulfillment status",
+      type: "string",
+      options: {
+        list: [
+          { title: "New", value: "new" },
+          { title: "Baking", value: "baking" },
+          { title: "Ready", value: "ready" },
+          { title: "Sent", value: "sent" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "new",
+    }),
   ],
   preview: {
     select: { name: "customerName", email: "customerEmail", total: "totalCents", fulfillment: "fulfillment" },

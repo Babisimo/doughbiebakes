@@ -75,6 +75,21 @@ export const reservationType = defineType({
     }),
     defineField({ name: "createdAt", title: "Created at", type: "datetime", readOnly: true, validation: (r) => r.required() }),
     defineField({ name: "decidedAt", title: "Decided at", type: "datetime", readOnly: true }),
+    defineField({
+      name: "fulfillmentStatus",
+      title: "Fulfillment status",
+      type: "string",
+      options: {
+        list: [
+          { title: "New", value: "new" },
+          { title: "Baking", value: "baking" },
+          { title: "Ready", value: "ready" },
+          { title: "Sent", value: "sent" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "new",
+    }),
   ],
   preview: {
     select: { name: "customerName", status: "status", total: "totalCents" },

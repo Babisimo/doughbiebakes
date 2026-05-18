@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
+import { buildBakeListView } from "@/lib/bake-list";
 import { getAdminSession } from "@/lib/admin-auth";
-import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
+import {
+  getActiveDrop,
+  getConfirmedReservationsForDrop,
+  getLiveOrdersForDrop,
+  getMemberSelectionsForDrop,
+  getPendingReservationCountForDrop,
+} from "@/lib/catalog";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
@@ -35,6 +42,10 @@ function formatDate(value?: string) {
   });
 }
 
+function itemsLabel(items: { name: string; qty: number }[]) {
+  return items.map((i) => `${i.qty}× ${i.name}`).join(", ");
+}
+
 export default async function BakeListPage({
   params,
 }: {
@@ -49,7 +60,21 @@ export default async function BakeListPage({
   const drop = await getActiveDrop({ fresh: true });
   if (!drop || drop.id !== dropId) notFound();
 
-  const selections = await getMemberSelectionsForDrop(drop, { fresh: true });
+  const [selections, orders, reservations, pendingReservationCount] =
+    await Promise.all([
+      getMemberSelectionsForDrop(drop, { fresh: true }),
+      getLiveOrdersForDrop(drop.id, { fresh: true }),
+      getConfirmedReservationsForDrop(drop.id, { fresh: true }),
+      getPendingReservationCountForDrop(drop.id, { fresh: true }),
+    ]);
+
+  const view = buildBakeListView({
+    drop,
+    members: selections,
+    orders,
+    reservations,
+    pendingReservationCount,
+  });
 
   const stripe = getStripe();
   const enriched = await Promise.all(
@@ -80,10 +105,6 @@ export default async function BakeListPage({
   const productNameBySlug = new Map(
     drop.lineItems.map((li) => [li.product.slug, li.product.name]),
   );
-  const tallyBySlug = new Map<string, number>();
-  for (const s of selections) {
-    tallyBySlug.set(s.productSlug, (tallyBySlug.get(s.productSlug) ?? 0) + 1);
-  }
   const pickupCount = selections.filter(
     (s) => (s.fulfillment ?? "pickup") === "pickup",
   ).length;
@@ -115,7 +136,46 @@ export default async function BakeListPage({
       </div>
 
       <section className="mt-8">
-        <h2 className="display text-2xl">Members ({selections.length})</h2>
+        <h2 className="display text-2xl">
+          Bake totals — {view.counts.loaves} loaf
+          {view.counts.loaves === 1 ? "" : "s"}
+        </h2>
+        <p className="mt-1 text-sm text-ink-500">
+          Everything for this drop: {view.counts.members} member ·{" "}
+          {view.counts.orders} public order
+          {view.counts.orders === 1 ? "" : "s"} · {view.counts.reservations}{" "}
+          confirmed reservation
+          {view.counts.reservations === 1 ? "" : "s"}.
+        </p>
+        {view.totals.length === 0 ? (
+          <p className="nb-card mt-4 p-6 text-ink-700">
+            Nobody&apos;s picked yet. Member picks, public orders, and confirmed
+            reservations for this drop will tally up here.
+          </p>
+        ) : (
+          <ul className="nb-card mt-4 divide-y divide-ink/10 p-0">
+            {view.totals.map((t) => (
+              <li
+                key={t.slug}
+                className="flex items-center justify-between px-4 py-3"
+              >
+                <span className="font-semibold">
+                  {t.name}
+                  {!t.inDrop ? (
+                    <span className="ml-2 align-middle text-xs font-normal text-flame-700">
+                      (not in this drop)
+                    </span>
+                  ) : null}
+                </span>
+                <span className="text-sm font-bold text-ink">bake {t.count}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="display text-2xl">Members ({view.counts.members})</h2>
 
         {selections.length === 0 ? (
           <p className="nb-card mt-4 p-6 text-ink-700">
@@ -158,7 +218,8 @@ export default async function BakeListPage({
                           <div className="text-ink-700">{row.customerEmail}</div>
                         </td>
                         <td className="px-4 py-3 font-semibold">
-                          {productNameBySlug.get(row.productSlug) ?? row.productSlug}
+                          {productNameBySlug.get(row.productSlug) ??
+                            row.productSlug}
                           {row.source === "default" ? (
                             <span className="ml-2 align-middle text-xs font-normal text-ink-500">
                               (default — never picked)
@@ -211,32 +272,142 @@ export default async function BakeListPage({
       </section>
 
       <section className="mt-10">
-        <h2 className="display text-2xl">Tally per flavor</h2>
-        <p className="mt-1 text-sm text-ink-500">
-          Member picks only. Public orders are separate — check Stripe Dashboard
-          → Payments for those, or sum up the difference between each drop line
-          item&apos;s current and starting quantity.
-        </p>
-        <ul className="nb-card mt-4 divide-y divide-ink/10 p-0">
-          {drop.lineItems.map((li) => {
-            const memberCount = tallyBySlug.get(li.product.slug) ?? 0;
-            const publicRemaining = Math.max(
-              0,
-              Math.floor(li.quantity ?? 0) - memberCount,
-            );
-            return (
-              <li
-                key={li.product.slug}
-                className="flex items-center justify-between px-4 py-3"
-              >
-                <span className="font-semibold">{li.product.name}</span>
-                <span className="text-sm text-ink-700">
-                  {memberCount} member · {publicRemaining} public stock left
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <h2 className="display text-2xl">
+          Public orders ({view.counts.orders})
+        </h2>
+        {view.orders.length === 0 ? (
+          <p className="nb-card mt-4 p-6 text-ink-700">
+            No paid public orders for this drop yet.
+          </p>
+        ) : (
+          <div className="nb-card mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-ink/15 text-xs uppercase tracking-wider text-ink-500">
+                <tr>
+                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Order</th>
+                  <th className="px-4 py-3">Get it via</th>
+                  <th className="px-4 py-3">Phone</th>
+                  <th className="px-4 py-3">Where</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view.orders.map((o, i) => (
+                  <tr
+                    key={`${o.email}-${i}`}
+                    className="border-b border-ink/10 align-top last:border-0"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-semibold">{o.name ?? "(no name)"}</div>
+                      <div className="text-ink-700">{o.email || "(no email)"}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-semibold">{itemsLabel(o.items)}</div>
+                      <div className="text-ink-500">
+                        {formatPrice(o.totalCents)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {o.fulfillment === "pickup" ? (
+                        <span className="badge badge-sage">📍 Pickup</span>
+                      ) : (
+                        <span className="badge badge-flame">📦 Ship</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-ink-700">{o.phone ?? "—"}</td>
+                    <td className="px-4 py-3 text-ink-700">
+                      {o.fulfillment === "pickup" ? (
+                        <span className="text-ink-500">
+                          Local pickup — no address needed
+                        </span>
+                      ) : o.shipAddress ? (
+                        <address className="not-italic">
+                          {o.shipAddress.line1}
+                          {o.shipAddress.line2 ? (
+                            <>
+                              <br />
+                              {o.shipAddress.line2}
+                            </>
+                          ) : null}
+                          <br />
+                          {[
+                            o.shipAddress.city,
+                            o.shipAddress.state,
+                            o.shipAddress.postalCode,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </address>
+                      ) : (
+                        <span className="text-flame-700">
+                          ⚠ Wants shipping but no address on order
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="display text-2xl">
+          Confirmed reservations ({view.counts.reservations})
+        </h2>
+        {view.pendingReservationCount > 0 ? (
+          <p className="mt-2 text-sm text-flame-700">
+            {view.pendingReservationCount} pending reservation
+            {view.pendingReservationCount === 1 ? "" : "s"} not counted yet —
+            review at{" "}
+            <a
+              className="underline decoration-2 hover:no-underline"
+              href="/admin/reservations"
+            >
+              /admin/reservations
+            </a>
+            .
+          </p>
+        ) : null}
+        {view.reservations.length === 0 ? (
+          <p className="nb-card mt-4 p-6 text-ink-700">
+            No confirmed reservations for this drop yet.
+          </p>
+        ) : (
+          <div className="nb-card mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-ink/15 text-xs uppercase tracking-wider text-ink-500">
+                <tr>
+                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Reserved</th>
+                  <th className="px-4 py-3">Phone</th>
+                  <th className="px-4 py-3">Due at pickup</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view.reservations.map((r, i) => (
+                  <tr
+                    key={`${r.email}-${i}`}
+                    className="border-b border-ink/10 align-top last:border-0"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-semibold">{r.name}</div>
+                      <div className="text-ink-700">{r.email || "(no email)"}</div>
+                    </td>
+                    <td className="px-4 py-3 font-semibold">
+                      {itemsLabel(r.items)}
+                    </td>
+                    <td className="px-4 py-3 text-ink-700">{r.phone}</td>
+                    <td className="px-4 py-3 text-ink-700">
+                      {formatPrice(r.totalCents)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );

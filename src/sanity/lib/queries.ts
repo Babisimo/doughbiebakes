@@ -95,10 +95,16 @@ export const RESERVATION_BY_ID_QUERY = groq`
     items[]{ productSlug, productName, quantity, priceCents }
   }`;
 
+// Anti-flood: an existing not-yet-decided reservation for this email + drop.
+export const OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY = groq`
+  *[_type == "reservation" && drop._ref == $dropId
+    && customerEmail == $email
+    && status in ["unverified", "pending"]][0]{ "id": _id }`;
+
 // Intentionally unfiltered (MVP, low Cottage-Food volume): the admin list
 // shows all reservations, pending first. Add a $limit/cutoff if it grows.
 export const RESERVATIONS_QUERY = groq`
-  *[_type == "reservation"] | order(
+  *[_type == "reservation" && status != "unverified"] | order(
     select(status == "pending" => 0, 1) asc, createdAt desc
   ){
     "id": _id, customerName, customerEmail, customerPhone,

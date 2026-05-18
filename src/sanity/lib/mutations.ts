@@ -281,3 +281,49 @@ export async function createOrder(rec: OrderRecord): Promise<boolean> {
   });
   return true;
 }
+
+/**
+ * Concurrency-safe fulfillment-stage transition. Verifies the doc is still at
+ * `fromStatus` (and, for reservations, still `confirmed`), then patches with
+ * `ifRevisionId`. Mirrors `setReservationStatus`: a 409 revision conflict is
+ * an idempotent no-op (`{ ok:false, conflict:true }`); real errors re-throw.
+ */
+export async function setFulfillmentStatus(
+  type: "order" | "reservation",
+  id: string,
+  fromStatus: string,
+  toStatus: string,
+): Promise<{ ok: boolean; conflict?: boolean }> {
+  if (!writeClient) return { ok: false };
+  const docType = type === "order" ? "order" : "reservation";
+  const cur = await writeClient.fetch<
+    { _rev: string; fulfillmentStatus?: string; status?: string } | null
+  >(
+    `*[_type == $docType && _id == $id][0]{ _rev, fulfillmentStatus, status }`,
+    { docType, id },
+  );
+  if (!cur) return { ok: false };
+  if (type === "reservation" && cur.status !== "confirmed") {
+    return { ok: false };
+  }
+  const curStage = cur.fulfillmentStatus ?? "new";
+  if (curStage !== fromStatus) return { ok: false, conflict: true };
+  try {
+    await writeClient
+      .patch(id)
+      .ifRevisionId(cur._rev)
+      .set({ fulfillmentStatus: toStatus })
+      .commit();
+    return { ok: true };
+  } catch (err) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "statusCode" in err &&
+      (err as { statusCode?: number }).statusCode === 409
+    ) {
+      return { ok: false, conflict: true };
+    }
+    throw err;
+  }
+}

@@ -82,6 +82,51 @@ export async function sendReservationReceived(input: ReservationEmailInput): Pro
   }
 }
 
+/** (a0) Customer: double opt-in — must click to confirm the request exists. */
+export async function sendReservationVerify(input: ReservationEmailInput): Promise<void> {
+  const base = siteUrl();
+  const verifyUrl = `${base}/api/reservations/verify?id=${encodeURIComponent(
+    input.id,
+  )}&token=${signReservationToken(input.id, "verify")}`;
+  const body = [
+    `Hi ${input.customerName} — one quick step to lock in your ${site.name} pickup reservation.`,
+    "",
+    `Confirm it here: ${verifyUrl}`,
+    "",
+    lines(input.lines),
+    `  Total due at pickup: ${formatPrice(input.totalCents)}`,
+    "",
+    "If you didn't request this, just ignore this email — nothing was reserved.",
+  ].join("\n");
+  const itemRows = toItemRows(input);
+  const html = renderEmail({
+    preheader: `Confirm your ${site.name} pickup reservation`,
+    eyebrow: "Confirm your reservation",
+    heading: `One tap to confirm, ${input.customerName}`,
+    bodyHtml:
+      infoCard("Your reservation isn't in our queue until you confirm it.") +
+      lineItemsTable(itemRows, {
+        label: "Total due at pickup",
+        amount: formatPrice(input.totalCents),
+      }) +
+      `<p style="margin:18px 0 0;">` +
+      emailButton(verifyUrl, "✅ Confirm my reservation", "primary") +
+      `</p>` +
+      `<p style="margin:14px 0 0;font-size:13px;color:#6b705c;">` +
+      `Didn't request this? Ignore this email — nothing was reserved.</p>`,
+  });
+  try {
+    await sendEmail({
+      to: input.customerEmail,
+      subject: `${site.name} — confirm your pickup reservation`,
+      html,
+      text: body,
+    });
+  } catch (err) {
+    console.error("[reservation-email] verify send failed", err);
+  }
+}
+
 /** (b) Baker: new request with signed Approve/Decline links. */
 export async function sendReservationBakerAlert(input: ReservationEmailInput): Promise<void> {
   const base = siteUrl();

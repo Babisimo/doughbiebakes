@@ -62,6 +62,7 @@ export function FulfillmentControl({
           onClick={() => move(back)}
           className="btn-outline text-xs"
           title={`Back to ${back}`}
+          aria-label={`Back to ${back}`}
         >
           ‹
         </button>

@@ -54,10 +54,14 @@ function itemsLabel(items: { name: string; qty: number }[]) {
   return items.map((i) => `${i.qty}× ${i.name}`).join(", ");
 }
 
-function stageBadgeClass(s: FulfillmentStage) {
-  if (s === "baking") return "badge badge-acid";
-  if (s === "ready") return "badge badge-sage";
-  return "badge";
+function stageBadgeClass(s: FulfillmentStage): string {
+  const map: Record<FulfillmentStage, string> = {
+    new: "badge",
+    baking: "badge badge-acid",
+    ready: "badge badge-sage",
+    sent: "badge",
+  };
+  return map[s];
 }
 
 function DelayChip({ d }: { d: DelayState }) {

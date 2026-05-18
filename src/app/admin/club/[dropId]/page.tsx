@@ -141,10 +141,10 @@ export default async function BakeListPage({
           {view.counts.loaves === 1 ? "" : "s"}
         </h2>
         <p className="mt-1 text-sm text-ink-500">
-          Everything for this drop: {view.counts.members} member ·{" "}
-          {view.counts.orders} public order
-          {view.counts.orders === 1 ? "" : "s"} · {view.counts.reservations}{" "}
-          confirmed reservation
+          Everything for this drop: {view.counts.members} member
+          {view.counts.members === 1 ? "" : "s"} · {view.counts.orders} public
+          order{view.counts.orders === 1 ? "" : "s"} ·{" "}
+          {view.counts.reservations} confirmed reservation
           {view.counts.reservations === 1 ? "" : "s"}.
         </p>
         {view.totals.length === 0 ? (
@@ -392,13 +392,13 @@ export default async function BakeListPage({
                     className="border-b border-ink/10 align-top last:border-0"
                   >
                     <td className="px-4 py-3">
-                      <div className="font-semibold">{r.name}</div>
+                      <div className="font-semibold">{r.name || "(no name)"}</div>
                       <div className="text-ink-700">{r.email || "(no email)"}</div>
                     </td>
                     <td className="px-4 py-3 font-semibold">
                       {itemsLabel(r.items)}
                     </td>
-                    <td className="px-4 py-3 text-ink-700">{r.phone}</td>
+                    <td className="px-4 py-3 text-ink-700">{r.phone || "—"}</td>
                     <td className="px-4 py-3 text-ink-700">
                       {formatPrice(r.totalCents)}
                     </td>

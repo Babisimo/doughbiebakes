@@ -1,6 +1,6 @@
 export type FulfillmentStage = "new" | "baking" | "ready" | "sent";
 
-export const STAGES: FulfillmentStage[] = ["new", "baking", "ready", "sent"];
+export const STAGES: readonly FulfillmentStage[] = ["new", "baking", "ready", "sent"];
 
 export const STAGE_LABELS: Record<FulfillmentStage, string> = {
   new: "New",

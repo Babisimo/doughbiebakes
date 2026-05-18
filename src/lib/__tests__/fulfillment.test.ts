@@ -64,12 +64,20 @@ test("deriveDelay: past date + new/baking → behind", () => {
     deriveDelay("baking", "2026-05-19T00:00:00.000Z", now),
     "behind",
   );
+  // exact boundary: t === due → behind (condition is `t >= due`)
+  assert.equal(deriveDelay("new", now.toISOString(), now), "behind");
 });
 
 test("deriveDelay: within 24h (not past) + new/baking → due-soon", () => {
   const soon = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
   assert.equal(deriveDelay("new", soon, now), "due-soon");
   assert.equal(deriveDelay("baking", soon, now), "due-soon");
+  // exact 24h boundary: due - t === DAY_MS → due-soon (condition is `<= DAY_MS`)
+  const exactDay = new Date(now.getTime() + DAY).toISOString();
+  assert.equal(deriveDelay("new", exactDay, now), "due-soon");
+  // 1ms past the 24h window → on-track
+  const justOver = new Date(now.getTime() + DAY + 1).toISOString();
+  assert.equal(deriveDelay("new", justOver, now), "on-track");
 });
 
 test("deriveDelay: comfortably before the date → on-track", () => {

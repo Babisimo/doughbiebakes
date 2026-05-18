@@ -307,15 +307,18 @@ export async function getLiveOrdersForDrop(
       opts,
     );
     if (!Array.isArray(rows)) return [];
-    return rows.map((r) => ({
-      customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
-      customerName: (r.customerName as string | null | undefined) ?? null,
-      customerPhone: (r.customerPhone as string | null | undefined) ?? null,
-      items: normItems(r.items),
-      fulfillment: r.fulfillment === "ship" ? "ship" : "pickup",
-      shipAddress: (r.shipAddress as OrderSource["shipAddress"]) ?? null,
-      totalCents: Number.isFinite(Number(r.totalCents)) ? Number(r.totalCents) : 0,
-    }));
+    return rows.map((r) => {
+      const tc = Number(r.totalCents);
+      return ({
+        customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
+        customerName: typeof r.customerName === "string" ? r.customerName : null,
+        customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : null,
+        items: normItems(r.items),
+        fulfillment: r.fulfillment === "ship" ? "ship" : "pickup",
+        shipAddress: (r.shipAddress as OrderSource["shipAddress"]) ?? null,
+        totalCents: Number.isFinite(tc) ? tc : 0,
+      });
+    });
   } catch (err) {
     console.error("[admin/club] orders fetch failed", err);
     return [];
@@ -338,13 +341,16 @@ export async function getConfirmedReservationsForDrop(
       opts,
     );
     if (!Array.isArray(rows)) return [];
-    return rows.map((r) => ({
-      customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
-      customerName: typeof r.customerName === "string" ? r.customerName : "",
-      customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : "",
-      items: normItems(r.items),
-      totalCents: Number.isFinite(Number(r.totalCents)) ? Number(r.totalCents) : 0,
-    }));
+    return rows.map((r) => {
+      const tc = Number(r.totalCents);
+      return ({
+        customerEmail: typeof r.customerEmail === "string" ? r.customerEmail : "",
+        customerName: typeof r.customerName === "string" ? r.customerName : "",
+        customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : "",
+        items: normItems(r.items),
+        totalCents: Number.isFinite(tc) ? tc : 0,
+      });
+    });
   } catch (err) {
     console.error("[admin/club] reservations fetch failed", err);
     return [];

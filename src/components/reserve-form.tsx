@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { useCart } from "@/components/cart-provider";
 import { type Availability } from "@/lib/availability";
@@ -16,10 +15,12 @@ export function ReserveForm({
   availability: Record<string, Availability>;
 }) {
   const { lines, ready } = useCart();
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [sent, setSent] = useState(false);
+  const [mountedAt] = useState<number>(() => Date.now());
+  const company = useRef("");
 
   const catalog = useMemo(() => new Map(products.map((p) => [p.slug, p])), [products]);
   const rows = lines
@@ -46,6 +47,9 @@ export function ReserveForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...form,
+          company: company.current,
+          // eslint-disable-next-line react-hooks/purity
+          elapsedMs: Date.now() - mountedAt,
           items: rows.map((r) => ({ slug: r.product.slug, quantity: r.quantity })),
         }),
       });
@@ -55,13 +59,24 @@ export function ReserveForm({
         setSubmitting(false);
         return;
       }
-      router.push("/reserve/received");
+      setSent(true);
     } catch {
       setError("Network error. Please try again.");
       setSubmitting(false);
     }
   }
 
+  if (sent)
+    return (
+      <div className="nb-card p-8 text-center">
+        <p className="display text-3xl">Check your email 📧</p>
+        <p className="mt-2 text-ink-700">
+          We sent a confirmation link to <strong>{form.email}</strong>. Click it
+          to put your reservation in — we&apos;ll email again once it&apos;s
+          approved. (No charge until pickup.)
+        </p>
+      </div>
+    );
   if (!ready) return <p className="text-ink-500">Loading your order…</p>;
   if (rows.length === 0)
     return (
@@ -75,6 +90,17 @@ export function ReserveForm({
     <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
       <div className="nb-card space-y-4 p-6">
         <h2 className="display text-xl">Your details</h2>
+        <input
+          type="text"
+          name="company"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          onChange={(e) => {
+            company.current = e.target.value;
+          }}
+          style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+        />
         {(["name", "email", "phone"] as const).map((f) => (
           <label key={f} className="block">
             <span className="text-xs font-semibold uppercase text-ink-500">{f}</span>

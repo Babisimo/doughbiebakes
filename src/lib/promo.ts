@@ -1,6 +1,7 @@
 import "server-only";
 
 import { sanityClient } from "@/sanity/client";
+import { groq } from "next-sanity";
 
 export type Promo = {
   id: string;
@@ -13,7 +14,7 @@ export type Promo = {
 
 const fresh = sanityClient?.withConfig({ useCdn: false }) ?? null;
 
-const ALL_PROMOS_QUERY = `*[_type == "promoCode"]{
+const ALL_PROMOS_QUERY = groq`*[_type == "promoCode"]{
   "id": _id, code, percentOff, maxRedemptions,
   "redeemedCount": coalesce(redeemedCount, 0),
   "active": coalesce(active, true)

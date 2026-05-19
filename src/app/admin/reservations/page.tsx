@@ -62,7 +62,8 @@ export default async function AdminReservationsPage() {
                       <span className="font-bold">{formatPrice(r.discountedTotalCents)}</span>{" "}
                       <span className="text-xs text-ink-500 line-through">{formatPrice(r.totalCents)}</span>{" "}
                       <span className="text-xs font-semibold uppercase text-acid-600">
-                        {r.promoCode} −{r.promoPercentOff}%
+                        {r.promoCode}
+                          {typeof r.promoPercentOff === "number" ? ` −${r.promoPercentOff}%` : ""}
                       </span>
                     </>
                   ) : (

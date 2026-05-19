@@ -19,6 +19,8 @@ export function ReserveForm({
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [notice, setNotice] = useState<string | null>(null);
   const [mountedAt] = useState<number>(() => Date.now());
   const company = useRef("");
 
@@ -48,17 +50,19 @@ export function ReserveForm({
         body: JSON.stringify({
           ...form,
           company: company.current,
+          code: code.trim(),
           // eslint-disable-next-line react-hooks/purity
           elapsedMs: Date.now() - mountedAt,
           items: rows.map((r) => ({ slug: r.product.slug, quantity: r.quantity })),
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
+      const data = (await res.json()) as { ok?: boolean; error?: string; notice?: string };
       if (!res.ok || !data.ok) {
         setError(data.error ?? "Could not submit your reservation.");
         setSubmitting(false);
         return;
       }
+      setNotice(data.notice ?? null);
       setSent(true);
     } catch {
       setError("Network error. Please try again.");
@@ -75,6 +79,9 @@ export function ReserveForm({
           to put your reservation in — we&apos;ll email again once it&apos;s
           approved. (No charge until pickup.)
         </p>
+        {notice ? (
+          <p className="mt-3 rounded-2xl panel-mono px-3 py-2 text-sm">{notice}</p>
+        ) : null}
       </div>
     );
   if (!ready) return <p className="text-ink-500">Loading your order…</p>;
@@ -113,6 +120,18 @@ export function ReserveForm({
             />
           </label>
         ))}
+        <label className="block">
+          <span className="text-xs font-semibold uppercase text-ink-500">
+            Promo code (optional)
+          </span>
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="mt-1 w-full rounded-2xl border border-ink/20 bg-paper px-3 py-2 uppercase"
+            placeholder="FOUNDING"
+          />
+        </label>
         {error ? <p className="rounded-2xl panel-mono px-3 py-2 text-sm">{error}</p> : null}
         <button
           type="button"

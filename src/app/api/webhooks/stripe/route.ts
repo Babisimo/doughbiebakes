@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 
-import { applyOrderToActiveDrop, createOrder, upsertMember } from "@/sanity/lib/mutations";
+import { applyOrderToActiveDrop, createOrder, redeemPromo, upsertMember } from "@/sanity/lib/mutations";
 import { buildOrderRecord, type OrderShipAddress } from "@/lib/order-record";
 import { sendOrderEmails, type OrderEmailLine } from "@/lib/order-email";
 import { getStripe } from "@/lib/stripe";
@@ -187,6 +187,21 @@ async function handleCompletedCheckout(
     dropId = await applyOrderToActiveDrop(sold);
   } catch (err) {
     console.error("[webhook] failed to update drop inventory:", err);
+  }
+
+  // Founding code: commit the shared counter on real, completed payments
+  // only. Over-cap is HONORED (the customer already paid the discounted
+  // amount) — never clawed back; just log a greppable signal.
+  const promoMeta = session.metadata?.promo;
+  if (session.mode === "payment" && session.livemode && promoMeta) {
+    try {
+      const ok = await redeemPromo(promoMeta);
+      if (!ok) {
+        console.warn(`[promo] OVER-CAP REDEMPTION HONORED ${session.id} (${promoMeta})`);
+      }
+    } catch (err) {
+      console.error("[promo] webhook redeem failed", session.id, err);
+    }
   }
 
   const customerEmail = session.customer_details?.email;

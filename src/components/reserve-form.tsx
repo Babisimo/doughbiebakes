@@ -80,7 +80,7 @@ export function ReserveForm({
           approved. (No charge until pickup.)
         </p>
         {notice ? (
-          <p className="mt-3 rounded-2xl panel-mono px-3 py-2 text-sm">{notice}</p>
+          <p className="mt-3 rounded-2xl panel-mono px-3 py-2 text-sm text-center">{notice}</p>
         ) : null}
       </div>
     );

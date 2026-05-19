@@ -57,6 +57,12 @@ export const memberType = defineType({
       readOnly: true,
     }),
     defineField({
+      name: "founding",
+      title: "Founding member (bonus loaf in first delivery)",
+      type: "boolean",
+      readOnly: true,
+    }),
+    defineField({
       name: "joinedAt",
       title: "Joined at",
       type: "datetime",
@@ -77,10 +83,10 @@ export const memberType = defineType({
     }),
   ],
   preview: {
-    select: { email: "customerEmail", status: "subscriptionStatus" },
-    prepare: ({ email, status }) => ({
-      title: email,
-      subtitle: status,
+    select: { email: "customerEmail", status: "subscriptionStatus", founding: "founding" },
+    prepare: ({ email, status, founding }) => ({
+      title: founding ? `★ FOUNDING — ${email}` : email,
+      subtitle: founding ? `${status} · add bonus loaf to first delivery` : status,
     }),
   },
 });

@@ -68,6 +68,7 @@ export const ACTIVE_MEMBERS_QUERY = groq`
       customerEmail,
       stripeCustomerId,
       subscriptionStatus,
+      "founding": coalesce(founding, false),
       joinedAt
     }
 `;

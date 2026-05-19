@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "next-sanity";
 
 import type { OrderRecord } from "@/lib/order-record";
+import { site } from "@/lib/site";
 
 import { apiVersion, dataset, projectId, sanityConfigured, writeToken } from "../env";
 
@@ -158,6 +159,18 @@ export async function upsertMember(input: MemberSyncInput): Promise<boolean> {
   const email = input.customerEmail.trim().toLowerCase();
   const now = new Date().toISOString();
 
+  const existing = await writeClient.fetch<{ _id: string } | null>(
+    `*[_type == "member" && _id == $id][0]{ "_id": _id }`,
+    { id: docId },
+  );
+  let founding = false;
+  if (!existing) {
+    const foundingCount = await writeClient.fetch<number>(
+      `count(*[_type == "member" && founding == true])`,
+    );
+    founding = foundingCount < site.breadClub.foundingSeats;
+  }
+
   await writeClient.createIfNotExists({
     _id: docId,
     _type: "member",
@@ -168,6 +181,7 @@ export async function upsertMember(input: MemberSyncInput): Promise<boolean> {
     priceId: input.priceId,
     joinedAt: now,
     lastSyncedAt: now,
+    ...(founding ? { founding: true } : {}),
   });
 
   const patch = writeClient.patch(docId).set({

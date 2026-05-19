@@ -33,6 +33,9 @@ export const site = {
     perLoafLabel: "about $10 a loaf",
     loavesPerCycle: 4,
     seats: 12,
+    /** First N members get a bonus loaf in their first delivery (grand
+     * opening). Independent of the founding promo-code cap. */
+    foundingSeats: 5,
     /** Product slug a member gets when they don't pick before the window closes. */
     defaultLoafSlug: "classic",
     /** Per-cycle surcharge (cents) when a member chooses "ship" instead of

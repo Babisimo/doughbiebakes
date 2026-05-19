@@ -130,6 +130,7 @@ export function ReserveForm({
             onChange={(e) => setCode(e.target.value)}
             className="mt-1 w-full rounded-2xl border border-ink/20 bg-paper px-3 py-2 uppercase"
             placeholder="FOUNDING"
+            autoComplete="off"
           />
         </label>
         {error ? <p className="rounded-2xl panel-mono px-3 py-2 text-sm">{error}</p> : null}

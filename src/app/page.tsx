@@ -52,10 +52,10 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-5xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-20">
           <div className="space-y-6">
             <span className="reveal badge badge-acid">🍞 Home-baked in {site.city}</span>
-            <p className="badge badge-flame mb-4">
+            <span className="badge badge-flame">
               🎉 Grand opening — first 5 orders get 15% off with code{" "}
               <strong>FOUNDING</strong> · Bread Club founding members get a bonus loaf
-            </p>
+            </span>
             <h1 className="reveal reveal-2 display text-6xl leading-[0.95] sm:text-7xl md:text-[5.5rem]">
               Real <span className="text-grad-berry">sourdough</span>.
               <span className="block">Dropped weekly.</span>

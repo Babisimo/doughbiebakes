@@ -7,6 +7,8 @@ import { looksLikeBot, reservationCapError } from "@/lib/reserve-guard";
 import { rateLimited } from "@/lib/rate-limit";
 import { sanityClient } from "@/sanity/client";
 import { OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY } from "@/sanity/lib/queries";
+import { getPromoByCode, isRedeemable, normalizeCode } from "@/lib/promo";
+import { discountedTotalCents } from "@/lib/promo-math";
 
 export const runtime = "nodejs";
 
@@ -19,6 +21,7 @@ type Body = {
   items?: unknown;
   company?: unknown; // honeypot
   elapsedMs?: unknown;
+  code?: unknown;
 };
 
 function clientIp(req: Request): string {
@@ -109,6 +112,22 @@ export async function POST(req: Request) {
     }
   }
 
+  let promoCode: string | undefined;
+  let promoPercentOff: number | undefined;
+  let discounted: number | undefined;
+  let notice: string | undefined;
+  const codeRaw = typeof body.code === "string" ? body.code.trim() : "";
+  if (codeRaw) {
+    const promo = await getPromoByCode(codeRaw);
+    if (isRedeemable(promo)) {
+      promoCode = normalizeCode(promo.code);
+      promoPercentOff = promo.percentOff;
+      discounted = discountedTotalCents(result.totalCents, promo.percentOff);
+    } else {
+      notice = "That code isn't valid or is fully claimed — reserved at full price.";
+    }
+  }
+
   const id = await createReservation({
     customerName: name,
     customerEmail: email,
@@ -116,6 +135,9 @@ export async function POST(req: Request) {
     dropId: drop.id,
     items: result.items,
     totalCents: result.totalCents,
+    promoCode,
+    promoPercentOff,
+    discountedTotalCents: discounted,
   });
   if (!id) {
     return Response.json(
@@ -134,7 +156,8 @@ export async function POST(req: Request) {
       quantity: i.quantity,
       priceCents: i.priceCents,
     })),
-    totalCents: result.totalCents,
+    totalCents: discounted ?? result.totalCents,
+    promoPercentOff,
     pickupDate: drop.pickupOrShipDate,
   };
   console.info(
@@ -146,5 +169,9 @@ export async function POST(req: Request) {
   // fire from /api/reservations/verify once the customer clicks.
   await sendReservationVerify(emailInput);
 
-  return Response.json({ ok: true, pendingVerification: true });
+  return Response.json({
+    ok: true,
+    pendingVerification: true,
+    ...(notice ? { notice } : {}),
+  });
 }

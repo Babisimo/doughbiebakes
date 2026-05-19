@@ -43,12 +43,12 @@ function toItemRows(input: ReservationEmailInput) {
   }));
 }
 function discountNoteText(input: ReservationEmailInput): string {
-  return input.promoPercentOff
-    ? `\n  (Founding discount: ${input.promoPercentOff}% off applied — total above is the discounted amount.)`
+  return typeof input.promoPercentOff === "number" && input.promoPercentOff > 0
+    ? `\n  (Founding discount: ${input.promoPercentOff}% off applied — the total shown is the discounted amount.)`
     : "";
 }
 function discountNoteHtml(input: ReservationEmailInput): string {
-  return input.promoPercentOff
+  return typeof input.promoPercentOff === "number" && input.promoPercentOff > 0
     ? `<p style="margin:10px 0 0;font-size:13px;color:#6b705c;">Founding discount: ` +
         `<strong>${input.promoPercentOff}% off</strong> applied — the total shown is the discounted amount.</p>`
     : "";
@@ -109,8 +109,7 @@ export async function sendReservationVerify(input: ReservationEmailInput): Promi
     `  Total due at pickup: ${formatPrice(input.totalCents)}`,
     "",
     "If you didn't request this, just ignore this email — nothing was reserved.",
-    discountNoteText(input),
-  ].join("\n");
+  ].join("\n") + discountNoteText(input);
   const itemRows = toItemRows(input);
   const html = renderEmail({
     preheader: `Confirm your ${site.name} pickup reservation`,
@@ -192,8 +191,7 @@ export async function sendReservationConfirmed(input: ReservationEmailInput): Pr
     `  Pay at pickup: ${formatPrice(input.totalCents)} (cash or card)`,
     "",
     `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}. ${site.cottageFood.permitNumber}.`,
-    discountNoteText(input),
-  ].join("\n");
+  ].join("\n") + discountNoteText(input);
   const itemRows = toItemRows(input);
   const html = renderEmail({
     preheader: `Your ${site.name} pickup reservation is confirmed`,

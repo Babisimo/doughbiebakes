@@ -26,6 +26,9 @@ type Row = {
   totalCents: number;
   createdAt: string;
   items: { productName: string; quantity: number }[];
+  promoCode?: string;
+  promoPercentOff?: number;
+  discountedTotalCents?: number;
 };
 
 export default async function AdminReservationsPage() {
@@ -54,7 +57,18 @@ export default async function AdminReservationsPage() {
                 <p className="text-sm text-ink-700">
                   {r.customerEmail} · {r.customerPhone} ·{" "}
                   {r.items.map((i) => `${i.quantity}× ${i.productName}`).join(", ")} ·{" "}
-                  {formatPrice(r.totalCents)} · {r.dropTitle ?? "—"}
+                  {r.promoCode && typeof r.discountedTotalCents === "number" ? (
+                    <>
+                      <span className="font-bold">{formatPrice(r.discountedTotalCents)}</span>{" "}
+                      <span className="text-xs text-ink-500 line-through">{formatPrice(r.totalCents)}</span>{" "}
+                      <span className="text-xs font-semibold uppercase text-acid-600">
+                        {r.promoCode} −{r.promoPercentOff}%
+                      </span>
+                    </>
+                  ) : (
+                    formatPrice(r.totalCents)
+                  )}{" "}
+                  · {r.dropTitle ?? "—"}
                 </p>
               </div>
               {r.status === "pending" ? <ReservationActions id={r.id} /> : null}

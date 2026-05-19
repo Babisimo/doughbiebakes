@@ -2,6 +2,8 @@ import type Stripe from "stripe";
 
 import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
+import { getPromoByCode, isRedeemable, normalizeCode } from "@/lib/promo";
+import { discountedUnitCents } from "@/lib/promo-math";
 import { shippingOptions } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/url";
@@ -72,6 +74,20 @@ export async function POST(request: Request) {
     claimedBySlug.set(sel.productSlug, (claimedBySlug.get(sel.productSlug) ?? 0) + 1);
   }
 
+  const codeRaw =
+    body && typeof body === "object" && typeof (body as { code?: unknown }).code === "string"
+      ? ((body as { code?: string }).code as string).trim()
+      : "";
+  let promoPercentOff = 0;
+  let promoMeta: string | undefined;
+  if (codeRaw) {
+    const promo = await getPromoByCode(codeRaw);
+    if (isRedeemable(promo)) {
+      promoPercentOff = promo.percentOff;
+      promoMeta = normalizeCode(promo.code);
+    }
+  }
+
   const lineItems: NonNullable<
     Stripe.Checkout.SessionCreateParams["line_items"]
   > = [];
@@ -100,11 +116,15 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
+    const unitAmount =
+      promoPercentOff > 0
+        ? discountedUnitCents(li.product.priceCents, promoPercentOff)
+        : li.product.priceCents;
     lineItems.push({
       quantity: item.quantity,
       price_data: {
         currency: "usd",
-        unit_amount: li.product.priceCents,
+        unit_amount: unitAmount,
         product_data: {
           name: li.product.name,
           description: li.product.tagline ?? undefined,
@@ -148,7 +168,10 @@ export async function POST(request: Request) {
             "You're pre-ordering from a home kitchen. We'll confirm pickup/ship details by email.",
         },
       },
-      metadata: { cart: cartSummary },
+      metadata: {
+        cart: cartSummary,
+        ...(promoMeta ? { promo: promoMeta } : {}),
+      },
       success_url: `${base}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/order/canceled`,
     });

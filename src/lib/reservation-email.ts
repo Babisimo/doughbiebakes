@@ -22,6 +22,7 @@ export type ReservationEmailInput = {
   lines: ReservationLine[];
   totalCents: number;
   pickupDate?: string;
+  promoPercentOff?: number;
 };
 
 function lines(ls: ReservationLine[]): string {
@@ -40,6 +41,17 @@ function toItemRows(input: ReservationEmailInput) {
     label: `${l.quantity}× ${l.productName}`,
     amount: formatPrice(l.priceCents * l.quantity),
   }));
+}
+function discountNoteText(input: ReservationEmailInput): string {
+  return input.promoPercentOff
+    ? `\n  (Founding discount: ${input.promoPercentOff}% off applied — total above is the discounted amount.)`
+    : "";
+}
+function discountNoteHtml(input: ReservationEmailInput): string {
+  return input.promoPercentOff
+    ? `<p style="margin:10px 0 0;font-size:13px;color:#6b705c;">Founding discount: ` +
+        `<strong>${input.promoPercentOff}% off</strong> applied — the total shown is the discounted amount.</p>`
+    : "";
 }
 
 /** (a) Customer: request received, not yet confirmed. */
@@ -97,6 +109,7 @@ export async function sendReservationVerify(input: ReservationEmailInput): Promi
     `  Total due at pickup: ${formatPrice(input.totalCents)}`,
     "",
     "If you didn't request this, just ignore this email — nothing was reserved.",
+    discountNoteText(input),
   ].join("\n");
   const itemRows = toItemRows(input);
   const html = renderEmail({
@@ -113,7 +126,8 @@ export async function sendReservationVerify(input: ReservationEmailInput): Promi
       emailButton(verifyUrl, "✅ Confirm my reservation", "primary") +
       `</p>` +
       `<p style="margin:14px 0 0;font-size:13px;color:#6b705c;">` +
-      `Didn't request this? Ignore this email — nothing was reserved.</p>`,
+      `Didn't request this? Ignore this email — nothing was reserved.</p>` +
+      discountNoteHtml(input),
   });
   try {
     await sendEmail({
@@ -178,6 +192,7 @@ export async function sendReservationConfirmed(input: ReservationEmailInput): Pr
     `  Pay at pickup: ${formatPrice(input.totalCents)} (cash or card)`,
     "",
     `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}. ${site.cottageFood.permitNumber}.`,
+    discountNoteText(input),
   ].join("\n");
   const itemRows = toItemRows(input);
   const html = renderEmail({
@@ -193,7 +208,8 @@ export async function sendReservationConfirmed(input: ReservationEmailInput): Pr
       lineItemsTable(itemRows, {
         label: "Total at pickup",
         amount: formatPrice(input.totalCents),
-      }),
+      }) +
+      discountNoteHtml(input),
   });
   try {
     await sendEmail({

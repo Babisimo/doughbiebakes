@@ -55,6 +55,7 @@ export default async function BreadClubPage() {
           ["⏸️", "Pause, skip a week, or cancel anytime — self-serve through Stripe. Quiet weeks with no drop don't get billed."],
           ["🥇", "First taste of new and seasonal flavors before they hit a public drop."],
           ["🤝", `Only ${club.seats} memberships so the oven can still feed the public drops — when they're gone, it's a waitlist.`],
+          ["🎁", `Founding members — the first 5 to join — get a bonus loaf in their very first delivery.`],
         ].map(([emoji, text]) => (
           <li key={text} className="nb-card-sm flex items-start gap-3 p-4">
             <span aria-hidden className="text-xl">

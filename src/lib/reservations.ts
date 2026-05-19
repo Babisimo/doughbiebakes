@@ -10,6 +10,7 @@ import { sanityClient } from "@/sanity/client";
 import { DROP_BY_ID_QUERY, RESERVATION_BY_ID_QUERY } from "@/sanity/lib/queries";
 import {
   decrementDropQuantities,
+  redeemPromo,
   setReservationStatus,
 } from "@/sanity/lib/mutations";
 import type { Drop } from "./types";
@@ -31,14 +32,21 @@ type Reservation = {
   dropId: string;
   status: string;
   totalCents: number;
+  promoCode?: string;
+  promoPercentOff?: number;
+  discountedTotalCents?: number;
   items: { productSlug: string; productName: string; quantity: number; priceCents: number }[];
 };
 
 export type DecideResult =
-  | { ok: true; status: "confirmed" | "declined"; idempotent?: boolean }
+  | { ok: true; status: "confirmed" | "declined"; idempotent?: boolean; warning?: string }
   | { ok: false; error: string };
 
 function emailInputFor(r: Reservation, pickupDate?: string) {
+  const total =
+    typeof r.discountedTotalCents === "number" && r.promoCode
+      ? r.discountedTotalCents
+      : r.totalCents;
   return {
     id: r.id,
     customerName: r.customerName,
@@ -49,7 +57,8 @@ function emailInputFor(r: Reservation, pickupDate?: string) {
       quantity: i.quantity,
       priceCents: i.priceCents,
     })),
-    totalCents: r.totalCents,
+    totalCents: total,
+    promoPercentOff: r.promoCode ? r.promoPercentOff : undefined,
     pickupDate,
   };
 }
@@ -109,6 +118,20 @@ export async function decideReservation(
         idempotent: true,
       };
     }
+    let warning: string | undefined;
+    if (r.promoCode) {
+      const redeemed = await redeemPromo(r.promoCode);
+      if (!redeemed) {
+        // Cap exhausted between submit and confirm: confirm at FULL price.
+        warning =
+          `Founding code "${r.promoCode}" is already fully redeemed — ` +
+          `confirmed at full price. Honor the discount manually if you choose.`;
+        // Strip the discount so the confirm email shows full price.
+        r.promoCode = undefined;
+        r.promoPercentOff = undefined;
+        r.discountedTotalCents = undefined;
+      }
+    }
     try {
       await decrementDropQuantities(
         r.dropId,
@@ -127,7 +150,7 @@ export async function decideReservation(
         err,
       );
     }
-    return { ok: true, status: "confirmed" };
+    return { ok: true, status: "confirmed", warning };
   } catch (err) {
     console.error("[reservations] decide failed", err);
     return {

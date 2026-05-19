@@ -196,6 +196,9 @@ export async function createReservation(input: {
   dropId: string;
   items: ReservationItemInput[];
   totalCents: number;
+  promoCode?: string;
+  promoPercentOff?: number;
+  discountedTotalCents?: number;
 }): Promise<string | null> {
   if (!writeClient) return null;
   const now = new Date().toISOString();
@@ -207,6 +210,13 @@ export async function createReservation(input: {
     drop: { _type: "reference", _ref: input.dropId },
     items: input.items.map((i) => ({ _type: "reservationItem", ...i })),
     totalCents: input.totalCents,
+    ...(input.promoCode ? { promoCode: input.promoCode } : {}),
+    ...(typeof input.promoPercentOff === "number"
+      ? { promoPercentOff: input.promoPercentOff }
+      : {}),
+    ...(typeof input.discountedTotalCents === "number"
+      ? { discountedTotalCents: input.discountedTotalCents }
+      : {}),
     status: "unverified",
     createdAt: now,
   });

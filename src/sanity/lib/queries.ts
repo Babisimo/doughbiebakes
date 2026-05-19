@@ -92,6 +92,7 @@ export const RESERVATION_BY_ID_QUERY = groq`
   *[_type == "reservation" && _id == $id][0]{
     "id": _id, _rev, customerName, customerEmail, customerPhone,
     "dropId": drop._ref, status, totalCents, createdAt, decidedAt,
+    promoCode, promoPercentOff, discountedTotalCents,
     items[]{ productSlug, productName, quantity, priceCents }
   }`;
 
@@ -109,6 +110,7 @@ export const RESERVATIONS_QUERY = groq`
   ){
     "id": _id, customerName, customerEmail, customerPhone,
     "dropTitle": drop->title, status, totalCents, createdAt, decidedAt,
+    promoCode, promoPercentOff, discountedTotalCents,
     items[]{ productSlug, productName, quantity, priceCents }
   }`;
 

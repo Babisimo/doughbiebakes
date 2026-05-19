@@ -149,7 +149,9 @@ export async function POST(request: Request) {
       shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },
       billing_address_collection: "auto",
-      allow_promotion_codes: true,
+      // Founding discount is exclusive: don't let a Stripe promo code stack
+      // on top of the already-discounted unit_amount.
+      allow_promotion_codes: promoPercentOff > 0 ? false : true,
       shipping_options: shippingOptions.map((opt) => ({
         shipping_rate_data: {
           // Required by the Stripe API (the only allowed value).

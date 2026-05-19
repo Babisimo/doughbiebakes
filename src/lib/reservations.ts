@@ -120,11 +120,13 @@ export async function decideReservation(
     }
     let warning: string | undefined;
     if (r.promoCode) {
-      const redeemed = await redeemPromo(r.promoCode);
+      const code = r.promoCode;
+      // redeemPromo never throws: false = cap hit or any error (safe degrade).
+      const redeemed = await redeemPromo(code);
       if (!redeemed) {
         // Cap exhausted between submit and confirm: confirm at FULL price.
         warning =
-          `Founding code "${r.promoCode}" is already fully redeemed — ` +
+          `Founding code "${code}" is already fully redeemed — ` +
           `confirmed at full price. Honor the discount manually if you choose.`;
         // Strip the discount so the confirm email shows full price.
         r.promoCode = undefined;

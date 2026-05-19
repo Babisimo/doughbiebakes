@@ -162,7 +162,9 @@ export async function POST(req: Request) {
   };
   console.info(
     `[reserve] unverified reservation ${id} — ${name} <${email}> — ` +
-      `$${(result.totalCents / 100).toFixed(2)} — ` +
+      `$${((discounted ?? result.totalCents) / 100).toFixed(2)}` +
+      (promoCode ? ` [promo ${promoCode} −${promoPercentOff}%]` : "") +
+      ` — ` +
       result.items.map((i) => `${i.quantity}× ${i.productSlug}`).join(", "),
   );
   // Double opt-in: only the verify email goes out now. Baker alert + "received"

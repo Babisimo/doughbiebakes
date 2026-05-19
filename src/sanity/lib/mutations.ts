@@ -387,7 +387,8 @@ export async function redeemPromo(code: string): Promise<boolean> {
     );
     if (!p) return false;
     const used = p.redeemedCount ?? 0;
-    if (p.active === false || used >= p.maxRedemptions) return false;
+    const cap = typeof p.maxRedemptions === "number" ? p.maxRedemptions : 0;
+    if (p.active === false || used >= cap) return false;
     await writeClient
       .patch(p._id)
       .ifRevisionId(p._rev)

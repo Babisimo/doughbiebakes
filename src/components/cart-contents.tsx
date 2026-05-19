@@ -32,6 +32,7 @@ export function CartContents({
   const { lines, setQuantity, remove, ready } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   const catalog = useMemo(
     () => new Map(products.map((p) => [p.slug, p])),
@@ -84,6 +85,7 @@ export function CartContents({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          code: code.trim(),
           items: rows
             .filter((r) => r.avail.canOrder)
             .map((r) => ({ slug: r.product.slug, quantity: Math.min(r.quantity, r.maxQty) })),
@@ -224,6 +226,18 @@ export function CartContents({
         {error ? (
           <p className="rounded-2xl panel-mono px-3 py-2 text-sm">{error}</p>
         ) : null}
+        <label className="block">
+          <span className="text-xs font-semibold uppercase text-ink-500">
+            Promo code (optional)
+          </span>
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="mt-1 w-full rounded-2xl border border-ink/20 bg-paper px-3 py-2 text-sm uppercase"
+            placeholder="FOUNDING"
+          />
+        </label>
         {canCheckout ? (
           <Link
             href="/reserve"

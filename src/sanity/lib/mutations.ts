@@ -360,3 +360,50 @@ export async function setFulfillmentStatus(
     throw err;
   }
 }
+
+/**
+ * Atomically claim one redemption of a promo code. Rev-guarded like
+ * `setReservationStatus`: succeeds only while the doc is unchanged AND
+ * `redeemedCount < maxRedemptions` AND `active`. Per the spec, NEVER throws
+ * into callers — a 409 race or any error returns false (caller treats false
+ * as "cap hit / not applied"); errors are logged.
+ */
+export async function redeemPromo(code: string): Promise<boolean> {
+  if (!writeClient) return false;
+  const norm = code.trim().toUpperCase();
+  try {
+    const all = await writeClient.fetch<
+      {
+        _id: string;
+        _rev: string;
+        code: string;
+        maxRedemptions: number;
+        redeemedCount?: number;
+        active?: boolean;
+      }[]
+    >(`*[_type == "promoCode"]{ _id, _rev, code, maxRedemptions, redeemedCount, active }`);
+    const p = all.find(
+      (x) => (x.code ?? "").trim().toUpperCase() === norm,
+    );
+    if (!p) return false;
+    const used = p.redeemedCount ?? 0;
+    if (p.active === false || used >= p.maxRedemptions) return false;
+    await writeClient
+      .patch(p._id)
+      .ifRevisionId(p._rev)
+      .set({ redeemedCount: used + 1 })
+      .commit();
+    return true;
+  } catch (err) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "statusCode" in err &&
+      (err as { statusCode?: number }).statusCode === 409
+    ) {
+      return false;
+    }
+    console.error("[promo] redeemPromo failed", err);
+    return false;
+  }
+}

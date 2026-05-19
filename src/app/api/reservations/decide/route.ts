@@ -29,11 +29,13 @@ export async function GET(req: Request) {
   const r = await decideReservation(id, action);
   if (!r.ok) return page("Couldn't process", r.error);
   if (r.idempotent) return page("Already decided", `This reservation was already <b>${r.status}</b>.`);
-  return page(
-    r.status === "confirmed" ? "Approved ✅" : "Declined",
+  const note =
     r.status === "confirmed"
       ? "Stock is held and the customer was emailed to pay at pickup."
-      : "The customer was emailed.",
+      : "The customer was emailed.";
+  return page(
+    r.status === "confirmed" ? "Approved ✅" : "Declined",
+    r.warning ? `${note}<br><br><strong>⚠️ ${r.warning}</strong>` : note,
   );
 }
 
@@ -55,5 +57,10 @@ export async function POST(req: Request) {
   }
   const r = await decideReservation(id, action);
   if (!r.ok) return Response.json({ error: r.error }, { status: 409 });
-  return Response.json({ ok: true, status: r.status, idempotent: r.idempotent ?? false });
+  return Response.json({
+    ok: true,
+    status: r.status,
+    idempotent: r.idempotent ?? false,
+    ...(r.warning ? { warning: r.warning } : {}),
+  });
 }

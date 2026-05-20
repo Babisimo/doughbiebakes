@@ -129,7 +129,6 @@ export function ReserveForm({
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className="mt-1 w-full rounded-2xl border border-ink/20 bg-paper px-3 py-2 uppercase"
-            placeholder="FOUNDING"
             autoComplete="off"
           />
         </label>

@@ -1,10 +1,11 @@
 import { defineField, defineType } from "sanity";
 
 /**
- * One Bread Club member's choice of loaf for a single drop. Written by the
- * /api/club/select route after verifying the signed magic-link token. The
- * presence of a doc for (drop, email) means "this member has claimed a loaf
- * out of this drop" — its productSlug is which flavor they took.
+ * One Bread Club member's choice for a single drop. Written by the
+ * /api/club/select route after verifying the signed magic-link token. A doc
+ * for (drop, email) is either a loaf pick (`productSlug` + `fulfillment`) or a
+ * skip (`skipped: true`, no loaf). A skipped member takes no loaf and is not
+ * charged for the drop.
  */
 export const memberSelectionType = defineType({
   name: "memberSelection",

@@ -28,7 +28,6 @@ export const memberSelectionType = defineType({
       name: "productSlug",
       title: "Chosen loaf (slug)",
       type: "string",
-      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "fulfillment",
@@ -45,12 +44,10 @@ export const memberSelectionType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "shipInvoiceItemId",
-      title: "Stripe shipping invoice item id",
-      type: "string",
-      readOnly: true,
-      description:
-        "Set when this member chose 'ship': the pending Stripe invoice item that bills the shipping surcharge on their next subscription invoice. Cleared when they switch back to pickup.",
+      name: "skipped",
+      title: "Skipped this drop",
+      type: "boolean",
+      description: "True when the member opted out of this drop — no loaf, no charge.",
     }),
     defineField({
       name: "selectedAt",
@@ -60,9 +57,9 @@ export const memberSelectionType = defineType({
     }),
   ],
   preview: {
-    select: { email: "customerEmail", slug: "productSlug", at: "selectedAt" },
-    prepare: ({ email, slug, at }) => ({
-      title: `${email} → ${slug}`,
+    select: { email: "customerEmail", slug: "productSlug", skipped: "skipped", at: "selectedAt" },
+    prepare: ({ email, slug, skipped, at }) => ({
+      title: skipped ? `${email} → (skipped)` : `${email} → ${slug ?? "(default)"}`,
       subtitle: at ? new Date(at).toLocaleString() : "",
     }),
   },

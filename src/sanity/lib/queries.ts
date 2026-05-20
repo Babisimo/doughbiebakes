@@ -78,6 +78,11 @@ export const ACTIVE_MEMBER_COUNT_QUERY = groq`
   count(*[_type == "member" && subscriptionStatus in ["active", "trialing"]])
 `;
 
+/** Count of members ever tagged founding — drives "founding spots left". */
+export const FOUNDING_MEMBER_COUNT_QUERY = groq`
+  count(*[_type == "member" && founding == true])
+`;
+
 /** A single member doc by email — needed when opening the Stripe Customer Portal. */
 export const MEMBER_BY_EMAIL_QUERY = groq`
   *[_type == "member" && customerEmail == $email][0]{

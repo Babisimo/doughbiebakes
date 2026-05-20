@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { JoinBreadClub } from "@/components/join-bread-club";
-import { getActiveMemberCount } from "@/lib/catalog";
+import { getActiveMemberCount, getFoundingMemberCount } from "@/lib/catalog";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -18,6 +18,26 @@ export default async function BreadClubPage() {
   // club as open in that case rather than locking out new sign-ups.
   const spotsLeft = memberCount === null ? club.seats : Math.max(0, club.seats - memberCount);
   const isFull = enabled && spotsLeft <= 0;
+
+  // Founding bonus-loaf cohort — the first `foundingSeats` members ever.
+  const foundingCount = await getFoundingMemberCount({ fresh: true });
+  const foundingSpotsLeft =
+    foundingCount === null
+      ? null
+      : Math.max(0, club.foundingSeats - foundingCount);
+  const membershipLine =
+    memberCount === null
+      ? `${club.seats} memberships open`
+      : isFull
+        ? "Membership full — waitlist open"
+        : `${spotsLeft} of ${club.seats} memberships open`;
+  const foundingLine =
+    foundingSpotsLeft === null
+      ? `🎁 First ${club.foundingSeats} to join get a bonus loaf in their first box.`
+      : foundingSpotsLeft > 0
+        ? `🎁 First ${club.foundingSeats} to join get a bonus loaf in their first box — ${foundingSpotsLeft} founding ${foundingSpotsLeft === 1 ? "spot" : "spots"} left.`
+        : `🎁 Founding bonus loaves — all ${club.foundingSeats} claimed.`;
+
   const waitlistHref = `mailto:${site.email}?subject=${encodeURIComponent(
     "Bread Club waitlist",
   )}&body=${encodeURIComponent(
@@ -26,14 +46,15 @@ export default async function BreadClubPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <span className="badge badge-flame">
-        Neighbors only ✶ {memberCount === null
-          ? `${club.seats} spots`
-          : isFull
-            ? "Full — waitlist open"
-            : `${spotsLeft} of ${club.seats} spots left`}{" "}
-        ✶ {site.city}
-      </span>
+      <div className="rounded-3xl panel-acid px-5 py-4 shadow-[var(--shadow-hard)]">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink">
+          ✶ Neighbors only · {site.city}
+        </p>
+        <p className="display mt-0.5 text-3xl leading-[1.05] text-ink sm:text-4xl">
+          {membershipLine}
+        </p>
+        <p className="mt-2 text-sm font-semibold text-ink">{foundingLine}</p>
+      </div>
       <h1 className="display mt-3 text-6xl sm:text-7xl">
         The <span className="text-grad-acid">Bread Club</span>
       </h1>

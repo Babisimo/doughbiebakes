@@ -4,6 +4,7 @@ import { sanityClient } from "@/sanity/client";
 import {
   ACTIVE_MEMBER_COUNT_QUERY,
   ACTIVE_MEMBERS_QUERY,
+  FOUNDING_MEMBER_COUNT_QUERY,
   ALL_PRODUCTS_QUERY,
   CONFIRMED_RESERVATIONS_FOR_DROP_QUERY,
   LIVE_ORDERS_FOR_DROP_QUERY,
@@ -232,6 +233,18 @@ export async function getActiveMemberCount(
 ): Promise<number | null> {
   if (!sanityClient) return null;
   const count = await fetchSanity<number>(ACTIVE_MEMBER_COUNT_QUERY, {}, opts);
+  return typeof count === "number" ? count : 0;
+}
+
+/**
+ * How many members have ever been tagged `founding`. `null` in demo mode so
+ * callers can distinguish "no data" from "zero founding members".
+ */
+export async function getFoundingMemberCount(
+  opts: FetchOpts = {},
+): Promise<number | null> {
+  if (!sanityClient) return null;
+  const count = await fetchSanity<number>(FOUNDING_MEMBER_COUNT_QUERY, {}, opts);
   return typeof count === "number" ? count : 0;
 }
 

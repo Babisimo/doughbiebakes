@@ -7,6 +7,7 @@ import { useCart } from "@/components/cart-provider";
 import { ProductImage } from "@/components/product-image";
 import { type Availability, unavailableLabel } from "@/lib/availability";
 import { formatPrice } from "@/lib/money";
+import { discountCents, discountedTotalCents } from "@/lib/promo-math";
 import type { Product } from "@/lib/types";
 
 const NOT_IN_DROP: Availability = {
@@ -29,10 +30,18 @@ export function CartContents({
   /** `slug -> Availability` for everything in the open drop. */
   availability: Record<string, Availability>;
 }) {
-  const { lines, setQuantity, remove, ready } = useCart();
+  const {
+    lines,
+    setQuantity,
+    remove,
+    ready,
+    promoCode,
+    promoPercentOff,
+    promoChecking,
+    setPromoCode,
+  } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [code, setCode] = useState("");
 
   const catalog = useMemo(
     () => new Map(products.map((p) => [p.slug, p])),
@@ -85,7 +94,7 @@ export function CartContents({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          code: code.trim(),
+          code: promoCode.trim(),
           items: rows
             .filter((r) => r.avail.canOrder)
             .map((r) => ({ slug: r.product.slug, quantity: Math.min(r.quantity, r.maxQty) })),
@@ -213,6 +222,24 @@ export function CartContents({
           <span className="font-semibold uppercase">Subtotal</span>
           <span className="font-bold">{formatPrice(subtotal)}</span>
         </div>
+        {promoPercentOff > 0 ? (
+          <div className="space-y-1">
+            <div className="flex justify-between text-sm text-acid-600">
+              <span className="font-semibold">
+                Founding discount ({promoPercentOff}% off)
+              </span>
+              <span className="font-bold">
+                −{formatPrice(discountCents(subtotal, promoPercentOff))}
+              </span>
+            </div>
+            <div className="flex justify-between border-b border-ink/15 pb-2 text-sm">
+              <span className="font-semibold uppercase">Discounted total</span>
+              <span className="font-bold">
+                {formatPrice(discountedTotalCents(subtotal, promoPercentOff))}
+              </span>
+            </div>
+          </div>
+        ) : null}
         <p className="text-xs text-ink-700">
           Shipping (local pickup in Corona — free, or USPS Priority within
           California) is picked at checkout. Taxes, if any, are computed by Stripe.
@@ -232,11 +259,22 @@ export function CartContents({
           </span>
           <input
             type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value)}
             className="mt-1 w-full rounded-2xl border border-ink/20 bg-paper px-3 py-2 text-sm uppercase"
             autoComplete="off"
           />
+          {promoCode.trim() && !promoChecking ? (
+            promoPercentOff > 0 ? (
+              <span className="mt-1 block text-xs font-semibold text-acid-600">
+                ✓ {promoPercentOff}% off applied
+              </span>
+            ) : (
+              <span className="mt-1 block text-xs text-ink-500">
+                That code isn&apos;t valid.
+              </span>
+            )
+          ) : null}
         </label>
         {canCheckout ? (
           <Link

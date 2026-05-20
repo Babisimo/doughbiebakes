@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 import { useCart } from "@/components/cart-provider";
 import { type Availability } from "@/lib/availability";
 import { formatPrice } from "@/lib/money";
+import { discountCents, discountedTotalCents } from "@/lib/promo-math";
 import type { Product } from "@/lib/types";
 
 export function ReserveForm({
@@ -14,12 +15,12 @@ export function ReserveForm({
   products: Product[];
   availability: Record<string, Availability>;
 }) {
-  const { lines, ready } = useCart();
+  const { lines, ready, promoCode, promoPercentOff, promoChecking, setPromoCode } =
+    useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [sent, setSent] = useState(false);
-  const [code, setCode] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [mountedAt] = useState<number>(() => Date.now());
   const company = useRef("");
@@ -50,7 +51,7 @@ export function ReserveForm({
         body: JSON.stringify({
           ...form,
           company: company.current,
-          code: code.trim(),
+          code: promoCode.trim(),
           // eslint-disable-next-line react-hooks/purity
           elapsedMs: Date.now() - mountedAt,
           items: rows.map((r) => ({ slug: r.product.slug, quantity: r.quantity })),
@@ -126,11 +127,22 @@ export function ReserveForm({
           </span>
           <input
             type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value)}
             className="mt-1 w-full rounded-2xl border border-ink/20 bg-paper px-3 py-2 uppercase"
             autoComplete="off"
           />
+          {promoCode.trim() && !promoChecking ? (
+            promoPercentOff > 0 ? (
+              <span className="mt-1 block text-xs font-semibold text-acid-600">
+                ✓ {promoPercentOff}% off applied
+              </span>
+            ) : (
+              <span className="mt-1 block text-xs text-ink-500">
+                That code isn&apos;t valid.
+              </span>
+            )
+          ) : null}
         </label>
         {error ? <p className="rounded-2xl panel-mono px-3 py-2 text-sm">{error}</p> : null}
         <button
@@ -153,10 +165,29 @@ export function ReserveForm({
             <span>{formatPrice(r.product.priceCents * r.quantity)}</span>
           </div>
         ))}
-        <div className="flex justify-between border-t border-ink/15 pt-2 text-sm font-bold">
-          <span>Due at pickup</span>
-          <span>{formatPrice(total)}</span>
-        </div>
+        {promoPercentOff > 0 ? (
+          <>
+            <div className="flex justify-between border-t border-ink/15 pt-2 text-sm">
+              <span>Subtotal</span>
+              <span>{formatPrice(total)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-acid-600">
+              <span>Founding discount ({promoPercentOff}% off)</span>
+              <span>−{formatPrice(discountCents(total, promoPercentOff))}</span>
+            </div>
+            <div className="flex justify-between text-sm font-bold">
+              <span>Due at pickup</span>
+              <span>
+                {formatPrice(discountedTotalCents(total, promoPercentOff))}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="flex justify-between border-t border-ink/15 pt-2 text-sm font-bold">
+            <span>Due at pickup</span>
+            <span>{formatPrice(total)}</span>
+          </div>
+        )}
       </aside>
     </div>
   );

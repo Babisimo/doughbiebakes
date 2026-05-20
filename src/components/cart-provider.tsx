@@ -12,6 +12,7 @@ import {
 import type { CartLine } from "@/lib/types";
 
 const STORAGE_KEY = "doughbie-cart";
+const PROMO_KEY = "doughbie-promo";
 
 type CartContextValue = {
   lines: CartLine[];
@@ -27,6 +28,14 @@ type CartContextValue = {
   remove: (slug: string) => void;
   clear: () => void;
   ready: boolean;
+  /** Promo code the customer entered. Shared across /cart and /reserve and
+   * persisted, so it's entered once and carried through the whole order. */
+  promoCode: string;
+  /** Validated discount for `promoCode` (0 when absent / invalid / unchecked). */
+  promoPercentOff: number;
+  /** True while `promoCode` is being validated against /api/promo. */
+  promoChecking: boolean;
+  setPromoCode: (code: string) => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -50,6 +59,9 @@ function sanitize(raw: unknown): CartLine[] {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoPercentOff, setPromoPercentOff] = useState(0);
+  const [promoChecking, setPromoChecking] = useState(false);
 
   // One-time hydration from localStorage after mount. We deliberately render an
   // empty cart on the server (and on the first client render) to avoid a
@@ -59,6 +71,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) setLines(sanitize(JSON.parse(stored)));
+    } catch {
+      /* ignore */
+    }
+    try {
+      const storedPromo = window.localStorage.getItem(PROMO_KEY);
+      if (storedPromo) setPromoCode(storedPromo);
     } catch {
       /* ignore */
     }
@@ -74,6 +92,50 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }, [lines, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      if (promoCode.trim()) window.localStorage.setItem(PROMO_KEY, promoCode);
+      else window.localStorage.removeItem(PROMO_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [promoCode, ready]);
+
+  // Validate the promo code (debounced) so /cart and /reserve can show a live
+  // discounted total. The server routes still re-validate authoritatively.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const code = promoCode.trim();
+    if (!code) {
+      setPromoPercentOff(0);
+      setPromoChecking(false);
+      return;
+    }
+    setPromoChecking(true);
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      fetch(`/api/promo?code=${encodeURIComponent(code)}`)
+        .then((r) => r.json())
+        .then((d: { valid?: boolean; percentOff?: number }) => {
+          if (!cancelled) {
+            setPromoPercentOff(d?.valid ? Number(d.percentOff) || 0 : 0);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setPromoPercentOff(0);
+        })
+        .finally(() => {
+          if (!cancelled) setPromoChecking(false);
+        });
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [promoCode]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const add = useCallback((slug: string, quantity = 1, max?: number) => {
     setLines((prev) => {
@@ -104,7 +166,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setLines((prev) => prev.filter((l) => l.slug !== slug));
   }, []);
 
-  const clear = useCallback(() => setLines([]), []);
+  // Clearing the cart after a completed order also drops the promo code — the
+  // code was tied to that order, the next one starts fresh.
+  const clear = useCallback(() => {
+    setLines([]);
+    setPromoCode("");
+  }, []);
 
   const value = useMemo<CartContextValue>(
     () => ({
@@ -115,8 +182,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       remove,
       clear,
       ready,
+      promoCode,
+      promoPercentOff,
+      promoChecking,
+      setPromoCode,
     }),
-    [lines, add, setQuantity, remove, clear, ready],
+    [
+      lines,
+      add,
+      setQuantity,
+      remove,
+      clear,
+      ready,
+      promoCode,
+      promoPercentOff,
+      promoChecking,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

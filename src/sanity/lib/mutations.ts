@@ -67,21 +67,6 @@ export async function decrementDropQuantities(
   await patch.commit({ autoGenerateArrayKeys: false });
 }
 
-/**
- * Best-effort: decrement the current open drop after a paid Stripe order.
- */
-export async function applyOrderToActiveDrop(
-  items: SoldItem[],
-): Promise<string | null> {
-  if (!writeClient || items.length === 0) return null;
-  const open = await writeClient.fetch<{ _id: string } | null>(
-    `*[_type == "drop" && status == "open"] | order(pickupOrShipDate asc)[0]{ _id }`,
-  );
-  if (!open?._id) return null;
-  await decrementDropQuantities(open._id, items);
-  return open._id;
-}
-
 type MemberSelectionInput = {
   dropId: string;
   email: string;

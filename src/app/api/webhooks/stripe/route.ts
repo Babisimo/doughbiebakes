@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 
-import { applyOrderToActiveDrop, createOrder, redeemPromo, upsertMember } from "@/sanity/lib/mutations";
+import { createOrder, decrementDropQuantities, redeemPromo, upsertMember } from "@/sanity/lib/mutations";
 import { buildOrderRecord, type OrderShipAddress } from "@/lib/order-record";
 import { sendOrderEmails, type OrderEmailLine } from "@/lib/order-email";
 import { getStripe } from "@/lib/stripe";
@@ -182,11 +182,22 @@ async function handleCompletedCheckout(
       sold.map((s) => `${s.quantity}× ${s.slug}`).join(", "),
   );
 
-  let dropId: string | null = null;
-  try {
-    dropId = await applyOrderToActiveDrop(sold);
-  } catch (err) {
-    console.error("[webhook] failed to update drop inventory:", err);
+  // Decrement the exact drop this order was placed against — its id rides
+  // along in the Checkout Session metadata (set in /api/checkout). This is
+  // authoritative; we never guess "the open drop" from a status query.
+  const dropId: string | null =
+    typeof session.metadata?.dropId === "string" ? session.metadata.dropId : null;
+  if (dropId && sold.length > 0) {
+    try {
+      await decrementDropQuantities(dropId, sold);
+      console.info(`[webhook] drop ${dropId} stock decremented`);
+    } catch (err) {
+      console.error("[webhook] failed to decrement drop inventory:", err);
+    }
+  } else if (!dropId && sold.length > 0) {
+    console.warn(
+      `[webhook] order ${session.id} has no dropId metadata — inventory not decremented`,
+    );
   }
 
   // Founding code: commit the shared counter on real, completed payments

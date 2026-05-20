@@ -172,6 +172,9 @@ export async function POST(request: Request) {
       },
       metadata: {
         cart: cartSummary,
+        // The exact drop this order is for — the webhook decrements THIS drop,
+        // rather than guessing "the open drop" from a stored-status query.
+        dropId: drop.id,
         ...(promoMeta ? { promo: promoMeta } : {}),
       },
       success_url: `${base}/order/success?session_id={CHECKOUT_SESSION_ID}`,

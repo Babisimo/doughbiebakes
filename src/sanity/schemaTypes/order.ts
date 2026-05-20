@@ -41,6 +41,8 @@ export const orderType = defineType({
     defineField({ name: "subtotalCents", title: "Subtotal (cents)", type: "number", validation: (r) => r.required().integer().min(0) }),
     defineField({ name: "shippingCents", title: "Shipping (cents)", type: "number", validation: (r) => r.required().integer().min(0) }),
     defineField({ name: "totalCents", title: "Total (cents)", type: "number", validation: (r) => r.required().integer().min(0) }),
+    defineField({ name: "promoCode", title: "Promo code", type: "string", readOnly: true }),
+    defineField({ name: "discountCents", title: "Discount (cents)", type: "number", readOnly: true }),
     defineField({
       name: "fulfillment",
       title: "Fulfillment",

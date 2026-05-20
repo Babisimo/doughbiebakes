@@ -23,6 +23,10 @@ export type OrderRecord = {
   subtotalCents: number;
   shippingCents: number;
   totalCents: number;
+  /** Founding promo code applied, if any. */
+  promoCode?: string;
+  /** Discount taken off the order, in cents (0/absent when no promo). */
+  discountCents?: number;
   fulfillment: "pickup" | "ship";
   shipState?: string;
   shipAddress?: OrderShipAddress;
@@ -41,6 +45,8 @@ export type BuildOrderInput = {
   subtotalCents: number;
   shippingCents: number;
   totalCents: number;
+  promoCode?: string | null;
+  discountCents?: number;
   isPickup: boolean;
   shipState?: string | null;
   shipAddress?: OrderShipAddress | null;
@@ -89,6 +95,10 @@ export function buildOrderRecord(input: BuildOrderInput): OrderRecord | null {
   if (input.customerName) rec.customerName = input.customerName;
   if (input.customerPhone) rec.customerPhone = input.customerPhone;
   if (input.dropId) rec.dropId = input.dropId;
+  if (input.promoCode) rec.promoCode = input.promoCode;
+  if (input.discountCents && input.discountCents > 0) {
+    rec.discountCents = cents(input.discountCents);
+  }
   if (input.shipState) rec.shipState = input.shipState;
   if (!input.isPickup && input.shipAddress) rec.shipAddress = input.shipAddress;
   return rec;

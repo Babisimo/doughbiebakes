@@ -23,10 +23,33 @@ export type OrderEmailInput = {
   subtotalCents: number;
   shippingCents: number;
   totalCents: number;
+  /** Founding promo code applied, if any. */
+  promoCode?: string | null;
+  /** Discount taken off the order, in cents (0/absent when no promo). */
+  discountCents?: number;
   isPickup: boolean;
   /** Shipping/billing state, for the baker notification + ship line. */
   shipState?: string | null;
 };
+
+/** A "Founding discount" breakdown row — empty when no promo applied. */
+function discountRows(input: OrderEmailInput): { label: string; amount: string }[] {
+  const d = input.discountCents ?? 0;
+  if (d <= 0) return [];
+  return [
+    {
+      label: `Founding discount${input.promoCode ? ` (${input.promoCode})` : ""}`,
+      amount: `−${formatPrice(d)}`,
+    },
+  ];
+}
+function discountTextLines(input: OrderEmailInput): string[] {
+  const d = input.discountCents ?? 0;
+  if (d <= 0) return [];
+  return [
+    `  Founding discount${input.promoCode ? ` (${input.promoCode})` : ""}: −${formatPrice(d)}`,
+  ];
+}
 
 
 function fulfillmentText(input: OrderEmailInput): string {
@@ -43,6 +66,7 @@ function customerHtml(input: OrderEmailInput): string {
   const rows = [
     ...items,
     { label: "Subtotal", amount: formatPrice(input.subtotalCents) },
+    ...discountRows(input),
     {
       label: "Shipping",
       amount:
@@ -74,7 +98,10 @@ function bakerHtml(input: OrderEmailInput): string {
       input.customerName ?? "(no name)",
     )}</strong> &lt;${escapeHtml(input.to)}&gt;</p>` +
     `<p style="margin:0 0 12px;">Fulfillment: <strong>${escapeHtml(fulfill)}</strong></p>` +
-    lineItemsTable(items, { label: "Total", amount: formatPrice(input.totalCents) });
+    lineItemsTable([...items, ...discountRows(input)], {
+      label: "Total",
+      amount: formatPrice(input.totalCents),
+    });
   return renderEmail({
     preheader: `New paid order ${input.orderRef} — ${formatPrice(input.totalCents)}`,
     eyebrow: "New paid order",
@@ -93,6 +120,7 @@ function customerText(input: OrderEmailInput): string {
     "",
     lines,
     `  Subtotal: ${formatPrice(input.subtotalCents)}`,
+    ...discountTextLines(input),
     `  Shipping: ${input.shippingCents > 0 ? formatPrice(input.shippingCents) : "Free (pickup)"}`,
     `  Total: ${formatPrice(input.totalCents)}`,
     "",
@@ -115,6 +143,7 @@ function bakerText(input: OrderEmailInput): string {
       : `Fulfillment: SHIP to ${input.shipState ?? "?"}`,
     "",
     lines,
+    ...discountTextLines(input),
     `  Total: ${formatPrice(input.totalCents)}`,
   ].join("\n");
 }

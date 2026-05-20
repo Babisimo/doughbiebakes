@@ -204,6 +204,7 @@ async function handleCompletedCheckout(
   // only. Over-cap is HONORED (the customer already paid the discounted
   // amount) — never clawed back; just log a greppable signal.
   const promoMeta = session.metadata?.promo;
+  const discountCents = session.total_details?.amount_discount ?? 0;
   if (session.mode === "payment" && session.livemode && promoMeta) {
     try {
       const ok = await redeemPromo(promoMeta);
@@ -273,6 +274,8 @@ async function handleCompletedCheckout(
       subtotalCents: session.amount_subtotal ?? 0,
       shippingCents: session.shipping_cost?.amount_total ?? 0,
       totalCents: session.amount_total ?? 0,
+      promoCode: promoMeta,
+      discountCents,
       isPickup,
       shipState: state,
       // ship orders only: prefer the collected shipping address, fall back
@@ -311,6 +314,8 @@ async function handleCompletedCheckout(
     subtotalCents: session.amount_subtotal ?? 0,
     shippingCents: session.shipping_cost?.amount_total ?? 0,
     totalCents: session.amount_total ?? 0,
+    promoCode: promoMeta,
+    discountCents,
     isPickup,
     shipState: state,
   });

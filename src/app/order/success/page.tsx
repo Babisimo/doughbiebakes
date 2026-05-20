@@ -21,6 +21,7 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
 
   let email: string | null = null;
   let amount: number | null = null;
+  let discount: number | null = null;
   let ok = false;
 
   const stripe = getStripe();
@@ -33,6 +34,7 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
         session.mode === "subscription";
       email = session.customer_details?.email ?? null;
       amount = session.amount_total ?? null;
+      discount = session.total_details?.amount_discount ?? null;
     } catch {
       /* fall through to a generic message */
     }
@@ -63,6 +65,11 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
             </>
           ) : null}
         </p>
+        {discount != null && discount > 0 ? (
+          <p className="mt-2 text-sm font-semibold text-acid-600">
+            🎉 Founding discount applied — you saved {formatPrice(discount)}.
+          </p>
+        ) : null}
         <p className="mt-3 text-ink-700">
           We bake to order, so you&apos;ll get a follow-up from {site.name} to
           confirm your pickup time in {site.city} (or shipping details if you

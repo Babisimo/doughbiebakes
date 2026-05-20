@@ -315,6 +315,10 @@ export async function createOrder(rec: OrderRecord): Promise<boolean> {
     subtotalCents: rec.subtotalCents,
     shippingCents: rec.shippingCents,
     totalCents: rec.totalCents,
+    ...(rec.promoCode ? { promoCode: rec.promoCode } : {}),
+    ...(typeof rec.discountCents === "number"
+      ? { discountCents: rec.discountCents }
+      : {}),
     fulfillment: rec.fulfillment,
     ...(rec.shipState ? { shipState: rec.shipState } : {}),
     ...(rec.shipAddress ? { shipAddress: rec.shipAddress } : {}),

@@ -183,11 +183,10 @@ export async function POST(request: Request) {
       phone_number_collection: { enabled: true },
       billing_address_collection: "auto",
       // Founding discount comes off the order total via a session coupon.
-      // Stripe forbids combining `discounts` with the promo-code field, so
-      // the field only shows when no founding discount is active.
-      ...(couponId
-        ? { discounts: [{ coupon: couponId }] }
-        : { allow_promotion_codes: true }),
+      // Stripe's own promo-code field is intentionally never shown: the
+      // founding code is app-managed (one shared cap across online orders
+      // AND reservations), so the cart's promo field is the only code entry.
+      ...(couponId ? { discounts: [{ coupon: couponId }] } : {}),
       shipping_options: shippingOptions.map((opt) => ({
         shipping_rate_data: {
           // Required by the Stripe API (the only allowed value).

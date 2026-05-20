@@ -41,11 +41,17 @@ const NOT_IN_DROP: Availability = {
   reason: "not-in-drop",
 };
 
-/** Build a `slug -> Availability` map from the active drop and member picks. */
+/**
+ * Build a `slug -> Availability` map from the active drop, member picks, and
+ * `reservationHolds` — a `slug -> quantity` map of loaves spoken for by
+ * email-confirmed-but-not-yet-approved reservations. Holds are subtracted from
+ * the public count just like member claims.
+ */
 export function buildAvailability(
   drop: Drop | null,
   memberSelections: MemberSelection[] = [],
   now: Date = new Date(),
+  reservationHolds: Map<string, number> = new Map(),
 ): Map<string, Availability> {
   const map = new Map<string, Availability>();
   if (!drop) return map;
@@ -60,7 +66,8 @@ export function buildAvailability(
   for (const { product, quantity } of drop.lineItems) {
     const raw = Math.max(0, Math.floor(quantity ?? 0));
     const claimed = claimedBySlug.get(product.slug) ?? 0;
-    const remaining = Math.max(0, raw - claimed);
+    const held = reservationHolds.get(product.slug) ?? 0;
+    const remaining = Math.max(0, raw - claimed - held);
 
     let entry: Availability;
     if (!open) {

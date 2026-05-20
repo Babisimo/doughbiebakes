@@ -71,3 +71,39 @@ test("null drop rejected as not-open", () => {
   assert.equal(r.ok, false);
   if (!r.ok) assert.equal(r.reason, "not-open");
 });
+
+test("pending-reservation holds reduce remaining", () => {
+  // classic has quantity 3; a hold of 2 leaves only 1 available.
+  const holds = new Map([["classic", 2]]);
+  const over = evaluateReservation(
+    drop(),
+    [],
+    [{ slug: "classic", quantity: 2 }],
+    NOW,
+    holds,
+  );
+  assert.equal(over.ok, false);
+  if (!over.ok) assert.equal(over.reason, "qty-exceeded");
+
+  const ok = evaluateReservation(
+    drop(),
+    [],
+    [{ slug: "classic", quantity: 1 }],
+    NOW,
+    holds,
+  );
+  assert.equal(ok.ok, true);
+});
+
+test("a hold covering all stock makes a loaf sold out", () => {
+  const holds = new Map([["classic", 3]]);
+  const r = evaluateReservation(
+    drop(),
+    [],
+    [{ slug: "classic", quantity: 1 }],
+    NOW,
+    holds,
+  );
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.equal(r.reason, "soldout");
+});

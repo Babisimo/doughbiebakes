@@ -10,6 +10,7 @@ import {
   MEMBER_BY_EMAIL_QUERY,
   MEMBER_SELECTIONS_FOR_DROP_QUERY,
   PENDING_RESERVATION_COUNT_FOR_DROP_QUERY,
+  PENDING_RESERVATION_ITEMS_FOR_DROP_QUERY,
   PRODUCT_BY_SLUG_QUERY,
   PRODUCTS_BY_SLUGS_QUERY,
   RECENT_DROPS_QUERY,
@@ -380,4 +381,36 @@ export async function getPendingReservationCountForDrop(
     console.error("[admin/club] pending reservation count failed", err);
     return 0;
   }
+}
+
+/**
+ * Loaves "held" by email-confirmed-but-not-yet-approved (pending) reservations
+ * for a drop — a `slug -> quantity` map subtracted from public availability so
+ * two customers can't reserve (or buy) the same last loaf. Empty map in demo
+ * mode, for a missing drop, or on query failure.
+ */
+export async function getReservationHoldsForDrop(
+  dropId: string | null | undefined,
+  opts: FetchOpts = {},
+): Promise<Map<string, number>> {
+  const holds = new Map<string, number>();
+  if (!sanityClient || !dropId) return holds;
+  try {
+    const rows = await fetchSanity<
+      { items?: { productSlug?: string; quantity?: number }[] }[]
+    >(PENDING_RESERVATION_ITEMS_FOR_DROP_QUERY, { dropId }, opts);
+    if (!Array.isArray(rows)) return holds;
+    for (const row of rows) {
+      for (const it of row?.items ?? []) {
+        const slug = typeof it?.productSlug === "string" ? it.productSlug : null;
+        const qty = Number(it?.quantity);
+        if (slug && Number.isFinite(qty) && qty > 0) {
+          holds.set(slug, (holds.get(slug) ?? 0) + qty);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[catalog] reservation holds fetch failed", err);
+  }
+  return holds;
 }

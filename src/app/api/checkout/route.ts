@@ -1,6 +1,10 @@
 import type Stripe from "stripe";
 
-import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
+import {
+  getActiveDrop,
+  getMemberSelectionsForDrop,
+  getReservationHoldsForDrop,
+} from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
 import { getPromoByCode, isRedeemable, normalizeCode } from "@/lib/promo";
 import { discountedUnitCents } from "@/lib/promo-math";
@@ -74,6 +78,10 @@ export async function POST(request: Request) {
     claimedBySlug.set(sel.productSlug, (claimedBySlug.get(sel.productSlug) ?? 0) + 1);
   }
 
+  // Pending (email-confirmed) reservations also hold loaves out of the public
+  // quantity — subtract them so two customers can't buy the same last loaf.
+  const reservationHolds = await getReservationHoldsForDrop(drop.id, { fresh: true });
+
   const codeRaw =
     body && typeof body === "object" && typeof (body as { code?: unknown }).code === "string"
       ? ((body as { code?: string }).code as string).trim()
@@ -101,7 +109,8 @@ export async function POST(request: Request) {
     }
     const raw = Math.max(0, Math.floor(li.quantity ?? 0));
     const claimed = claimedBySlug.get(item.slug) ?? 0;
-    const left = Math.max(0, raw - claimed);
+    const held = reservationHolds.get(item.slug) ?? 0;
+    const left = Math.max(0, raw - claimed - held);
     if (left <= 0) {
       return Response.json(
         { error: `"${li.product.name}" is sold out.` },

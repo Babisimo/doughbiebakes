@@ -28,6 +28,7 @@ export function evaluateReservation(
   memberSelections: MemberSelection[],
   items: ReqItem[],
   now: Date,
+  reservationHolds: Map<string, number> = new Map(),
 ): EvalResult {
   if (items.length === 0) {
     return { ok: false, reason: "empty", message: "Your order is empty." };
@@ -39,7 +40,7 @@ export function evaluateReservation(
       message: "Ordering isn't open right now — check the current drop.",
     };
   }
-  const availability = buildAvailability(drop, memberSelections, now);
+  const availability = buildAvailability(drop, memberSelections, now, reservationHolds);
   const bySlug = new Map(drop.lineItems.map((li) => [li.product.slug, li.product]));
   const priced: PricedItem[] = [];
   for (const item of items) {

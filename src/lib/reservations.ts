@@ -1,6 +1,10 @@
 import "server-only";
 
-import { getActiveDrop, getMemberSelectionsForDrop } from "./catalog";
+import {
+  getActiveDrop,
+  getMemberSelectionsForDrop,
+  getReservationHoldsForDrop,
+} from "./catalog";
 import { evaluateReservation, type EvalResult, type ReqItem } from "./reservation-eval";
 import {
   sendReservationConfirmed,
@@ -21,7 +25,8 @@ const freshClient = sanityClient?.withConfig({ useCdn: false }) ?? null;
 export async function validateReservationCart(items: ReqItem[]): Promise<EvalResult> {
   const drop = await getActiveDrop({ fresh: true });
   const selections = await getMemberSelectionsForDrop(drop, { fresh: true });
-  return evaluateReservation(drop, selections, items, new Date());
+  const holds = await getReservationHoldsForDrop(drop?.id, { fresh: true });
+  return evaluateReservation(drop, selections, items, new Date(), holds);
 }
 
 type Reservation = {

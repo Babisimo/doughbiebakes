@@ -6,7 +6,12 @@ import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { ProductImage } from "@/components/product-image";
 import { availabilityOf, buildAvailability, unavailableLabel } from "@/lib/availability";
-import { getActiveDrop, getMemberSelectionsForDrop, getProduct } from "@/lib/catalog";
+import {
+  getActiveDrop,
+  getMemberSelectionsForDrop,
+  getProduct,
+  getReservationHoldsForDrop,
+} from "@/lib/catalog";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import { seedProducts } from "@/lib/seed-products";
@@ -36,7 +41,11 @@ export default async function ProductPage({ params }: Props) {
   const [product, drop] = await Promise.all([getProduct(slug), getActiveDrop()]);
   if (!product) notFound();
   const memberSelections = await getMemberSelectionsForDrop(drop);
-  const availability = availabilityOf(buildAvailability(drop, memberSelections), slug);
+  const holds = await getReservationHoldsForDrop(drop?.id);
+  const availability = availabilityOf(
+    buildAvailability(drop, memberSelections, new Date(), holds),
+    slug,
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">

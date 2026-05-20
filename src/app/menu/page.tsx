@@ -3,7 +3,12 @@ import Link from "next/link";
 
 import { ProductCard } from "@/components/product-card";
 import { availabilityOf, buildAvailability } from "@/lib/availability";
-import { getActiveDrop, getMemberSelectionsForDrop, getProducts } from "@/lib/catalog";
+import {
+  getActiveDrop,
+  getMemberSelectionsForDrop,
+  getProducts,
+  getReservationHoldsForDrop,
+} from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 
 // Render per-request so "loaves left" reflects inventory immediately.
@@ -17,7 +22,8 @@ export const metadata: Metadata = {
 export default async function MenuPage() {
   const [products, drop] = await Promise.all([getProducts(), getActiveDrop()]);
   const memberSelections = await getMemberSelectionsForDrop(drop);
-  const availability = buildAvailability(drop, memberSelections);
+  const holds = await getReservationHoldsForDrop(drop?.id);
+  const availability = buildAvailability(drop, memberSelections, new Date(), holds);
 
   // Group by category, keeping a stable order.
   const groups = new Map<string, Product[]>();

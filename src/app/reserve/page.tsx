@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 
 import { ReserveForm } from "@/components/reserve-form";
 import { buildAvailability } from "@/lib/availability";
-import { getDropsView, getMemberSelectionsForDrop, getProducts } from "@/lib/catalog";
+import {
+  getDropsView,
+  getMemberSelectionsForDrop,
+  getProducts,
+  getReservationHoldsForDrop,
+} from "@/lib/catalog";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Reserve & pay at pickup" };
@@ -13,7 +18,8 @@ export default async function ReservePage() {
     getProducts(),
   ]);
   const selections = await getMemberSelectionsForDrop(drop);
-  const map = buildAvailability(drop, selections, new Date());
+  const holds = await getReservationHoldsForDrop(drop?.id);
+  const map = buildAvailability(drop, selections, new Date(), holds);
   const availability = Object.fromEntries(map);
 
   return (

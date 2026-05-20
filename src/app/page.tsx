@@ -8,7 +8,12 @@ import { Countdown } from "@/components/countdown";
 import { PreviousDrops } from "@/components/previous-drops";
 import { ProductImage } from "@/components/product-image";
 import { availabilityOf, buildAvailability, unavailableLabel } from "@/lib/availability";
-import { getDropsView, getMemberSelectionsForDrop, getProducts } from "@/lib/catalog";
+import {
+  getDropsView,
+  getMemberSelectionsForDrop,
+  getProducts,
+  getReservationHoldsForDrop,
+} from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
@@ -42,7 +47,8 @@ export default async function HomePage() {
   const now = new Date();
   const eff = drop ? effectiveDropStatus(drop, now) : null;
   const memberSelections = await getMemberSelectionsForDrop(drop);
-  const availability = buildAvailability(drop, memberSelections, now);
+  const holds = await getReservationHoldsForDrop(drop?.id);
+  const availability = buildAvailability(drop, memberSelections, now, holds);
   const featured = products.slice(0, 3);
 
   return (

@@ -148,3 +148,10 @@ export const CONFIRMED_RESERVATIONS_FOR_DROP_QUERY = groq`
 // Heads-up count only — pending reservations the baker hasn't decided yet.
 export const PENDING_RESERVATION_COUNT_FOR_DROP_QUERY = groq`
   count(*[_type == "reservation" && drop._ref == $dropId && status == "pending"])`;
+
+// Line items of every pending (email-confirmed, not yet decided) reservation
+// for a drop — these "hold" stock so public availability reflects them.
+export const PENDING_RESERVATION_ITEMS_FOR_DROP_QUERY = groq`
+  *[_type == "reservation" && drop._ref == $dropId && status == "pending"]{
+    items[]{ productSlug, quantity }
+  }`;

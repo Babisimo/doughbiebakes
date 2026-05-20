@@ -7,7 +7,6 @@ import {
 } from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
 import { getPromoByCode, isRedeemable, normalizeCode } from "@/lib/promo";
-import { discountedUnitCents } from "@/lib/promo-math";
 import { shippingOptions } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/url";
@@ -31,6 +30,30 @@ function parseCart(body: unknown): IncomingItem[] {
       return { slug, quantity: Math.min(qty, 20) };
     })
     .filter((it): it is IncomingItem => it !== null);
+}
+
+/**
+ * A reusable Stripe coupon for the founding discount, keyed by percent so it's
+ * created once and shared. Applied as a session-level discount so it comes off
+ * the order TOTAL, not each loaf's unit price.
+ */
+async function ensureFoundingCoupon(
+  stripe: Stripe,
+  percentOff: number,
+): Promise<string> {
+  const id = `founding-${percentOff}pct`;
+  try {
+    await stripe.coupons.create({
+      id,
+      percent_off: percentOff,
+      duration: "once",
+      name: `Founding ${percentOff}% off`,
+    });
+  } catch (err) {
+    // Already created by an earlier checkout — reuse it. Re-throw anything else.
+    if ((err as { code?: string })?.code !== "resource_already_exists") throw err;
+  }
+  return id;
 }
 
 export async function POST(request: Request) {
@@ -125,15 +148,11 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    const unitAmount =
-      promoPercentOff > 0
-        ? discountedUnitCents(li.product.priceCents, promoPercentOff)
-        : li.product.priceCents;
     lineItems.push({
       quantity: item.quantity,
       price_data: {
         currency: "usd",
-        unit_amount: unitAmount,
+        unit_amount: li.product.priceCents,
         product_data: {
           name: li.product.name,
           description: li.product.tagline ?? undefined,
@@ -143,6 +162,11 @@ export async function POST(request: Request) {
       },
     });
   }
+
+  // Apply the founding discount to the order TOTAL via a reusable Stripe
+  // coupon — line items stay full price; Stripe takes the % off the subtotal.
+  const couponId =
+    promoPercentOff > 0 ? await ensureFoundingCoupon(stripe, promoPercentOff) : null;
 
   const base = siteUrl();
   const cartSummary = JSON.stringify(
@@ -158,9 +182,12 @@ export async function POST(request: Request) {
       shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },
       billing_address_collection: "auto",
-      // Founding discount is exclusive: don't let a Stripe promo code stack
-      // on top of the already-discounted unit_amount.
-      allow_promotion_codes: promoPercentOff > 0 ? false : true,
+      // Founding discount comes off the order total via a session coupon.
+      // Stripe forbids combining `discounts` with the promo-code field, so
+      // the field only shows when no founding discount is active.
+      ...(couponId
+        ? { discounts: [{ coupon: couponId }] }
+        : { allow_promotion_codes: true }),
       shipping_options: shippingOptions.map((opt) => ({
         shipping_rate_data: {
           // Required by the Stripe API (the only allowed value).

@@ -1,5 +1,3 @@
-import "server-only";
-
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 /**
@@ -34,6 +32,33 @@ export function verifyClubToken(
   let expected: Buffer;
   try {
     expected = Buffer.from(signClubToken(email, dropId), "hex");
+  } catch {
+    return false;
+  }
+  let actual: Buffer;
+  try {
+    actual = Buffer.from(token, "hex");
+  } catch {
+    return false;
+  }
+  if (actual.length !== expected.length) return false;
+  return timingSafeEqual(actual, expected);
+}
+
+/** Member-scoped magic-link token (cancel, card-update) — HMAC of the Stripe
+ * customer id, distinct namespace from the per-drop token via the `member:`
+ * prefix. */
+export function signClubMemberToken(customerId: string): string {
+  return createHmac("sha256", getSecret())
+    .update(`member:${customerId}`)
+    .digest("hex");
+}
+
+export function verifyClubMemberToken(customerId: string, token: string): boolean {
+  if (!customerId || !token) return false;
+  let expected: Buffer;
+  try {
+    expected = Buffer.from(signClubMemberToken(customerId), "hex");
   } catch {
     return false;
   }

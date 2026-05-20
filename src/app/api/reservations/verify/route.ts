@@ -48,6 +48,9 @@ export async function GET(req: Request) {
         customerPhone: string;
         dropId: string;
         totalCents: number;
+        promoCode?: string;
+        promoPercentOff?: number;
+        discountedTotalCents?: number;
         items: { productSlug: string; productName: string; quantity: number; priceCents: number }[];
       } | null>(RESERVATION_BY_ID_QUERY, { id });
       if (r) {
@@ -55,6 +58,8 @@ export async function GET(req: Request) {
           DROP_BY_ID_QUERY,
           { id: r.dropId },
         );
+        const promoApplies =
+          !!r.promoCode && typeof r.discountedTotalCents === "number";
         const emailInput = {
           id: r.id,
           customerName: r.customerName,
@@ -65,7 +70,12 @@ export async function GET(req: Request) {
             quantity: i.quantity,
             priceCents: i.priceCents,
           })),
-          totalCents: r.totalCents,
+          totalCents:
+            typeof r.discountedTotalCents === "number" && r.promoCode
+              ? r.discountedTotalCents
+              : r.totalCents,
+          originalTotalCents: promoApplies ? r.totalCents : undefined,
+          promoPercentOff: r.promoCode ? r.promoPercentOff : undefined,
           pickupDate: drop?.pickupOrShipDate,
         };
         await sendReservationReceived(emailInput);

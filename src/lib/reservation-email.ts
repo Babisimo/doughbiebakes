@@ -20,9 +20,14 @@ export type ReservationEmailInput = {
   customerEmail: string;
   customerPhone: string;
   lines: ReservationLine[];
+  /** Amount due at pickup — already the discounted amount when a promo applies. */
   totalCents: number;
   pickupDate?: string;
+  /** Founding discount percent (present only when a promo applies). */
   promoPercentOff?: number;
+  /** Pre-discount subtotal — present only when a promo applies, so emails can
+   * show a subtotal → discount → total breakdown. */
+  originalTotalCents?: number;
 };
 
 function lines(ls: ReservationLine[]): string {
@@ -42,30 +47,74 @@ function toItemRows(input: ReservationEmailInput) {
     amount: formatPrice(l.priceCents * l.quantity),
   }));
 }
-function discountNoteText(input: ReservationEmailInput): string {
-  return typeof input.promoPercentOff === "number" && input.promoPercentOff > 0
-    ? `\n  (Founding discount: ${input.promoPercentOff}% off applied — the total shown is the discounted amount.)`
+
+/** True when this input carries a founding discount to display. */
+function hasPromo(input: ReservationEmailInput): boolean {
+  return (
+    typeof input.promoPercentOff === "number" &&
+    input.promoPercentOff > 0 &&
+    typeof input.originalTotalCents === "number"
+  );
+}
+
+/** HTML table rows: item lines, plus Subtotal + discount rows when a promo
+ * applies — so the discount shows as a line BEFORE the bold total row. */
+function breakdownRows(input: ReservationEmailInput): { label: string; amount: string }[] {
+  const rows = toItemRows(input);
+  const orig = input.originalTotalCents;
+  const pct = input.promoPercentOff;
+  if (typeof orig === "number" && typeof pct === "number" && pct > 0) {
+    rows.push({ label: "Subtotal", amount: formatPrice(orig) });
+    rows.push({
+      label: `Founding discount (${pct}% off)`,
+      amount: `−${formatPrice(orig - input.totalCents)}`,
+    });
+  }
+  return rows;
+}
+
+/** Plain-text breakdown: item lines, plus Subtotal + discount when a promo applies. */
+function breakdownText(input: ReservationEmailInput): string {
+  const itemLines = lines(input.lines);
+  const orig = input.originalTotalCents;
+  const pct = input.promoPercentOff;
+  if (typeof orig === "number" && typeof pct === "number" && pct > 0) {
+    return [
+      itemLines,
+      `  Subtotal: ${formatPrice(orig)}`,
+      `  Founding discount (${pct}% off): −${formatPrice(orig - input.totalCents)}`,
+    ].join("\n");
+  }
+  return itemLines;
+}
+
+/** Submit-stage note: the founding discount isn't locked in until the baker
+ * approves the reservation. Empty when no promo applies. */
+function pendingDiscountText(input: ReservationEmailInput): string {
+  return hasPromo(input)
+    ? `\n\nYour ${input.promoPercentOff}% founding discount is applied when we approve your reservation.`
     : "";
 }
-function discountNoteHtml(input: ReservationEmailInput): string {
-  return typeof input.promoPercentOff === "number" && input.promoPercentOff > 0
-    ? `<p style="margin:10px 0 0;font-size:13px;color:#6b705c;">Founding discount: ` +
-        `<strong>${input.promoPercentOff}% off</strong> applied — the total shown is the discounted amount.</p>`
+function pendingDiscountHtml(input: ReservationEmailInput): string {
+  return hasPromo(input)
+    ? `<p style="margin:12px 0 0;font-size:13px;color:#6b705c;">Your ` +
+        `<strong>${input.promoPercentOff}% founding discount</strong> ` +
+        `is applied when we approve your reservation.</p>`
     : "";
 }
 
 /** (a) Customer: request received, not yet confirmed. */
 export async function sendReservationReceived(input: ReservationEmailInput): Promise<void> {
-  const body = [
-    `Thanks ${input.customerName} — we got your pickup reservation request.`,
-    `It is NOT confirmed yet; ${site.name} will email you once it's approved.`,
-    "",
-    lines(input.lines),
-    `  Total due at pickup: ${formatPrice(input.totalCents)}`,
-    "",
-    `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}.`,
-  ].join("\n");
-  const itemRows = toItemRows(input);
+  const body =
+    [
+      `Thanks ${input.customerName} — we got your pickup reservation request.`,
+      `It is NOT confirmed yet; ${site.name} will email you once it's approved.`,
+      "",
+      breakdownText(input),
+      `  Total due at pickup: ${formatPrice(input.totalCents)}`,
+      "",
+      `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}.`,
+    ].join("\n") + pendingDiscountText(input);
   const html = renderEmail({
     preheader: `We received your ${site.name} pickup reservation request`,
     eyebrow: "Reservation requested",
@@ -74,10 +123,11 @@ export async function sendReservationReceived(input: ReservationEmailInput): Pro
       infoCard(
         "It's not confirmed yet — we'll email you once it's approved.",
       ) +
-      lineItemsTable(itemRows, {
+      lineItemsTable(breakdownRows(input), {
         label: "Total due at pickup",
         amount: formatPrice(input.totalCents),
       }) +
+      pendingDiscountHtml(input) +
       `<p style="margin:14px 0 0;">Pickup in ${escapeHtml(site.city)} on ${escapeHtml(
         when(input),
       )}. ${escapeHtml(site.cottageFood.madeIn)}.</p>`,
@@ -100,33 +150,33 @@ export async function sendReservationVerify(input: ReservationEmailInput): Promi
   const verifyUrl = `${base}/api/reservations/verify?id=${encodeURIComponent(
     input.id,
   )}&token=${signReservationToken(input.id, "verify")}`;
-  const body = [
-    `Hi ${input.customerName} — one quick step to lock in your ${site.name} pickup reservation.`,
-    "",
-    `Confirm it here: ${verifyUrl}`,
-    "",
-    lines(input.lines),
-    `  Total due at pickup: ${formatPrice(input.totalCents)}`,
-    "",
-    "If you didn't request this, just ignore this email — nothing was reserved.",
-  ].join("\n") + discountNoteText(input);
-  const itemRows = toItemRows(input);
+  const body =
+    [
+      `Hi ${input.customerName} — one quick step to lock in your ${site.name} pickup reservation.`,
+      "",
+      `Confirm it here: ${verifyUrl}`,
+      "",
+      breakdownText(input),
+      `  Total due at pickup: ${formatPrice(input.totalCents)}`,
+      "",
+      "If you didn't request this, just ignore this email — nothing was reserved.",
+    ].join("\n") + pendingDiscountText(input);
   const html = renderEmail({
     preheader: `Confirm your ${site.name} pickup reservation`,
     eyebrow: "Confirm your reservation",
     heading: `One tap to confirm, ${input.customerName}`,
     bodyHtml:
       infoCard("Your reservation isn't in our queue until you confirm it.") +
-      lineItemsTable(itemRows, {
+      lineItemsTable(breakdownRows(input), {
         label: "Total due at pickup",
         amount: formatPrice(input.totalCents),
       }) +
+      pendingDiscountHtml(input) +
       `<p style="margin:18px 0 0;">` +
       emailButton(verifyUrl, "✅ Confirm my reservation", "primary") +
       `</p>` +
       `<p style="margin:14px 0 0;font-size:13px;color:#6b705c;">` +
-      `Didn't request this? Ignore this email — nothing was reserved.</p>` +
-      discountNoteHtml(input),
+      `Didn't request this? Ignore this email — nothing was reserved.</p>`,
   });
   try {
     await sendEmail({
@@ -149,9 +199,8 @@ export async function sendReservationBakerAlert(input: ReservationEmailInput): P
     `New pickup reservation — ${formatPrice(input.totalCents)} due at pickup`,
     `${input.customerName} <${input.customerEmail}> ${input.customerPhone}`,
     "",
-    lines(input.lines),
+    breakdownText(input),
   ].join("\n");
-  const itemRows = toItemRows(input);
   const html = renderEmail({
     preheader: `New pickup reservation — ${formatPrice(input.totalCents)}`,
     eyebrow: "New pickup reservation",
@@ -161,7 +210,7 @@ export async function sendReservationBakerAlert(input: ReservationEmailInput): P
         input.customerEmail,
       )}&gt;</p>` +
       `<p style="margin:0 0 12px;">${escapeHtml(input.customerPhone)}</p>` +
-      lineItemsTable(itemRows, {
+      lineItemsTable(breakdownRows(input), {
         label: "Total at pickup",
         amount: formatPrice(input.totalCents),
       }) +
@@ -187,12 +236,11 @@ export async function sendReservationConfirmed(input: ReservationEmailInput): Pr
   const body = [
     `You're confirmed, ${input.customerName}! 🍞`,
     "",
-    lines(input.lines),
+    breakdownText(input),
     `  Pay at pickup: ${formatPrice(input.totalCents)} (cash or card)`,
     "",
     `Pickup in ${site.city} on ${when(input)}. ${site.cottageFood.madeIn}. ${site.cottageFood.permitNumber}.`,
-  ].join("\n") + discountNoteText(input);
-  const itemRows = toItemRows(input);
+  ].join("\n");
   const html = renderEmail({
     preheader: `Your ${site.name} pickup reservation is confirmed`,
     eyebrow: "Reservation confirmed",
@@ -203,11 +251,10 @@ export async function sendReservationConfirmed(input: ReservationEmailInput): Pr
           `pickup ${escapeHtml(when(input))} in ${escapeHtml(site.city)}.`,
         "sage",
       ) +
-      lineItemsTable(itemRows, {
+      lineItemsTable(breakdownRows(input), {
         label: "Total at pickup",
         amount: formatPrice(input.totalCents),
-      }) +
-      discountNoteHtml(input),
+      }),
   });
   try {
     await sendEmail({

@@ -47,6 +47,8 @@ function emailInputFor(r: Reservation, pickupDate?: string) {
     typeof r.discountedTotalCents === "number" && r.promoCode
       ? r.discountedTotalCents
       : r.totalCents;
+  const promoApplies =
+    typeof r.discountedTotalCents === "number" && !!r.promoCode;
   return {
     id: r.id,
     customerName: r.customerName,
@@ -58,6 +60,7 @@ function emailInputFor(r: Reservation, pickupDate?: string) {
       priceCents: i.priceCents,
     })),
     totalCents: total,
+    originalTotalCents: promoApplies ? r.totalCents : undefined,
     promoPercentOff: r.promoCode ? r.promoPercentOff : undefined,
     pickupDate,
   };

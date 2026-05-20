@@ -157,6 +157,7 @@ export async function POST(req: Request) {
       priceCents: i.priceCents,
     })),
     totalCents: discounted ?? result.totalCents,
+    originalTotalCents: discounted != null ? result.totalCents : undefined,
     promoPercentOff,
     pickupDate: drop.pickupOrShipDate,
   };

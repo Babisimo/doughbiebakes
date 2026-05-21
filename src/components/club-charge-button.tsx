@@ -24,7 +24,12 @@ export function ClubChargeButton({ dropId }: { dropId: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ dropId }),
       });
-      setResult((await res.json()) as ChargeResult);
+      const data = (await res.json()) as ChargeResult;
+      if (!res.ok && !data.error) {
+        setResult({ error: `Server error (${res.status}) — please try again.` });
+      } else {
+        setResult(data);
+      }
     } catch {
       setResult({ error: "Network error — please try again." });
     } finally {
@@ -40,7 +45,13 @@ export function ClubChargeButton({ dropId }: { dropId: string }) {
         disabled={busy}
         className="btn-acid text-sm"
       >
-        {busy ? "Charging…" : "Charge members for this drop ＋"}
+        {busy ? (
+          "Charging…"
+        ) : (
+          <>
+            Charge members for this drop <span aria-hidden>＋</span>
+          </>
+        )}
       </button>
       {result?.error ? (
         <p className="rounded-2xl panel-mono px-3 py-2 text-sm">{result.error}</p>

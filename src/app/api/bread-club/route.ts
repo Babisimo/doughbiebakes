@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getActiveMemberCount, getMemberByEmail } from "@/lib/catalog";
 import { site } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
@@ -38,6 +40,9 @@ export async function POST(req: Request) {
 
   // Dedup: an ACTIVE member with this email already exists → don't re-join.
   // (A previously canceled member with this email may rejoin.)
+  // NOTE: race window — the member doc is written by the webhook, not here, so
+  // two near-simultaneous joins for the same email can both open a Checkout
+  // before either doc exists. Acceptable at 5-seat manual-club scale.
   const existing = await getMemberByEmail(email, { fresh: true });
   if (existing && existing.status === "active") {
     return Response.json({

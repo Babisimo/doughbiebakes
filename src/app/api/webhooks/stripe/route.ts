@@ -1,6 +1,12 @@
 import type Stripe from "stripe";
 
-import { createOrder, decrementDropQuantities, redeemPromo } from "@/sanity/lib/mutations";
+import {
+  createClubMember,
+  createOrder,
+  decrementDropQuantities,
+  redeemPromo,
+  setMemberCard,
+} from "@/sanity/lib/mutations";
 import { buildOrderRecord, type OrderShipAddress } from "@/lib/order-record";
 import { sendOrderEmails, type OrderEmailLine } from "@/lib/order-email";
 import { getStripe } from "@/lib/stripe";
@@ -38,7 +44,11 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    await handleCompletedCheckout(stripe, session);
+    if (session.mode === "setup") {
+      await handleSetupCompleted(stripe, session);
+    } else {
+      await handleCompletedCheckout(stripe, session);
+    }
   }
 
   return Response.json({ received: true });
@@ -252,4 +262,71 @@ async function handleCompletedCheckout(
     isPickup,
     shipState: state,
   });
+}
+
+/**
+ * A completed `setup`-mode Checkout — a Bread Club join or a card update.
+ * Saves the entered card as the customer's default and writes/updates the
+ * member doc. `metadata.kind` distinguishes the two.
+ */
+async function handleSetupCompleted(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+) {
+  const kind = session.metadata?.kind;
+  if (kind !== "club-join" && kind !== "club-card-update") return;
+
+  const customerId =
+    typeof session.customer === "string" ? session.customer : session.customer?.id;
+  const setupIntentId =
+    typeof session.setup_intent === "string"
+      ? session.setup_intent
+      : session.setup_intent?.id;
+  if (!customerId || !setupIntentId) {
+    console.error("[webhook] setup session missing customer/setup_intent", session.id);
+    return;
+  }
+
+  let paymentMethodId: string | null = null;
+  try {
+    const si = await stripe.setupIntents.retrieve(setupIntentId);
+    paymentMethodId =
+      typeof si.payment_method === "string"
+        ? si.payment_method
+        : (si.payment_method?.id ?? null);
+  } catch (err) {
+    console.error("[webhook] setup intent retrieve failed", session.id, err);
+    return;
+  }
+  if (!paymentMethodId) {
+    console.error("[webhook] setup session has no payment method", session.id);
+    return;
+  }
+
+  // Make it the customer's default so off-session charges resolve cleanly.
+  try {
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: paymentMethodId },
+    });
+  } catch (err) {
+    console.error("[webhook] could not set default payment method", customerId, err);
+  }
+
+  if (kind === "club-card-update") {
+    await setMemberCard(customerId, paymentMethodId);
+    console.info(`[webhook] member ${customerId} card updated`);
+    return;
+  }
+
+  const email = session.customer_details?.email ?? session.customer_email;
+  if (!email) {
+    console.error("[webhook] club-join session has no email", session.id);
+    return;
+  }
+  await createClubMember({
+    stripeCustomerId: customerId,
+    stripePaymentMethodId: paymentMethodId,
+    customerEmail: email,
+  });
+  console.info(`[webhook] Bread Club member created ${customerId} <${email}>`);
 }

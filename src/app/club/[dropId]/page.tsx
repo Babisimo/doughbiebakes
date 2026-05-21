@@ -112,7 +112,7 @@ export default async function ClubDropPage({
           <input type="hidden" name="email" value={email} />
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="dropId" value={drop.id} />
-          Need to update your card or leave the club?{" "}
+          Need to update your card?{" "}
           <button
             type="submit"
             className="font-semibold text-acid-600 underline decoration-2 hover:no-underline"

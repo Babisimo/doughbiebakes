@@ -41,6 +41,9 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
     }
   }
 
+  // `club=1` rides on both the join and card-update success URLs, so isClub
+  // means "any Bread Club flow". isCardUpdate is the narrower case and is
+  // checked first wherever the two need different copy.
   const isCardUpdate = kind === "club-card-update";
 
   return (

@@ -295,8 +295,10 @@ async function handleSetupCompleted(
         ? si.payment_method
         : (si.payment_method?.id ?? null);
   } catch (err) {
+    // Transient Stripe error — rethrow so the webhook 500s and Stripe retries.
+    // Returning here would 200 the delivery and permanently lose the signup.
     console.error("[webhook] setup intent retrieve failed", session.id, err);
-    return;
+    throw err;
   }
   if (!paymentMethodId) {
     console.error("[webhook] setup session has no payment method", session.id);

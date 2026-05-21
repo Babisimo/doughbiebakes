@@ -31,7 +31,8 @@ export async function sendClubDeclineEmail(input: {
     heading: "Your Bread Club card needs an update",
     bodyHtml:
       infoCard(
-        "Your card was declined for this week's drop. Update it and we'll re-run the charge.",
+        "Your card was declined for this week's drop. Update it and we'll " +
+          "re-run the charge — no loaf is held until payment goes through.",
       ) +
       `<p style="margin:18px 0 0;">` +
       emailButton(updateUrl, "Update my card", "primary") +

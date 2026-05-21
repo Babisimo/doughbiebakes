@@ -194,11 +194,11 @@ export async function getMemberSelectionsForDrop(
   );
   const skippedEmails = new Set(
     (fromSanity ?? [])
-      .filter((s) => (s as { skipped?: boolean }).skipped)
+      .filter((s) => s.skipped)
       .map((s) => s.customerEmail),
   );
   const explicit = (fromSanity ?? [])
-    .filter((s) => !(s as { skipped?: boolean }).skipped)
+    .filter((s) => !s.skipped)
     .map((s) => ({ ...s, source: "explicit" as const }));
 
   const drop = typeof dropOrId === "object" ? dropOrId : null;
@@ -224,6 +224,7 @@ export async function getMemberSelectionsForDrop(
       customerEmail: m.customerEmail,
       productSlug: defaultSlug,
       fulfillment: "pickup" as const,
+      skipped: false,
       source: "default" as const,
     }));
 

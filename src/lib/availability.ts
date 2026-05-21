@@ -26,6 +26,9 @@ export type MemberSelection = {
   customerEmail: string;
   productSlug: string;
   fulfillment?: Fulfillment;
+  /** Whether the member explicitly skipped this drop. Always `false` for
+   * default selections; the query coalesces null/missing to false. */
+  skipped: boolean;
   /** Pending Stripe invoice item billing the ship surcharge (only set when
    * `fulfillment === "ship"`). */
   shipInvoiceItemId?: string;

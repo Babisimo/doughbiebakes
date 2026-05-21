@@ -21,26 +21,23 @@ export const site = {
     madeIn: "Made in a Home Kitchen",
   },
   /**
-   * Bread Club subscription — copy shown on /bread-club. These are *display*
-   * values: the amount the customer is actually billed comes from the Stripe
-   * recurring Price referenced by STRIPE_BREAD_CLUB_PRICE_ID, so keep them in
-   * sync (Stripe: $40.00 every 4 weeks). Cap `seats` to ~3 batches' worth so
-   * public drops still have loaves to sell.
+   * Bread Club — per-drop billing model. $10 is charged per drop, only on
+   * weeks the bakery bakes; members who skip a drop pay nothing that week.
+   * There is no recurring Stripe Price/subscription. Cap `seats` to ~3
+   * batches' worth so public drops still have loaves to sell.
    */
   breadClub: {
-    priceLabel: "$40",
-    cadenceLabel: "every 4 weeks",
-    perLoafLabel: "about $10 a loaf",
-    loavesPerCycle: 4,
+    priceLabel: "$10",
+    cadenceLabel: "per drop",
     seats: 12,
     /** First N members get a bonus loaf in their first delivery (grand
      * opening). Independent of the founding promo-code cap. */
     foundingSeats: 5,
     /** Product slug a member gets when they don't pick before the window closes. */
     defaultLoafSlug: "classic",
-    /** Per-cycle surcharge (cents) when a member chooses "ship" instead of
-     * free local pickup. Queued as a one-time line on their next Stripe
-     * subscription invoice. Keep in step with the public ca-priority option. */
+    /** Shipping surcharge (cents) when a member chooses "ship" instead of
+     * free local pickup. Added as a one-time charge on the drop invoice.
+     * Keep in step with the public ca-priority option. */
     shipSurchargeCents: 1200,
   },
 } as const;

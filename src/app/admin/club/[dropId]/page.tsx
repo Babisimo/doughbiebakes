@@ -20,6 +20,7 @@ import {
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
+import { ClubChargeButton } from "@/components/club-charge-button";
 import { FulfillmentControl } from "@/components/fulfillment-control";
 
 export const dynamic = "force-dynamic";
@@ -241,6 +242,9 @@ export default async function BakeListPage({
 
       <section className="mt-10">
         <h2 className="display text-2xl">Members ({view.counts.members})</h2>
+        <div className="mt-3">
+          <ClubChargeButton dropId={drop.id} />
+        </div>
 
         {selections.length === 0 ? (
           <p className="nb-card mt-4 p-6 text-ink-700">

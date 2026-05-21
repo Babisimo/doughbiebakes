@@ -9,6 +9,7 @@ import {
   CONFIRMED_RESERVATIONS_FOR_DROP_QUERY,
   LIVE_ORDERS_FOR_DROP_QUERY,
   MEMBER_BY_EMAIL_QUERY,
+  MEMBER_CHARGES_FOR_DROP_QUERY,
   MEMBER_SELECTIONS_FOR_DROP_QUERY,
   PENDING_RESERVATION_COUNT_FOR_DROP_QUERY,
   PENDING_RESERVATION_ITEMS_FOR_DROP_QUERY,
@@ -191,7 +192,14 @@ export async function getMemberSelectionsForDrop(
     { dropId },
     opts,
   );
-  const explicit = (fromSanity ?? []).map((s) => ({ ...s, source: "explicit" as const }));
+  const skippedEmails = new Set(
+    (fromSanity ?? [])
+      .filter((s) => (s as { skipped?: boolean }).skipped)
+      .map((s) => s.customerEmail),
+  );
+  const explicit = (fromSanity ?? [])
+    .filter((s) => !(s as { skipped?: boolean }).skipped)
+    .map((s) => ({ ...s, source: "explicit" as const }));
 
   const drop = typeof dropOrId === "object" ? dropOrId : null;
   const eff = drop ? effectiveDropStatus(drop, new Date()) : null;
@@ -211,7 +219,7 @@ export async function getMemberSelectionsForDrop(
 
   const explicitEmails = new Set(explicit.map((s) => s.customerEmail));
   const defaults: MemberSelection[] = allActive
-    .filter((m) => !explicitEmails.has(m.customerEmail))
+    .filter((m) => !explicitEmails.has(m.customerEmail) && !skippedEmails.has(m.customerEmail))
     .map((m) => ({
       customerEmail: m.customerEmail,
       productSlug: defaultSlug,
@@ -252,7 +260,8 @@ export type ActiveMember = {
   id: string;
   customerEmail: string;
   stripeCustomerId: string;
-  subscriptionStatus: string;
+  stripePaymentMethodId?: string;
+  founding: boolean;
   joinedAt: string;
 };
 
@@ -271,7 +280,7 @@ export async function getActiveMembers(
 
 export type MemberRecord = {
   stripeCustomerId: string;
-  subscriptionStatus: string;
+  status: string;
   customerEmail: string;
 };
 
@@ -287,6 +296,34 @@ export async function getMemberByEmail(
     opts,
   );
   return fromSanity ?? null;
+}
+
+export type MemberChargeRow = {
+  id: string;
+  customerId: string;
+  customerEmail: string;
+  status: "paid" | "failed";
+  amountCents: number;
+  failureMessage?: string;
+};
+
+/** All memberCharge rows for a drop. `[]` in demo mode or on failure. */
+export async function getMemberChargesForDrop(
+  dropId: string,
+  opts: FetchOpts = {},
+): Promise<MemberChargeRow[]> {
+  if (!sanityClient || !dropId) return [];
+  try {
+    const rows = await fetchSanity<MemberChargeRow[]>(
+      MEMBER_CHARGES_FOR_DROP_QUERY,
+      { dropId },
+      opts,
+    );
+    return Array.isArray(rows) ? rows : [];
+  } catch (err) {
+    console.error("[catalog] member charges fetch failed", err);
+    return [];
+  }
 }
 
 /** Coerce a Sanity-fetched item list so `quantity` is always a finite number

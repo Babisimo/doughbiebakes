@@ -45,9 +45,9 @@ export async function POST(req: Request) {
   const existing = await getMemberByEmail(email, { fresh: true });
   if (
     existing &&
-    (existing.subscriptionStatus === "active" ||
-      existing.subscriptionStatus === "trialing" ||
-      existing.subscriptionStatus === "past_due")
+    (existing.status === "active" ||
+      existing.status === "trialing" ||
+      existing.status === "past_due")
   ) {
     return Response.json({
       alreadyMember: true,

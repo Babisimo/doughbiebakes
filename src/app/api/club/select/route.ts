@@ -80,11 +80,9 @@ export async function POST(req: Request) {
   // Picking "ship" adds a one-time line to the member's NEXT subscription
   // invoice. Switching back to "pickup" deletes that pending line so they
   // aren't charged. Scoped per (drop, email) via the memberSelection doc.
+  // TODO(BC.T13): shipping surcharge will be re-wired for per-drop billing.
   const priorSelection = selections.find((s) => s.customerEmail === email);
   const priorShipItemId = priorSelection?.shipInvoiceItemId ?? null;
-  // undefined = leave the doc's shipInvoiceItemId untouched; null = clear it;
-  // string = set it.
-  let resolvedShipItemId: string | null | undefined = undefined;
 
   const stripe = getStripe();
   const member = await getMemberByEmail(email, { fresh: true });
@@ -93,13 +91,12 @@ export async function POST(req: Request) {
   if (stripe && stripeCustomerId) {
     if (fulfillment === "ship" && !priorShipItemId) {
       try {
-        const item = await stripe.invoiceItems.create({
+        await stripe.invoiceItems.create({
           customer: stripeCustomerId,
           amount: site.breadClub.shipSurchargeCents,
           currency: "usd",
           description: `Bread Club shipping — ${drop.title}`,
         });
-        resolvedShipItemId = item.id;
       } catch (err) {
         console.error("[club/select] failed to queue shipping invoice item:", err);
       }
@@ -108,13 +105,12 @@ export async function POST(req: Request) {
         await stripe.invoiceItems.del(priorShipItemId);
       } catch (err) {
         // Already swept onto a finalized invoice — can't delete. Baker may
-        // need to refund manually. Clear our reference either way.
+        // need to refund manually.
         console.error(
           "[club/select] could not delete shipping invoice item (already invoiced?):",
           err,
         );
       }
-      resolvedShipItemId = null;
     }
     // ship + already has an item, or pickup + nothing to clear → no-op.
   } else if (fulfillment === "ship") {
@@ -128,7 +124,7 @@ export async function POST(req: Request) {
     email,
     productSlug,
     fulfillment,
-    shipInvoiceItemId: resolvedShipItemId,
+    skipped: false,
   });
   if (!wrote) {
     return Response.json(

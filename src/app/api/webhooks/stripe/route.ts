@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 
-import { createOrder, decrementDropQuantities, redeemPromo, upsertMember } from "@/sanity/lib/mutations";
+import { createOrder, decrementDropQuantities, redeemPromo } from "@/sanity/lib/mutations";
 import { buildOrderRecord, type OrderShipAddress } from "@/lib/order-record";
 import { sendOrderEmails, type OrderEmailLine } from "@/lib/order-email";
 import { getStripe } from "@/lib/stripe";
@@ -39,76 +39,9 @@ export async function POST(request: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     await handleCompletedCheckout(stripe, session);
-  } else if (
-    event.type === "customer.subscription.created" ||
-    event.type === "customer.subscription.updated" ||
-    event.type === "customer.subscription.deleted"
-  ) {
-    const sub = event.data.object;
-    await handleSubscriptionEvent(stripe, sub, event.type);
   }
 
   return Response.json({ received: true });
-}
-
-async function handleSubscriptionEvent(
-  stripe: Stripe,
-  sub: Stripe.Subscription,
-  eventType: string,
-) {
-  const breadClubPriceId = process.env.STRIPE_BREAD_CLUB_PRICE_ID;
-  if (!breadClubPriceId) {
-    console.warn("[webhook] STRIPE_BREAD_CLUB_PRICE_ID not set — skipping subscription sync.");
-    return;
-  }
-
-  // Only mirror subscriptions on the Bread Club price. Other subscription
-  // products (if any) shouldn't pollute the membership table.
-  const onBreadClubPrice = sub.items?.data?.some(
-    (i) => i.price?.id === breadClubPriceId,
-  );
-  if (!onBreadClubPrice) return;
-
-  const customerId =
-    typeof sub.customer === "string" ? sub.customer : sub.customer.id;
-
-  let email: string | null = null;
-  if (typeof sub.customer === "object" && !sub.customer.deleted) {
-    email = sub.customer.email ?? null;
-  }
-  if (!email) {
-    try {
-      const c = await stripe.customers.retrieve(customerId);
-      if (!c.deleted) email = c.email ?? null;
-    } catch (err) {
-      console.error("[webhook] failed to fetch customer", customerId, err);
-    }
-  }
-  if (!email) {
-    console.warn(
-      `[webhook] subscription ${sub.id} (${eventType}) has no customer email — skipping member sync`,
-    );
-    return;
-  }
-
-  const canceled =
-    eventType === "customer.subscription.deleted" || sub.status === "canceled";
-
-  try {
-    await upsertMember({
-      stripeCustomerId: customerId,
-      stripeSubscriptionId: sub.id,
-      customerEmail: email,
-      subscriptionStatus: sub.status,
-      priceId: breadClubPriceId,
-      canceled,
-    });
-    console.info(
-      `[webhook] member ${email} synced (status=${sub.status}, event=${eventType})`,
-    );
-  } catch (err) {
-    console.error("[webhook] failed to upsert member", email, err);
-  }
 }
 
 function mapAddr(

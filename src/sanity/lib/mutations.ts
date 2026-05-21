@@ -100,6 +100,7 @@ export async function upsertMemberSelection(
   };
   if (existing) {
     let patch = writeClient.patch(existing._id).set(fields);
+    // Scrub a previously-saved slug when the member skips or clears their pick.
     if (input.skipped || !input.productSlug) patch = patch.unset(["productSlug"]);
     await patch.commit();
   } else {
@@ -131,7 +132,7 @@ export async function createClubMember(input: CreateMemberInput): Promise<boolea
   const now = new Date().toISOString();
 
   const existing = await writeClient.fetch<{ _id: string } | null>(
-    `*[_type == "member" && _id == $id][0]{ "_id": _id }`,
+    `*[_type == "member" && _id == $id][0]{ _id }`,
     { id: docId },
   );
   let founding = false;

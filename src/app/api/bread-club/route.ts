@@ -8,16 +8,13 @@ export const runtime = "nodejs";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Starts a recurring "Bread Club" subscription checkout. Requires
- * STRIPE_BREAD_CLUB_PRICE_ID (a recurring Price created in the Stripe
- * dashboard — recommended: $40.00 every 4 weeks, see docs/STRIPE.md). Without
- * it the Bread Club page falls back to a waitlist email instead of this button.
- * (Enable Stripe's Customer Portal so members get a working pause/cancel link.)
+ * Starts a Bread Club join — a Stripe `setup`-mode Checkout that saves a card
+ * on file (charges nothing). The webhook creates the member on completion.
+ * Per-drop $10 charges happen later, when the baker runs a drop.
  */
 export async function POST(req: Request) {
   const stripe = getStripe();
-  const priceId = process.env.STRIPE_BREAD_CLUB_PRICE_ID;
-  if (!stripe || !priceId) {
+  if (!stripe) {
     return Response.json(
       { error: "Bread Club isn't open for sign-ups online yet." },
       { status: 503 },
@@ -39,31 +36,23 @@ export async function POST(req: Request) {
     );
   }
 
-  // Dedup check: if this email already has an active membership in the cache,
-  // don't open Checkout — tell the caller to manage their existing one
-  // instead. Keeps a member from accidentally double-paying.
+  // Dedup: an ACTIVE member with this email already exists → don't re-join.
+  // (A previously canceled member with this email may rejoin.)
   const existing = await getMemberByEmail(email, { fresh: true });
-  if (
-    existing &&
-    (existing.status === "active" ||
-      existing.status === "trialing" ||
-      existing.status === "past_due")
-  ) {
+  if (existing && existing.status === "active") {
     return Response.json({
       alreadyMember: true,
       message:
-        "We found a Bread Club membership for that email. Check your Stripe payment receipts for the 'manage subscription' link — it's a tap away from pause / cancel / update card.",
+        "You're already a Bread Club member with that email. Use the manage link in any of our emails to update your card or leave the club.",
     });
   }
 
-  // Server-side cap. The /bread-club page already hides the Join button when
-  // we're full, but a stale tab or a curl request could still hit this — so
-  // re-check the Sanity member cache before opening Checkout.
+  // Server-side seat cap.
   const memberCount = await getActiveMemberCount({ fresh: true });
   if (memberCount !== null && memberCount >= site.breadClub.seats) {
     return Response.json(
       {
-        error: `The Bread Club is full (${site.breadClub.seats} members). Email ${site.email} to join the waitlist — we'll text the moment a seat opens.`,
+        error: `The Bread Club is full (${site.breadClub.seats} members). Email ${site.email} to join the waitlist.`,
       },
       { status: 409 },
     );
@@ -72,18 +61,14 @@ export async function POST(req: Request) {
   const base = siteUrl();
   try {
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      // Pre-fill + lock the email we just checked. Stripe Checkout still
-      // creates a fresh Customer record under the hood; the dedup that
-      // matters happens up above against our Sanity cache.
+      mode: "setup",
+      currency: "usd",
       customer_email: email,
-      shipping_address_collection: { allowed_countries: ["US"] },
-      phone_number_collection: { enabled: true },
-      allow_promotion_codes: true,
+      payment_method_types: ["card"],
+      metadata: { kind: "club-join" },
       custom_text: {
         submit: {
-          message: `Standing weekly loaf from ${site.name}. Pause or cancel anytime from the link in your receipt.`,
+          message: `Save your card for ${site.name}'s Bread Club. You're charged $10 only on weeks we bake — skip any drop you don't want.`,
         },
       },
       success_url: `${base}/order/success?session_id={CHECKOUT_SESSION_ID}&club=1`,

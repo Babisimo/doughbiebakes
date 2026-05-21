@@ -5,6 +5,7 @@ import { buildBakeListView } from "@/lib/bake-list";
 import { getAdminSession } from "@/lib/admin-auth";
 import {
   getActiveDrop,
+  getActiveMembers,
   getConfirmedReservationsForDrop,
   getLiveOrdersForDrop,
   getMemberSelectionsForDrop,
@@ -21,6 +22,7 @@ import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
 import { ClubChargeButton } from "@/components/club-charge-button";
+import { ClubMemberRemove } from "@/components/club-member-row-actions";
 import { FulfillmentControl } from "@/components/fulfillment-control";
 
 export const dynamic = "force-dynamic";
@@ -95,13 +97,19 @@ export default async function BakeListPage({
   const drop = await getActiveDrop({ fresh: true });
   if (!drop || drop.id !== dropId) notFound();
 
-  const [selections, orders, reservations, pendingReservationCount] =
+  const [selections, orders, reservations, pendingReservationCount, activeMembers] =
     await Promise.all([
       getMemberSelectionsForDrop(drop, { fresh: true }),
       getLiveOrdersForDrop(drop.id, { fresh: true }),
       getConfirmedReservationsForDrop(drop.id, { fresh: true }),
       getPendingReservationCountForDrop(drop.id, { fresh: true }),
+      getActiveMembers({ fresh: true }),
     ]);
+
+  // Email → Stripe customer id, so each member row can offer "Remove from club".
+  const customerIdByEmail = new Map(
+    activeMembers.map((m) => [m.customerEmail.toLowerCase(), m.stripeCustomerId]),
+  );
 
   const view = buildBakeListView({
     drop,
@@ -269,12 +277,16 @@ export default async function BakeListPage({
                     <th className="px-4 py-3">Get it via</th>
                     <th className="px-4 py-3">Phone</th>
                     <th className="px-4 py-3">Where</th>
+                    <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {enriched.map((row) => {
                     const a = row.customer?.address;
                     const fulfillment = row.fulfillment ?? "pickup";
+                    const customerId = customerIdByEmail.get(
+                      row.customerEmail.toLowerCase(),
+                    );
                     return (
                       <tr
                         key={row.customerEmail}
@@ -328,6 +340,16 @@ export default async function BakeListPage({
                             <span className="text-flame-700">
                               ⚠ Wants shipping but no address on Stripe
                             </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {customerId ? (
+                            <ClubMemberRemove
+                              customerId={customerId}
+                              email={row.customerEmail}
+                            />
+                          ) : (
+                            <span className="text-ink-500">—</span>
                           )}
                         </td>
                       </tr>

@@ -60,22 +60,22 @@ export const MEMBER_SELECTIONS_FOR_DROP_QUERY = groq`
   }
 `;
 
-/** All active (or trialing) Bread Club members, sorted by sign-up. */
+/** All active Bread Club members, sorted by sign-up. */
 export const ACTIVE_MEMBERS_QUERY = groq`
-  *[_type == "member" && subscriptionStatus in ["active", "trialing"]]
+  *[_type == "member" && status == "active"]
     | order(joinedAt asc){
       "id": _id,
       customerEmail,
       stripeCustomerId,
-      subscriptionStatus,
+      stripePaymentMethodId,
       "founding": coalesce(founding, false),
       joinedAt
     }
 `;
 
-/** Count of active (or trialing) members. Used to enforce the seat cap. */
+/** Count of active members. Used to enforce the seat cap. */
 export const ACTIVE_MEMBER_COUNT_QUERY = groq`
-  count(*[_type == "member" && subscriptionStatus in ["active", "trialing"]])
+  count(*[_type == "member" && status == "active"])
 `;
 
 /** Count of members ever tagged founding — drives "founding spots left". */
@@ -87,7 +87,7 @@ export const FOUNDING_MEMBER_COUNT_QUERY = groq`
 export const MEMBER_BY_EMAIL_QUERY = groq`
   *[_type == "member" && customerEmail == $email][0]{
     stripeCustomerId,
-    subscriptionStatus,
+    status,
     customerEmail
   }
 `;
@@ -159,4 +159,19 @@ export const PENDING_RESERVATION_COUNT_FOR_DROP_QUERY = groq`
 export const PENDING_RESERVATION_ITEMS_FOR_DROP_QUERY = groq`
   *[_type == "reservation" && drop._ref == $dropId && status == "pending"]{
     items[]{ productSlug, quantity }
+  }`;
+
+// All memberSelection docs for a drop, raw (includes skipped ones) — the
+// per-drop charge route needs skip + fulfillment per member.
+export const MEMBER_SELECTIONS_RAW_FOR_DROP_QUERY = groq`
+  *[_type == "memberSelection" && drop._ref == $dropId]{
+    customerEmail, productSlug, "fulfillment": coalesce(fulfillment, "pickup"),
+    "skipped": coalesce(skipped, false)
+  }`;
+
+// memberCharge docs for a drop — so the charge run knows who's already paid.
+export const MEMBER_CHARGES_FOR_DROP_QUERY = groq`
+  *[_type == "memberCharge" && drop._ref == $dropId]{
+    "id": _id, "customerId": member._ref, customerEmail, status,
+    amountCents, failureMessage
   }`;

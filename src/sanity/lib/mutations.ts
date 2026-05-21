@@ -70,11 +70,10 @@ export async function decrementDropQuantities(
 type MemberSelectionInput = {
   dropId: string;
   email: string;
-  productSlug: string;
+  /** Omitted/undefined when the member is skipping this drop. */
+  productSlug?: string;
   fulfillment: "pickup" | "ship";
-  /** Stripe pending invoice item id for the ship surcharge. `null` clears it
-   * (member switched back to pickup); `undefined` leaves it untouched. */
-  shipInvoiceItemId?: string | null;
+  skipped: boolean;
 };
 
 /**
@@ -88,57 +87,44 @@ export async function upsertMemberSelection(
 ): Promise<boolean> {
   if (!writeClient) return false;
   const email = input.email.trim().toLowerCase();
-
   const existing = await writeClient.fetch<{ _id: string } | null>(
     `*[_type == "memberSelection" && drop._ref == $dropId && customerEmail == $email][0]{ _id }`,
     { dropId: input.dropId, email },
   );
-
   const now = new Date().toISOString();
-
+  const fields = {
+    fulfillment: input.fulfillment,
+    skipped: input.skipped,
+    selectedAt: now,
+    ...(input.productSlug ? { productSlug: input.productSlug } : {}),
+  };
   if (existing) {
-    let patch = writeClient.patch(existing._id).set({
-      productSlug: input.productSlug,
-      fulfillment: input.fulfillment,
-      selectedAt: now,
-    });
-    if (input.shipInvoiceItemId === null) {
-      patch = patch.unset(["shipInvoiceItemId"]);
-    } else if (typeof input.shipInvoiceItemId === "string") {
-      patch = patch.set({ shipInvoiceItemId: input.shipInvoiceItemId });
-    }
+    let patch = writeClient.patch(existing._id).set(fields);
+    if (input.skipped || !input.productSlug) patch = patch.unset(["productSlug"]);
     await patch.commit();
   } else {
     await writeClient.create({
       _type: "memberSelection",
       drop: { _type: "reference", _ref: input.dropId },
       customerEmail: email,
-      productSlug: input.productSlug,
-      fulfillment: input.fulfillment,
-      selectedAt: now,
-      ...(typeof input.shipInvoiceItemId === "string"
-        ? { shipInvoiceItemId: input.shipInvoiceItemId }
-        : {}),
+      ...fields,
     });
   }
   return true;
 }
 
-type MemberSyncInput = {
+type CreateMemberInput = {
   stripeCustomerId: string;
-  stripeSubscriptionId: string;
+  stripePaymentMethodId: string;
   customerEmail: string;
-  subscriptionStatus: string;
-  priceId: string;
-  canceled: boolean;
 };
 
 /**
- * Mirror a Stripe subscription into the Sanity `member` cache. Idempotent:
- * `_id` is the Stripe customer id, so the same customer always upserts to
- * the same doc. `joinedAt` is set on first sync and preserved thereafter.
+ * Create a Bread Club member on a completed join (idempotent — `_id` is the
+ * Stripe customer id, so a webhook redelivery is a no-op). The `founding` tag
+ * is assigned once, at creation, while fewer than `foundingSeats` exist.
  */
-export async function upsertMember(input: MemberSyncInput): Promise<boolean> {
+export async function createClubMember(input: CreateMemberInput): Promise<boolean> {
   if (!writeClient) return false;
   const docId = input.stripeCustomerId;
   const email = input.customerEmail.trim().toLowerCase();
@@ -161,23 +147,45 @@ export async function upsertMember(input: MemberSyncInput): Promise<boolean> {
     _type: "member",
     customerEmail: email,
     stripeCustomerId: input.stripeCustomerId,
-    stripeSubscriptionId: input.stripeSubscriptionId,
-    subscriptionStatus: input.subscriptionStatus,
-    priceId: input.priceId,
+    stripePaymentMethodId: input.stripePaymentMethodId,
+    status: "active",
     joinedAt: now,
-    lastSyncedAt: now,
     ...(founding ? { founding: true } : {}),
   });
+  // A returning (previously canceled) member rejoining: reactivate + refresh
+  // the saved card. New members: this patch is a harmless no-op over the create.
+  await writeClient
+    .patch(docId)
+    .set({
+      status: "active",
+      stripePaymentMethodId: input.stripePaymentMethodId,
+      customerEmail: email,
+    })
+    .unset(["canceledAt"])
+    .commit();
+  return true;
+}
 
-  const patch = writeClient.patch(docId).set({
-    customerEmail: email,
-    stripeSubscriptionId: input.stripeSubscriptionId,
-    subscriptionStatus: input.subscriptionStatus,
-    priceId: input.priceId,
-    lastSyncedAt: now,
-    ...(input.canceled ? { canceledAt: now } : {}),
-  });
-  await patch.commit();
+/** Update a member's saved card (card-update flow). */
+export async function setMemberCard(
+  stripeCustomerId: string,
+  stripePaymentMethodId: string,
+): Promise<boolean> {
+  if (!writeClient) return false;
+  await writeClient
+    .patch(stripeCustomerId)
+    .set({ stripePaymentMethodId })
+    .commit();
+  return true;
+}
+
+/** Cancel a membership (self-cancel or baker removal). */
+export async function cancelMember(stripeCustomerId: string): Promise<boolean> {
+  if (!writeClient) return false;
+  await writeClient
+    .patch(stripeCustomerId)
+    .set({ status: "canceled", canceledAt: new Date().toISOString() })
+    .commit();
   return true;
 }
 
@@ -420,4 +428,37 @@ export async function redeemPromo(code: string): Promise<boolean> {
     console.error("[promo] redeemPromo failed", err);
     return false;
   }
+}
+
+type MemberChargeInput = {
+  dropId: string;
+  stripeCustomerId: string;
+  customerEmail: string;
+  amountCents: number;
+  status: "paid" | "failed";
+  stripePaymentIntentId?: string;
+  failureMessage?: string;
+};
+
+/**
+ * Write (or replace) the memberCharge record for a (drop, member). The
+ * deterministic `_id` makes a re-run overwrite the prior attempt rather than
+ * duplicating it.
+ */
+export async function recordMemberCharge(input: MemberChargeInput): Promise<void> {
+  if (!writeClient) return;
+  await writeClient.createOrReplace({
+    _id: `charge.${input.dropId}.${input.stripeCustomerId}`,
+    _type: "memberCharge",
+    member: { _type: "reference", _ref: input.stripeCustomerId },
+    drop: { _type: "reference", _ref: input.dropId },
+    customerEmail: input.customerEmail,
+    amountCents: input.amountCents,
+    status: input.status,
+    ...(input.stripePaymentIntentId
+      ? { stripePaymentIntentId: input.stripePaymentIntentId }
+      : {}),
+    ...(input.failureMessage ? { failureMessage: input.failureMessage } : {}),
+    chargedAt: new Date().toISOString(),
+  });
 }

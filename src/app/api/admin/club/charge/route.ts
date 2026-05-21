@@ -77,6 +77,10 @@ export async function POST(req: Request) {
     }
     const amountCents = dropChargeCents(selection?.fulfillment ?? "pickup");
     try {
+      // Known window: if the PaymentIntent succeeds but recordMemberCharge
+      // then throws, no charge doc is written and a re-run would charge the
+      // member again. Tolerated at club scale — the baker sees a failed run
+      // and can reconcile against Stripe before re-clicking.
       const intent = await stripe.paymentIntents.create({
         amount: amountCents,
         currency: "usd",
@@ -115,10 +119,19 @@ export async function POST(req: Request) {
       });
       failed += 1;
       failures.push({ email: member.customerEmail, reason });
-      await sendClubDeclineEmail({
-        to: member.customerEmail,
-        stripeCustomerId: member.stripeCustomerId,
-      });
+      // Best-effort — a failed email must never abort the rest of the run.
+      try {
+        await sendClubDeclineEmail({
+          to: member.customerEmail,
+          stripeCustomerId: member.stripeCustomerId,
+        });
+      } catch (emailErr) {
+        console.error(
+          "[club/charge] decline email failed",
+          member.customerEmail,
+          emailErr,
+        );
+      }
     }
   }
 

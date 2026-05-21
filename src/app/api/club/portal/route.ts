@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   const member = await getMemberByEmail(email, { fresh: true });
   if (!member?.stripeCustomerId) {
     return new Response(
-      "We couldn't find an active subscription for that email. If you just signed up, give it a minute and reload.",
+      "We couldn't find a Bread Club membership for that email. If you just signed up, give it a minute and reload.",
       { status: 404 },
     );
   }
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[club/portal] Stripe portal session failed:", err);
     return new Response(
-      "Could not open the subscription portal — please try again, or reply to your Bread Club emails for help.",
+      "Could not open the billing portal — please try again, or reply to your Bread Club emails for help.",
       { status: 502 },
     );
   }

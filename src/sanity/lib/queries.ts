@@ -56,7 +56,6 @@ export const MEMBER_SELECTIONS_FOR_DROP_QUERY = groq`
     productSlug,
     "fulfillment": coalesce(fulfillment, "pickup"),
     "skipped": coalesce(skipped, false),
-    shipInvoiceItemId,
     selectedAt
   }
 `;

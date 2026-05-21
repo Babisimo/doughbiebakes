@@ -53,7 +53,7 @@ export function JoinBreadClub({
           kind: "alreadyMember",
           message:
             data.message ??
-            "You're already a Bread Club member with this email. Check your Stripe payment receipts for the 'manage subscription' link.",
+            "You're already a Bread Club member with this email. Use the manage link in any of our Bread Club emails to update your card or leave the club.",
         });
         return;
       }
@@ -107,7 +107,7 @@ export function JoinBreadClub({
       ) : null}
       <p className="text-xs text-ink-500">
         We check this against existing members before charging your card — no
-        duplicate subscriptions.
+        duplicate memberships.
       </p>
     </form>
   );

@@ -29,9 +29,6 @@ export type MemberSelection = {
   /** Whether the member explicitly skipped this drop. Always `false` for
    * default selections; the query coalesces null/missing to false. */
   skipped: boolean;
-  /** Pending Stripe invoice item billing the ship surcharge (only set when
-   * `fulfillment === "ship"`). */
-  shipInvoiceItemId?: string;
   /** "default" means the member never picked and this is the auto-assigned
    * Classic loaf computed at read time. "explicit" (or undefined) is a real
    * pick the member made in /club. */

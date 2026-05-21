@@ -62,7 +62,7 @@ export function buildClubConfirmation(args: {
   }
 
   // --- PICK branch ---
-  const flavor = flavorName ?? "";
+  const flavor = flavorName ?? "your loaf";
 
   const fulfillmentLabel =
     fulfillment === "pickup"

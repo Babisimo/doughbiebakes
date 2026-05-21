@@ -58,8 +58,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // `line` is the matched drop line item for a pick; stays null for a skip.
+  let line: (typeof drop.lineItems)[number] | undefined;
   if (!skip) {
-    const line = drop.lineItems.find((li) => li.product.slug === productSlug);
+    line = drop.lineItems.find((li) => li.product.slug === productSlug);
     if (!line) {
       return Response.json(
         { error: "That loaf isn't part of this drop." },
@@ -71,6 +73,8 @@ export async function POST(req: Request) {
       (s) => s.productSlug === productSlug && s.customerEmail !== email,
     ).length;
     const totalForSlug = Math.max(0, Math.floor(line.quantity ?? 0));
+    // Best-effort TOCTOU check: a tiny read-then-write race exists between
+    // this count and the upsert below; acceptable at Bread Club scale.
     if (claimedByOthers >= totalForSlug) {
       return Response.json(
         { error: "Another member just claimed the last one — please pick another flavor." },
@@ -79,6 +83,8 @@ export async function POST(req: Request) {
     }
   }
 
+  // When `skip` is true, `productSlug` and `fulfillment` are intentionally
+  // ignored — a skipped drop has no loaf and no fulfillment choice.
   const wrote = await upsertMemberSelection({
     dropId,
     email,
@@ -97,9 +103,7 @@ export async function POST(req: Request) {
   // the skip. Best-effort: log + swallow so a flaky mailer never blocks save.
   const freshToken = signClubToken(email, drop.id);
   const selfServeUrl = `${siteUrl()}/club/${drop.id}?email=${encodeURIComponent(email)}&token=${freshToken}`;
-  const flavorName = skip
-    ? null
-    : (drop.lineItems.find((li) => li.product.slug === productSlug)?.product.name ?? productSlug);
+  const flavorName = skip ? null : (line?.product.name ?? productSlug);
   const message = buildClubConfirmation({
     skipped: skip,
     flavorName,

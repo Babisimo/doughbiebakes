@@ -23,6 +23,7 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
   let amount: number | null = null;
   let discount: number | null = null;
   let ok = false;
+  let kind: string | undefined;
 
   const stripe = getStripe();
   if (stripe && sessionId) {
@@ -30,8 +31,8 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       ok =
         session.payment_status === "paid" ||
-        session.status === "complete" ||
-        session.mode === "subscription";
+        session.status === "complete";
+      kind = session.metadata?.kind;
       email = session.customer_details?.email ?? null;
       amount = session.amount_total ?? null;
       discount = session.total_details?.amount_discount ?? null;
@@ -39,6 +40,8 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
       /* fall through to a generic message */
     }
   }
+
+  const isCardUpdate = kind === "club-card-update";
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6">
@@ -48,14 +51,20 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
           {ok ? "🍞" : "✅"}
         </div>
         <h1 className="display mt-4 text-5xl sm:text-6xl">
-          {isClub ? "Welcome to the Bread Club!" : "Order received!"}
+          {isCardUpdate
+            ? "Your card is updated"
+            : isClub
+              ? "Welcome to the Bread Club!"
+              : "Order received!"}
         </h1>
         <p className="mt-3 text-ink-700">
-          {isClub
-            ? `Your weekly loaf is set. ${email ? `Receipt is on its way to ${email}.` : "Receipt is on its way to your email."}`
-            : email
-              ? `Receipt is on its way to ${email}.`
-              : "Receipt is on its way to your email."}
+          {isCardUpdate
+            ? "Your new card is saved. We'll use it the next time a Bread Club drop runs — nothing is charged until then."
+            : isClub
+              ? `You're in. We'll email you before each drop so you can pick your loaf — and you're only charged $10 on the weeks we bake.${email ? ` Receipt is on its way to ${email}.` : ""}`
+              : email
+                ? `Receipt is on its way to ${email}.`
+                : "Receipt is on its way to your email."}
           {amount != null ? (
             <>
               {" "}
@@ -70,11 +79,13 @@ export default async function OrderSuccessPage({ searchParams }: Props) {
             🎉 Founding discount applied — you saved {formatPrice(discount)}.
           </p>
         ) : null}
-        <p className="mt-3 text-ink-700">
-          We bake to order, so you&apos;ll get a follow-up from {site.name} to
-          confirm your pickup time in {site.city} (or shipping details if you
-          chose California delivery).
-        </p>
+        {!isClub ? (
+          <p className="mt-3 text-ink-700">
+            We bake to order, so you&apos;ll get a follow-up from {site.name} to
+            confirm your pickup time in {site.city} (or shipping details if you
+            chose California delivery).
+          </p>
+        ) : null}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/menu" className="btn-acid text-sm">
             Back to the menu ＋

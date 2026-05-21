@@ -203,8 +203,9 @@ async function handleCompletedCheckout(
     );
   }
 
-  // Best-effort: persist a public-order record (Bread Club subscription
-  // checkouts are `mode: "subscription"` — never recorded as orders).
+  // Best-effort: persist a public-order record. Bread Club setup-mode
+  // checkouts (join / card update) are handled by `handleSetupCompleted`
+  // and are never recorded as orders.
   if (session.mode === "payment") {
     const rec = buildOrderRecord({
       stripeSessionId: session.id,

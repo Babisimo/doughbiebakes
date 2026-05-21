@@ -3,8 +3,8 @@ import { defineArrayMember, defineField, defineType } from "sanity";
 /**
  * A paid one-off public order, written best-effort + idempotently by the
  * Stripe webhook (`createIfNotExists`, `_id = order.<stripeSessionId>`).
- * Bread Club subscription checkouts are NOT orders (webhook gates on
- * `mode === "payment"`).
+ * Bread Club setup-mode checkouts (join / card update) are NOT orders
+ * (the webhook gates on `mode === "payment"`).
  */
 export const orderType = defineType({
   name: "order",

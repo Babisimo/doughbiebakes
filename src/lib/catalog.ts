@@ -233,7 +233,7 @@ export async function getMemberSelectionsForDrop(
 }
 
 /**
- * How many active (or trialing) Bread Club members are in the cache. Returns
+ * How many active Bread Club members are in the cache. Returns
  * `null` in demo mode so callers can distinguish "no cap data" from "zero
  * members" — important so we don't accidentally lock the club when Sanity
  * isn't configured.
@@ -267,7 +267,7 @@ export type ActiveMember = {
   joinedAt: string;
 };
 
-/** Every active / trialing member (from the Sanity cache). `[]` in demo mode. */
+/** Every active member (from the Sanity cache). `[]` in demo mode. */
 export async function getActiveMembers(
   opts: FetchOpts = {},
 ): Promise<ActiveMember[]> {

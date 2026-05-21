@@ -1,13 +1,10 @@
 import "server-only";
 
-import { getActiveDrop, getMemberByEmail, getMemberSelectionsForDrop } from "@/lib/catalog";
+import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
 import { buildClubConfirmation } from "@/lib/club-confirmation-email";
 import { signClubToken, verifyClubToken } from "@/lib/club-token";
 import { effectiveDropStatus } from "@/lib/drop-status";
 import { sendEmail } from "@/lib/email";
-import { formatPrice } from "@/lib/money";
-import { site } from "@/lib/site";
-import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/url";
 import { upsertMemberSelection } from "@/sanity/lib/mutations";
 
@@ -19,6 +16,7 @@ type Body = {
   token?: unknown;
   productSlug?: unknown;
   fulfillment?: unknown;
+  skip?: unknown;
 };
 
 export async function POST(req: Request) {
@@ -33,11 +31,14 @@ export async function POST(req: Request) {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const token = typeof body.token === "string" ? body.token : "";
   const productSlug = typeof body.productSlug === "string" ? body.productSlug : "";
-  const fulfillment =
-    body.fulfillment === "ship" ? "ship" : "pickup"; // default to pickup
+  const fulfillment = body.fulfillment === "ship" ? "ship" : "pickup";
+  const skip = body.skip === true;
 
-  if (!dropId || !email || !token || !productSlug) {
+  if (!dropId || !email || !token) {
     return Response.json({ error: "Missing required fields." }, { status: 400 });
+  }
+  if (!skip && !productSlug) {
+    return Response.json({ error: "Pick a loaf or skip this drop." }, { status: 400 });
   }
   if (!verifyClubToken(email, dropId, token)) {
     return Response.json({ error: "Invalid or expired link." }, { status: 403 });
@@ -56,75 +57,34 @@ export async function POST(req: Request) {
       { status: 409 },
     );
   }
-  const line = drop.lineItems.find((li) => li.product.slug === productSlug);
-  if (!line) {
-    return Response.json(
-      { error: "That loaf isn't part of this drop." },
-      { status: 409 },
-    );
-  }
 
-  const selections = await getMemberSelectionsForDrop(drop, { fresh: true });
-  const claimedByOthers = selections.filter(
-    (s) => s.productSlug === productSlug && s.customerEmail !== email,
-  ).length;
-  const totalForSlug = Math.max(0, Math.floor(line.quantity ?? 0));
-  if (claimedByOthers >= totalForSlug) {
-    return Response.json(
-      { error: "Another member just claimed the last one — please pick another flavor." },
-      { status: 409 },
-    );
-  }
-
-  // --- Shipping surcharge: queue / clear a pending Stripe invoice item ------
-  // Picking "ship" adds a one-time line to the member's NEXT subscription
-  // invoice. Switching back to "pickup" deletes that pending line so they
-  // aren't charged. Scoped per (drop, email) via the memberSelection doc.
-  // TODO(BC.T13): shipping surcharge will be re-wired for per-drop billing.
-  const priorSelection = selections.find((s) => s.customerEmail === email);
-  const priorShipItemId = priorSelection?.shipInvoiceItemId ?? null;
-
-  const stripe = getStripe();
-  const member = await getMemberByEmail(email, { fresh: true });
-  const stripeCustomerId = member?.stripeCustomerId;
-
-  if (stripe && stripeCustomerId) {
-    if (fulfillment === "ship" && !priorShipItemId) {
-      try {
-        await stripe.invoiceItems.create({
-          customer: stripeCustomerId,
-          amount: site.breadClub.shipSurchargeCents,
-          currency: "usd",
-          description: `Bread Club shipping — ${drop.title}`,
-        });
-      } catch (err) {
-        console.error("[club/select] failed to queue shipping invoice item:", err);
-      }
-    } else if (fulfillment === "pickup" && priorShipItemId) {
-      try {
-        await stripe.invoiceItems.del(priorShipItemId);
-      } catch (err) {
-        // Already swept onto a finalized invoice — can't delete. Baker may
-        // need to refund manually.
-        console.error(
-          "[club/select] could not delete shipping invoice item (already invoiced?):",
-          err,
-        );
-      }
+  if (!skip) {
+    const line = drop.lineItems.find((li) => li.product.slug === productSlug);
+    if (!line) {
+      return Response.json(
+        { error: "That loaf isn't part of this drop." },
+        { status: 409 },
+      );
     }
-    // ship + already has an item, or pickup + nothing to clear → no-op.
-  } else if (fulfillment === "ship") {
-    console.warn(
-      `[club/select] ${email} chose ship but no Stripe customer in cache — shipping NOT billed. Reconcile manually.`,
-    );
+    const selections = await getMemberSelectionsForDrop(drop, { fresh: true });
+    const claimedByOthers = selections.filter(
+      (s) => s.productSlug === productSlug && s.customerEmail !== email,
+    ).length;
+    const totalForSlug = Math.max(0, Math.floor(line.quantity ?? 0));
+    if (claimedByOthers >= totalForSlug) {
+      return Response.json(
+        { error: "Another member just claimed the last one — please pick another flavor." },
+        { status: 409 },
+      );
+    }
   }
 
   const wrote = await upsertMemberSelection({
     dropId,
     email,
-    productSlug,
+    productSlug: skip ? undefined : productSlug,
     fulfillment,
-    skipped: false,
+    skipped: skip,
   });
   if (!wrote) {
     return Response.json(
@@ -133,20 +93,20 @@ export async function POST(req: Request) {
     );
   }
 
-  // Fire-and-await the confirmation email. We log + swallow on failure so a
-  // flaky Resend doesn't keep a member from saving their pick.
+  // Confirmation email — for a pick, confirm the loaf; for a skip, confirm
+  // the skip. Best-effort: log + swallow so a flaky mailer never blocks save.
   const freshToken = signClubToken(email, drop.id);
   const selfServeUrl = `${siteUrl()}/club/${drop.id}?email=${encodeURIComponent(email)}&token=${freshToken}`;
+  const flavorName = skip
+    ? null
+    : (drop.lineItems.find((li) => li.product.slug === productSlug)?.product.name ?? productSlug);
   const message = buildClubConfirmation({
-    flavorName: line.product.name,
+    skipped: skip,
+    flavorName,
     fulfillment,
     dropTitle: drop.title,
     pickupOrShipDate: drop.pickupOrShipDate,
     selfServeUrl,
-    shipSurchargeLabel:
-      fulfillment === "ship"
-        ? formatPrice(site.breadClub.shipSurchargeCents)
-        : undefined,
   });
   const emailSent = await sendEmail({
     to: email,
@@ -155,5 +115,5 @@ export async function POST(req: Request) {
     text: message.text,
   });
 
-  return Response.json({ ok: true, productSlug, fulfillment, emailSent });
+  return Response.json({ ok: true, skipped: skip, productSlug: skip ? null : productSlug, fulfillment, emailSent });
 }

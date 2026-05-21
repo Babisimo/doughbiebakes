@@ -22,7 +22,12 @@ export function ClubMemberRemove({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ customerId }),
       });
-      setState(res.ok ? "done" : "error");
+      if (res.ok) {
+        setState("done");
+      } else {
+        console.error("[club-member-remove] remove failed", res.status);
+        setState("error");
+      }
     } catch {
       setState("error");
     }

@@ -15,6 +15,12 @@ export async function POST(req: Request) {
   }
   const customerId = typeof body.customerId === "string" ? body.customerId.trim() : "";
   if (!customerId) return Response.json({ error: "Missing customerId." }, { status: 400 });
-  await cancelMember(customerId);
+  const ok = await cancelMember(customerId);
+  if (!ok) {
+    return Response.json(
+      { error: "Couldn't remove the member — the Sanity write client isn't configured." },
+      { status: 503 },
+    );
+  }
   return Response.json({ ok: true });
 }

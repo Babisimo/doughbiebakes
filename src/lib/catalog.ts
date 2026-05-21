@@ -10,6 +10,7 @@ import {
   LIVE_ORDERS_FOR_DROP_QUERY,
   MEMBER_BY_EMAIL_QUERY,
   MEMBER_CHARGES_FOR_DROP_QUERY,
+  MEMBER_SELECTION_RAW_FOR_EMAIL_QUERY,
   MEMBER_SELECTIONS_FOR_DROP_QUERY,
   PENDING_RESERVATION_COUNT_FOR_DROP_QUERY,
   PENDING_RESERVATION_ITEMS_FOR_DROP_QUERY,
@@ -324,6 +325,27 @@ export async function getMemberChargesForDrop(
   } catch (err) {
     console.error("[catalog] member charges fetch failed", err);
     return [];
+  }
+}
+
+/** Whether one member already skipped a drop — seeds the selection form so a
+ * returning skipper sees their skip state. `false` in demo mode or on error. */
+export async function getMemberSkippedForDrop(
+  dropId: string,
+  email: string,
+  opts: FetchOpts = {},
+): Promise<boolean> {
+  if (!sanityClient || !dropId || !email) return false;
+  try {
+    const row = await fetchSanity<{ skipped?: boolean } | null>(
+      MEMBER_SELECTION_RAW_FOR_EMAIL_QUERY,
+      { dropId, email: email.trim().toLowerCase() },
+      opts,
+    );
+    return row?.skipped === true;
+  } catch (err) {
+    console.error("[catalog] member skip fetch failed", err);
+    return false;
   }
 }
 

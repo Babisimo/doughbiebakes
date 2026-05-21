@@ -34,6 +34,7 @@ export function SelectionForm({
   token,
   currentSlug,
   currentFulfillment,
+  currentSkipped,
   options,
   windowOpen,
 }: {
@@ -45,6 +46,7 @@ export function SelectionForm({
   token: string;
   currentSlug: string | null;
   currentFulfillment: Fulfillment;
+  currentSkipped: boolean;
   options: Option[];
   windowOpen: boolean;
 }) {
@@ -58,7 +60,7 @@ export function SelectionForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<"unknown" | "sent" | "failed">("unknown");
-  const [skipped, setSkipped] = useState(false);
+  const [skipped, setSkipped] = useState(currentSkipped);
 
   const dirty =
     draftSlug !== null &&

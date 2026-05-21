@@ -173,6 +173,16 @@ export const MEMBER_SELECTIONS_RAW_FOR_DROP_QUERY = groq`
     "skipped": coalesce(skipped, false)
   }`;
 
+/**
+ * One member's raw selection for a drop, keyed on drop + email — lets the
+ * selection form seed whether a returning member already skipped this drop.
+ */
+export const MEMBER_SELECTION_RAW_FOR_EMAIL_QUERY = groq`
+  *[_type == "memberSelection" && drop._ref == $dropId && customerEmail == $email][0]{
+    productSlug,
+    "skipped": coalesce(skipped, false)
+  }`;
+
 /** memberCharge docs for a drop — so the charge run knows who's already paid. */
 export const MEMBER_CHARGES_FOR_DROP_QUERY = groq`
   *[_type == "memberCharge" && drop._ref == $dropId]{

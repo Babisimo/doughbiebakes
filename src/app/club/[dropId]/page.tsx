@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
-import { getActiveDrop, getMemberSelectionsForDrop } from "@/lib/catalog";
+import {
+  getActiveDrop,
+  getMemberSelectionsForDrop,
+  getMemberSkippedForDrop,
+} from "@/lib/catalog";
 import { verifyClubToken } from "@/lib/club-token";
 import { effectiveDropStatus } from "@/lib/drop-status";
 import { formatPrice } from "@/lib/money";
@@ -44,6 +48,11 @@ export default async function ClubDropPage({
 
   const selections = await getMemberSelectionsForDrop(drop, { fresh: true });
   const normalizedEmail = email.toLowerCase();
+  // Skipped members are filtered out of `selections`, so check skip status
+  // directly — otherwise a returning skipper sees a blank "pick a loaf" form.
+  const currentSkipped = await getMemberSkippedForDrop(drop.id, normalizedEmail, {
+    fresh: true,
+  });
   const myPick = selections.find((s) => s.customerEmail === normalizedEmail);
   const claimedBySlug = new Map<string, number>();
   for (const s of selections) {
@@ -92,6 +101,7 @@ export default async function ClubDropPage({
         token={token}
         currentSlug={myPick?.productSlug ?? null}
         currentFulfillment={myPick?.fulfillment ?? "pickup"}
+        currentSkipped={currentSkipped}
         options={options.map(({ product, remaining }) => ({
           slug: product.slug,
           name: product.name,

@@ -161,17 +161,25 @@ export const PENDING_RESERVATION_ITEMS_FOR_DROP_QUERY = groq`
     items[]{ productSlug, quantity }
   }`;
 
-// All memberSelection docs for a drop, raw (includes skipped ones) — the
-// per-drop charge route needs skip + fulfillment per member.
+/**
+ * All memberSelection docs for a drop, raw (includes skipped ones) — the
+ * per-drop charge route needs skip + fulfillment per member.
+ */
 export const MEMBER_SELECTIONS_RAW_FOR_DROP_QUERY = groq`
   *[_type == "memberSelection" && drop._ref == $dropId]{
-    customerEmail, productSlug, "fulfillment": coalesce(fulfillment, "pickup"),
+    customerEmail,
+    productSlug,
+    "fulfillment": coalesce(fulfillment, "pickup"),
     "skipped": coalesce(skipped, false)
   }`;
 
-// memberCharge docs for a drop — so the charge run knows who's already paid.
+/** memberCharge docs for a drop — so the charge run knows who's already paid. */
 export const MEMBER_CHARGES_FOR_DROP_QUERY = groq`
   *[_type == "memberCharge" && drop._ref == $dropId]{
-    "id": _id, "customerId": member._ref, customerEmail, status,
-    amountCents, failureMessage
+    "id": _id,
+    "customerId": member._ref,
+    customerEmail,
+    status,
+    amountCents,
+    failureMessage
   }`;

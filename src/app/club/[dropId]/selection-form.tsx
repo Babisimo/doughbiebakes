@@ -58,6 +58,7 @@ export function SelectionForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<"unknown" | "sent" | "failed">("unknown");
+  const [skipped, setSkipped] = useState(false);
 
   const dirty =
     draftSlug !== null &&
@@ -89,9 +90,35 @@ export function SelectionForm({
       }
       setSavedSlug(draftSlug);
       setSavedFulfillment(draftFulfillment);
+      setSkipped(false);
       setEmailStatus(data.emailSent ? "sent" : "failed");
       // Re-render the server component so every card's "N left" reflects the
       // pick we just saved (and anyone else's picks since page load).
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function skipDrop() {
+    if (!windowOpen) return;
+    setError(null);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/club/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dropId, email, token, skip: true }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Something went wrong — try again.");
+      }
+      setSavedSlug(null);
+      setDraftSlug(null);
+      setSkipped(true);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error.");
@@ -124,6 +151,15 @@ export function SelectionForm({
           email={email}
           windowOpen={windowOpen}
         />
+      ) : skipped ? (
+        <section className="nb-card border-2 border-ink/20 bg-ink/5 p-5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
+            Drop skipped
+          </p>
+          <p className="mt-2 text-sm text-ink-700">
+            You&apos;ve skipped this drop — you won&apos;t be charged. Changed your mind? Pick a loaf above while the window is open.
+          </p>
+        </section>
       ) : null}
 
       <FulfillmentToggle
@@ -192,6 +228,19 @@ export function SelectionForm({
           })}
         </ul>
       </div>
+
+      {windowOpen ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            disabled={saving}
+            onClick={skipDrop}
+            className="btn-outline text-xs"
+          >
+            {saving ? "Saving…" : "Skip this drop"}
+          </button>
+        </div>
+      ) : null}
 
       <ConfirmBar
         dirty={dirty}

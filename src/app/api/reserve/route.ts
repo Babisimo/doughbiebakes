@@ -96,19 +96,19 @@ export async function POST(req: Request) {
 
   // Layer 2 (anti-flood) — one open (unverified|pending) reservation per email per drop.
   if (fresh) {
-    const existing = await fresh.fetch<{ id: string } | null>(
+    const existing = await fresh.fetch<{ id: string; status: string } | null>(
       OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY,
       { dropId: drop.id, email: email.toLowerCase() },
       { cache: "no-store" as const },
     );
     if (existing) {
-      return Response.json(
-        {
-          error:
-            "You already have a reservation in for this drop — check your email to confirm it, then we'll email you once it's approved.",
-        },
-        { status: 409 },
-      );
+      // Tailor the message so the customer knows which step they're actually
+      // stuck on. Both branches return 409 so the form surfaces it as an error.
+      const message =
+        existing.status === "unverified"
+          ? "You already started a reservation for this drop, but you haven't clicked the confirmation link in your email yet. Check your inbox (and spam) for our verification email — once you click it, the baker reviews it. If you can't find it, email us and we'll resend."
+          : "You already have a reservation in for this drop and it's waiting on baker review. We'll email you the moment it's approved — no need to submit again.";
+      return Response.json({ error: message }, { status: 409 });
     }
   }
 

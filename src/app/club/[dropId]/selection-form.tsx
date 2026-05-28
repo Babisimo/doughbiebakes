@@ -16,6 +16,15 @@ type Option = {
 
 type Fulfillment = "pickup" | "ship";
 
+type SavedShipping = {
+  name: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+};
+
 function formatDropDate(value: string | null): string | null {
   if (!value) return null;
   return new Date(value).toLocaleDateString("en-US", {
@@ -35,6 +44,7 @@ export function SelectionForm({
   currentSlug,
   currentFulfillment,
   currentSkipped,
+  savedShipping,
   options,
   windowOpen,
 }: {
@@ -47,6 +57,7 @@ export function SelectionForm({
   currentSlug: string | null;
   currentFulfillment: Fulfillment;
   currentSkipped: boolean;
+  savedShipping: SavedShipping | null;
   options: Option[];
   windowOpen: boolean;
 }) {
@@ -65,9 +76,11 @@ export function SelectionForm({
   const dirty =
     draftSlug !== null &&
     (draftSlug !== savedSlug || draftFulfillment !== savedFulfillment);
+  // Block confirm while picking Ship without an address on file.
+  const needsAddress = draftFulfillment === "ship" && !savedShipping;
 
   async function confirm() {
-    if (!draftSlug || !dirty || !windowOpen) return;
+    if (!draftSlug || !dirty || !windowOpen || needsAddress) return;
     setError(null);
     setSaving(true);
     try {
@@ -171,6 +184,18 @@ export function SelectionForm({
         shipSurchargeLabel={shipSurchargeLabel}
       />
 
+      {draftFulfillment === "ship" ? (
+        // Address stays editable even after the selection window closes — a
+        // typo or "send it to my parents' house this week" shouldn't be gated
+        // by the pick lock. Only the flavor + pickup-vs-ship freeze at lock.
+        <ShippingAddressPanel
+          email={email}
+          dropId={dropId}
+          token={token}
+          saved={savedShipping}
+        />
+      ) : null}
+
       <div>
         <h2 className="display text-2xl">
           {savedSlug ? "Want to swap?" : "Pick your loaf"}
@@ -250,6 +275,7 @@ export function SelectionForm({
         hasDraft={draftSlug !== null}
         hasSaved={savedSlug !== null}
         windowOpen={windowOpen}
+        needsAddress={needsAddress}
         onConfirm={confirm}
         onDiscard={discard}
       />
@@ -263,6 +289,7 @@ function ConfirmBar({
   hasDraft,
   hasSaved,
   windowOpen,
+  needsAddress,
   onConfirm,
   onDiscard,
 }: {
@@ -271,6 +298,7 @@ function ConfirmBar({
   hasDraft: boolean;
   hasSaved: boolean;
   windowOpen: boolean;
+  needsAddress: boolean;
   onConfirm: () => void;
   onDiscard: () => void;
 }) {
@@ -283,7 +311,11 @@ function ConfirmBar({
       className="sticky bottom-4 z-10 nb-card flex flex-wrap items-center justify-between gap-3 border-2 border-acid bg-white p-4"
     >
       <p className="text-sm font-semibold">
-        {hasSaved ? "Unsaved changes — confirm to update your pick." : "Ready to confirm your pick?"}
+        {needsAddress
+          ? "Save your shipping address above first."
+          : hasSaved
+            ? "Unsaved changes — confirm to update your pick."
+            : "Ready to confirm your pick?"}
       </p>
       <div className="flex gap-2">
         {hasSaved ? (
@@ -299,10 +331,16 @@ function ConfirmBar({
         <button
           type="button"
           onClick={onConfirm}
-          disabled={!dirty || saving}
-          className="btn-acid text-xs"
+          disabled={!dirty || saving || needsAddress}
+          className="btn-acid text-xs disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {saving ? "Saving…" : hasSaved ? "Confirm changes" : "Confirm pick"}
+          {saving
+            ? "Saving…"
+            : needsAddress
+              ? "Address needed"
+              : hasSaved
+                ? "Confirm changes"
+                : "Confirm pick"}
         </button>
       </div>
     </div>
@@ -402,6 +440,217 @@ function FulfillmentToggle({
           ? "We'll text you the pickup window before drop day."
           : `We'll ship to the address on file with Stripe. ${shipSurchargeLabel} shipping is added to your next Bread Club invoice — no separate checkout.`}
       </p>
+    </div>
+  );
+}
+
+function ShippingAddressPanel({
+  email,
+  dropId,
+  token,
+  saved,
+}: {
+  email: string;
+  dropId: string;
+  token: string;
+  saved: SavedShipping | null;
+}) {
+  const router = useRouter();
+  const [editing, setEditing] = useState<boolean>(!saved);
+  const [name, setName] = useState(saved?.name ?? "");
+  const [line1, setLine1] = useState(saved?.line1 ?? "");
+  const [line2, setLine2] = useState(saved?.line2 ?? "");
+  const [city, setCity] = useState(saved?.city ?? "");
+  const [postalCode, setPostalCode] = useState(saved?.postalCode ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Read-only summary when an address is saved and we're not editing.
+  if (saved && !editing) {
+    return (
+      <div className="nb-card-sm border-2 border-sage/40 bg-sage/5 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
+          Shipping to
+        </p>
+        <address className="mt-2 not-italic text-sm text-ink">
+          {saved.name ? (
+            <>
+              <strong>{saved.name}</strong>
+              <br />
+            </>
+          ) : null}
+          {saved.line1}
+          {saved.line2 ? (
+            <>
+              <br />
+              {saved.line2}
+            </>
+          ) : null}
+          <br />
+          {[saved.city, saved.state, saved.postalCode].filter(Boolean).join(", ")}
+        </address>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-3 text-xs font-semibold text-acid-600 underline decoration-2 hover:no-underline"
+        >
+          Edit address
+        </button>
+      </div>
+    );
+  }
+
+  async function save() {
+    setError(null);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/club/address", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          dropId,
+          token,
+          name,
+          line1,
+          line2,
+          city,
+          state: "CA",
+          postalCode,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Could not save the address.");
+      }
+      setEditing(false);
+      // Re-render so the server reads the new shipping back from Stripe and
+      // hands the parent SelectionForm `savedShipping` on the next pass.
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="nb-card-sm border-2 border-flame/40 bg-flame/5 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-flame-700">
+        Shipping address needed
+      </p>
+      <p className="mt-1 text-sm text-ink-700">
+        We&apos;ll ship to this address on bake day. California addresses only —
+        we&apos;re a Cottage Food bakery.
+      </p>
+
+      {error ? (
+        <p className="nb-card-sm mt-3 bg-flame/15 p-2 text-xs text-ink">{error}</p>
+      ) : null}
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <label className="block text-xs font-semibold sm:col-span-2">
+          Full name
+          <input
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={saving}
+            autoComplete="name"
+            className="mt-1 w-full rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-normal disabled:opacity-50"
+          />
+        </label>
+        <label className="block text-xs font-semibold sm:col-span-2">
+          Street address
+          <input
+            type="text"
+            required
+            value={line1}
+            onChange={(e) => setLine1(e.target.value)}
+            disabled={saving}
+            autoComplete="address-line1"
+            className="mt-1 w-full rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-normal disabled:opacity-50"
+          />
+        </label>
+        <label className="block text-xs font-semibold sm:col-span-2">
+          Apt / suite (optional)
+          <input
+            type="text"
+            value={line2}
+            onChange={(e) => setLine2(e.target.value)}
+            disabled={saving}
+            autoComplete="address-line2"
+            className="mt-1 w-full rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-normal disabled:opacity-50"
+          />
+        </label>
+        <label className="block text-xs font-semibold">
+          City
+          <input
+            type="text"
+            required
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            disabled={saving}
+            autoComplete="address-level2"
+            className="mt-1 w-full rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-normal disabled:opacity-50"
+          />
+        </label>
+        <div className="grid grid-cols-[auto_1fr] gap-2">
+          <label className="block text-xs font-semibold">
+            State
+            <input
+              type="text"
+              value="CA"
+              readOnly
+              disabled
+              aria-label="State (California only)"
+              className="mt-1 w-14 rounded-md border border-ink/20 bg-ink/5 px-3 py-2 text-sm font-normal text-ink-500"
+            />
+          </label>
+          <label className="block text-xs font-semibold">
+            ZIP
+            <input
+              type="text"
+              required
+              inputMode="numeric"
+              pattern="\d{5}"
+              maxLength={5}
+              value={postalCode}
+              onChange={(e) =>
+                setPostalCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 5))
+              }
+              disabled={saving}
+              autoComplete="postal-code"
+              className="mt-1 w-full rounded-md border border-ink/20 bg-white px-3 py-2 text-sm font-normal disabled:opacity-50"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          className="btn-acid text-xs disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save shipping address"}
+        </button>
+        {saved ? (
+          <button
+            type="button"
+            onClick={() => {
+              setEditing(false);
+              setError(null);
+            }}
+            disabled={saving}
+            className="btn-outline text-xs"
+          >
+            Cancel
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

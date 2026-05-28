@@ -103,10 +103,12 @@ export const RESERVATION_BY_ID_QUERY = groq`
   }`;
 
 // Anti-flood: an existing not-yet-decided reservation for this email + drop.
+// `status` rides along so the caller can tailor the user-facing message
+// (unverified email vs. waiting on baker review).
 export const OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY = groq`
   *[_type == "reservation" && drop._ref == $dropId
     && customerEmail == $email
-    && status in ["unverified", "pending"]][0]{ "id": _id }`;
+    && status in ["unverified", "pending"]][0]{ "id": _id, status }`;
 
 // Admin list: excludes unverified (not yet email-confirmed) reservations.
 // Pending floats first; add a $limit/cutoff if volume grows.

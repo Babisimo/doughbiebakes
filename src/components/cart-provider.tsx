@@ -168,9 +168,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Clearing the cart after a completed order also drops the promo code — the
   // code was tied to that order, the next one starts fresh.
+  //
+  // Synchronously wipe localStorage too, not just state. The state→useEffect→
+  // localStorage path is async (one render later), and if the user navigates
+  // away before that effect commits, the next page's hydration reads the stale
+  // cart/promo back in. Removing both keys here is belt-and-suspenders that
+  // makes clearing the cart bulletproof across navigation timing.
   const clear = useCallback(() => {
     setLines([]);
     setPromoCode("");
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(PROMO_KEY);
+    } catch {
+      /* SSR / privacy-mode — state reset alone will handle it */
+    }
   }, []);
 
   const value = useMemo<CartContextValue>(

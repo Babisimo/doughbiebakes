@@ -15,7 +15,7 @@ export function ReserveForm({
   products: Product[];
   availability: Record<string, Availability>;
 }) {
-  const { lines, ready, promoCode, promoPercentOff, promoChecking, setPromoCode } =
+  const { lines, ready, promoCode, promoPercentOff, promoChecking, setPromoCode, clear } =
     useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +65,10 @@ export function ReserveForm({
       }
       setNotice(data.notice ?? null);
       setSent(true);
+      // Reset the cart now that the loaves are spoken for — the next page they
+      // see is "check your email", and we don't want a stale cart leading them
+      // back into /menu thinking they still need to buy.
+      clear();
     } catch {
       setError("Network error. Please try again.");
       setSubmitting(false);

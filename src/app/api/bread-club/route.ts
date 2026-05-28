@@ -65,10 +65,16 @@ export async function POST(req: Request) {
 
   const base = siteUrl();
   try {
+    // Pre-create the Customer so `session.customer` is always populated in the
+    // setup-completed webhook. On API 2026-04-22.dahlia, passing
+    // `customer_email` alone to a setup-mode session does not reliably create a
+    // Customer — `session.customer` arrives null and the member never gets
+    // saved. Pre-creating is deterministic.
+    const customer = await stripe.customers.create({ email });
     const session = await stripe.checkout.sessions.create({
       mode: "setup",
       currency: "usd",
-      customer_email: email,
+      customer: customer.id,
       payment_method_types: ["card"],
       metadata: { kind: "club-join" },
       custom_text: {

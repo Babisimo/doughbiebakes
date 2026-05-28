@@ -2,10 +2,7 @@ import { markReservationVerified } from "@/sanity/lib/mutations";
 import { verifyReservationToken } from "@/lib/reservation-token";
 import { sanityClient } from "@/sanity/client";
 import { RESERVATION_BY_ID_QUERY, DROP_BY_ID_QUERY } from "@/sanity/lib/queries";
-import {
-  sendReservationBakerAlert,
-  sendReservationReceived,
-} from "@/lib/reservation-email";
+import { sendReservationBakerAlert } from "@/lib/reservation-email";
 import { siteUrl } from "@/lib/url";
 
 export const runtime = "nodejs";
@@ -78,7 +75,9 @@ export async function GET(req: Request) {
           promoPercentOff: r.promoCode ? r.promoPercentOff : undefined,
           pickupDate: drop?.pickupOrShipDate,
         };
-        await sendReservationReceived(emailInput);
+        // Customer already has the "we got your reservation" page in front of
+        // them after clicking the verify link — no second redundant "received"
+        // email. The next message they get is the baker's approve/decline.
         await sendReservationBakerAlert(emailInput);
       }
     } catch (err) {

@@ -16,6 +16,9 @@ export function getStripe(): Stripe | null {
     ? new Stripe(key, {
         apiVersion: "2026-04-22.dahlia",
         appInfo: { name: "doughbie" },
+        // Required on Cloudflare Workers (no Node http stack). Harmless on
+        // Node — uses fetch() everywhere, which exists on both runtimes.
+        httpClient: Stripe.createFetchHttpClient(),
       })
     : null;
   return cached;

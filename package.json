@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -13,9 +13,13 @@
     "club:link": "node --env-file=.env.local scripts/club-link.mjs",
     "drop:repair": "node --env-file=.env.local scripts/repair-drop-refs.mjs",
     "drop:reset": "node --env-file=.env.local scripts/reset-active-drop.mjs",
-    "test": "node --test --experimental-strip-types"
+    "test": "node --test --experimental-strip-types",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.19.11",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^5.24.0",
     "@stripe/stripe-js": "^9.4.0",
@@ -36,6 +40,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.95.0"
   }
 }

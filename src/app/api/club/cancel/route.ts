@@ -1,7 +1,8 @@
 import "server-only";
 
+import { getMemberByEmail } from "@/lib/catalog";
 import { cancelMember } from "@/sanity/lib/mutations";
-import { verifyClubMemberToken } from "@/lib/club-token";
+import { verifyClubMemberToken, verifyClubToken } from "@/lib/club-token";
 
 export const runtime = "nodejs";
 
@@ -49,19 +50,32 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  let customer = "";
-  let token = "";
+  let form: FormData;
   try {
-    const form = await req.formData();
-    customer = String(form.get("customer") ?? "");
-    token = String(form.get("token") ?? "");
+    form = await req.formData();
   } catch {
     return INVALID;
   }
-  if (!customer || !verifyClubMemberToken(customer, token)) return INVALID;
+  const customer = String(form.get("customer") ?? "");
+  const token = String(form.get("token") ?? "");
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const dropId = String(form.get("dropId") ?? "");
+
+  // Two supported auth modes:
+  //   1. Email-link mode: `customer` + dedicated cancel-token (verifyClubMemberToken)
+  //   2. From the member's /club/[dropId] page: same magic-link token used to
+  //      view picks (email + dropId + token verified by verifyClubToken)
+  let stripeCustomerId: string | null = null;
+  if (customer && verifyClubMemberToken(customer, token)) {
+    stripeCustomerId = customer;
+  } else if (email && dropId && verifyClubToken(email, dropId, token)) {
+    const member = await getMemberByEmail(email, { fresh: true });
+    if (member?.stripeCustomerId) stripeCustomerId = member.stripeCustomerId;
+  }
+  if (!stripeCustomerId) return INVALID;
 
   try {
-    await cancelMember(customer);
+    await cancelMember(stripeCustomerId);
   } catch (err) {
     console.error("[club/cancel] cancelMember failed", err);
     return page(

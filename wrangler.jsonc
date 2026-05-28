@@ -1,0 +1,27 @@
+{
+  // wrangler config for the OpenNext Cloudflare build.
+  //
+  // `main` and `assets.directory` point at OpenNext's build output (created by
+  // `npx opennextjs-cloudflare build`). The `nodejs_compat` flag is REQUIRED —
+  // the app uses node:crypto (admin auth, club tokens) and Buffer.
+  //
+  // Secrets (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SANITY_API_WRITE_TOKEN,
+  // CLUB_LINK_SECRET, BAKER_TOKEN, RESEND_API_KEY, FROM_EMAIL) are set via
+  // `wrangler secret put <NAME>` or the dashboard — NOT here.
+  //
+  // Public NEXT_PUBLIC_* vars are inlined at build time. They need to be in
+  // the build environment, set in the Cloudflare dashboard under
+  // Settings → Variables & Secrets before each deploy.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "doughbie-app",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-03-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

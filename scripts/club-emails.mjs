@@ -12,10 +12,7 @@
 import { createHmac } from "node:crypto";
 
 import { createClient as createSanityClient } from "next-sanity";
-import Stripe from "stripe";
 
-const stripeKey = process.env.STRIPE_SECRET_KEY;
-const priceId = process.env.STRIPE_BREAD_CLUB_PRICE_ID;
 const secret = process.env.CLUB_LINK_SECRET;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const sanityProjectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
@@ -25,10 +22,8 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const fromEmail = process.env.FROM_EMAIL || "Doughbie <onboarding@resend.dev>";
 const bakeryName = "Doughbie";
 
-if (!stripeKey || !priceId || !secret) {
-  console.error(
-    "Missing STRIPE_SECRET_KEY / STRIPE_BREAD_CLUB_PRICE_ID / CLUB_LINK_SECRET in .env.local",
-  );
+if (!secret) {
+  console.error("Missing CLUB_LINK_SECRET in .env.local");
   process.exit(1);
 }
 
@@ -103,38 +98,20 @@ function sign(email) {
 }
 
 async function listActiveMemberEmails() {
-  if (sanity) {
-    const cached = await sanity.fetch(
-      `*[_type == "member" && subscriptionStatus in ["active", "trialing"]]{ customerEmail }`,
-    );
-    const emails = (cached ?? [])
-      .map((m) => m.customerEmail)
-      .filter((e) => typeof e === "string" && e.includes("@"));
-    if (emails.length > 0) {
-      console.error(`Found ${emails.length} member(s) in Sanity cache.`);
-      return emails;
-    }
+  if (!sanity) {
     console.error(
-      "Sanity member cache is empty — falling back to live Stripe query. " +
-        "(Once the Stripe webhook fires for a subscription event the cache will populate.)",
+      "Sanity is not configured — set NEXT_PUBLIC_SANITY_PROJECT_ID in .env.local. " +
+        "Members live in Sanity now (no Stripe-subscription fallback).",
     );
+    process.exit(1);
   }
-  const stripe = new Stripe(stripeKey);
-  const subs = stripe.subscriptions.list({
-    price: priceId,
-    status: "active",
-    expand: ["data.customer"],
-    limit: 100,
-  });
-  const emails = [];
-  for await (const sub of subs) {
-    const customer = sub.customer;
-    const email =
-      typeof customer === "object" && customer && "email" in customer
-        ? customer.email
-        : null;
-    if (email) emails.push(email);
-  }
+  const rows = await sanity.fetch(
+    `*[_type == "member" && status == "active"]{ customerEmail }`,
+  );
+  const emails = (rows ?? [])
+    .map((m) => m.customerEmail)
+    .filter((e) => typeof e === "string" && e.includes("@"));
+  console.error(`Found ${emails.length} active member(s) in Sanity.`);
   return emails;
 }
 

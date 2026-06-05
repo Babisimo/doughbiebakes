@@ -44,9 +44,6 @@ export function SiteFooter() {
           </div>
           <div className="space-y-2 text-sm">
             <h4 className="display text-lg text-acid-600">Say hi</h4>
-            <a className="block hover:text-acid-600" href={`mailto:${site.email}`}>
-              {site.email}
-            </a>
             <a
               className="block hover:text-acid-600"
               href={site.instagram}

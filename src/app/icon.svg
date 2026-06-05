@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Cream background matches the site's paper color (#fefae0) so the
+       emoji glyph sits on the same warm tone as the storefront. -->
+  <rect width="32" height="32" rx="6" fill="#fefae0"/>
+  <text x="16" y="16" dominant-baseline="central" text-anchor="middle"
+        font-size="22">🍞</text>
+</svg>

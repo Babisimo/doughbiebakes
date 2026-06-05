@@ -265,25 +265,11 @@ export default async function HomePage() {
             </ul>
           </>
         ) : (
-          <div className="nb-card mt-6 p-8">
-            <p className="text-ink-700">
-              No open drop right now. New drops get announced on{" "}
-              <a
-                className="font-bold text-acid-600 underline decoration-2 hover:no-underline"
-                href={site.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Instagram
-              </a>{" "}
-              — or join the{" "}
-              <Link
-                className="font-bold text-acid-600 underline decoration-2 hover:no-underline"
-                href="/bread-club"
-              >
-                Bread Club
-              </Link>{" "}
-              for a standing weekly loaf.
+          <div className="nb-card mt-6 p-8 text-center">
+            <p className="display text-3xl">Welcome 🍞</p>
+            <p className="mt-3 text-ink-700">
+              The first drop is coming soon — check back to see what&apos;s
+              hitting the oven.
             </p>
           </div>
         )}

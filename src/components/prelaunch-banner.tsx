@@ -16,7 +16,7 @@ export function PrelaunchBanner() {
       <a href="/reserve" className="font-bold underline decoration-2 hover:no-underline">
         reserve a loaf
       </a>{" "}
-      — we&apos;ll bake it and you can pay (or just enjoy) at pickup.
+      — we&apos;ll bake it and you can pay at pickup.
     </div>
   );
 }

@@ -103,7 +103,7 @@ export default async function BreadClubPage() {
         </div>
         <p className="mt-1 text-sm text-ink-700">
           {IS_PRELAUNCH
-            ? `Online sign-ups open the moment our Cottage Food Operation registration clears. Email us to claim a founding-member spot — first ${club.foundingSeats} get a bonus loaf in their first delivery.`
+            ? `Sign-ups open the moment our Cottage Food Operation registration clears. Stay tuned.`
             : !enabled
               ? "Online sign-ups open soon — email to grab one of the spots on the waitlist."
               : isFull
@@ -118,10 +118,16 @@ export default async function BreadClubPage() {
           </p>
         ) : null}
         <div className="mt-4">
-          <JoinBreadClub
-            enabled={enabled && !isFull}
-            waitlistHref={waitlistHref}
-          />
+          {IS_PRELAUNCH ? (
+            <span className="btn-ink text-sm pointer-events-none opacity-75">
+              Coming soon
+            </span>
+          ) : (
+            <JoinBreadClub
+              enabled={enabled && !isFull}
+              waitlistHref={waitlistHref}
+            />
+          )}
         </div>
       </div>
 

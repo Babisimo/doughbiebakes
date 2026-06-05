@@ -15,6 +15,7 @@ import {
   getReservationHoldsForDrop,
 } from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
+import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import type { DropStatus } from "@/lib/types";
@@ -58,18 +59,23 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-5xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-20">
           <div className="space-y-6">
             <span className="reveal badge badge-acid">🍞 Home-baked in {site.city}</span>
-            <div className="reveal rounded-3xl panel-acid px-5 py-4 shadow-[var(--shadow-hard)]">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink">
-                🎉 Grand opening
-              </p>
-              <p className="display mt-0.5 text-3xl leading-[1.05] text-ink sm:text-4xl">
-                15% off your first order
-              </p>
-              <p className="mt-2 text-sm font-semibold text-ink">
-                Use code <strong>FOUNDING</strong> at checkout — first 5 orders.
-                Bread Club founding members get a bonus loaf.
-              </p>
-            </div>
+            {/* "Grand opening · 15% off · FOUNDING" panel — paused while the
+                checkout / promo paths are off; reappears the moment
+                NEXT_PUBLIC_LAUNCH_MODE flips to "live". */}
+            {IS_PRELAUNCH ? null : (
+              <div className="reveal rounded-3xl panel-acid px-5 py-4 shadow-[var(--shadow-hard)]">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink">
+                  🎉 Grand opening
+                </p>
+                <p className="display mt-0.5 text-3xl leading-[1.05] text-ink sm:text-4xl">
+                  15% off your first order
+                </p>
+                <p className="mt-2 text-sm font-semibold text-ink">
+                  Use code <strong>FOUNDING</strong> at checkout — first 5 orders.
+                  Bread Club founding members get a bonus loaf.
+                </p>
+              </div>
+            )}
             <h1 className="reveal reveal-2 display text-6xl leading-[0.95] sm:text-7xl md:text-[5.5rem]">
               Real <span className="text-grad-berry">sourdough</span>.
               <span className="block">Dropped weekly.</span>

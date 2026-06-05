@@ -36,10 +36,13 @@ if (!projectId || !token) {
 
 const client = createClient({ projectId, dataset, token, apiVersion, useCdn: false });
 
+// Order matters: Sanity blocks delete-with-references, so children must go
+// before parents. memberCharge → references member (delete first); same for
+// memberSelection's drop ref (we don't touch drops, so it's harmless either way).
 const targets = [
-  { label: "members",           query: `*[_type == "member"]._id` },
-  { label: "memberSelections",  query: `*[_type == "memberSelection"]._id` },
   { label: "memberCharges",     query: `*[_type == "memberCharge"]._id` },
+  { label: "memberSelections",  query: `*[_type == "memberSelection"]._id` },
+  { label: "members",           query: `*[_type == "member"]._id` },
   { label: "reservations",      query: `*[_type == "reservation"]._id` },
   { label: "test-mode orders",  query: `*[_type == "order" && livemode == false]._id` },
 ];

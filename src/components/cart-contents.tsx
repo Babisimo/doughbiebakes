@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/components/cart-provider";
 import { ProductImage } from "@/components/product-image";
 import { type Availability, unavailableLabel } from "@/lib/availability";
+import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { formatPrice } from "@/lib/money";
 import { discountCents, discountedTotalCents } from "@/lib/promo-math";
 import type { Product } from "@/lib/types";
@@ -285,19 +286,30 @@ export function CartContents({
           </Link>
         ) : null}
         <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
-          Local pickup · pay cash or card when you pick up
+          {IS_PRELAUNCH
+            ? "Local pickup only · pay (or just enjoy) at pickup"
+            : "Local pickup · pay cash or card when you pick up"}
         </p>
-        <button
-          type="button"
-          onClick={checkout}
-          disabled={submitting || !canCheckout}
-          className="btn-outline w-full text-sm"
-        >
-          {submitting ? "Redirecting…" : "Pre-order & pay online ＋"}
-        </button>
-        <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
-          Pay now with Stripe · needed for California shipping
-        </p>
+        {/*
+          Stripe "pay online" path is hidden while in pre-launch / friends-only
+          mode — we can't legally take payment until the CFO permit is issued.
+          The Reserve button above remains as the only checkout action.
+        */}
+        {IS_PRELAUNCH ? null : (
+          <>
+            <button
+              type="button"
+              onClick={checkout}
+              disabled={submitting || !canCheckout}
+              className="btn-outline w-full text-sm"
+            >
+              {submitting ? "Redirecting…" : "Pre-order & pay online ＋"}
+            </button>
+            <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
+              Pay now with Stripe · needed for California shipping
+            </p>
+          </>
+        )}
       </aside>
     </div>
   );

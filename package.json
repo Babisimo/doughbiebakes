@@ -13,6 +13,7 @@
     "club:link": "node --env-file=.env.local scripts/club-link.mjs",
     "drop:repair": "node --env-file=.env.local scripts/repair-drop-refs.mjs",
     "drop:reset": "node --env-file=.env.local scripts/reset-active-drop.mjs",
+    "prelaunch:cleanup": "node --env-file=.env.local scripts/prelaunch-cleanup.mjs",
     "test": "node --test --experimental-strip-types",
     "build:cf": "opennextjs-cloudflare build",
     "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo_Black, Caprasimo, Plus_Jakarta_Sans } from "next/font/google";
 
 import { CartProvider } from "@/components/cart-provider";
+import { PrelaunchBanner } from "@/components/prelaunch-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { site } from "@/lib/site";
@@ -53,6 +54,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <CartProvider>
+          <PrelaunchBanner />
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <SiteFooter />

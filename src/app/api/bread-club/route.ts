@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getActiveMemberCount, getMemberByEmail } from "@/lib/catalog";
+import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { site } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
 import { siteUrl } from "@/lib/url";
@@ -15,6 +16,19 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Per-drop $10 charges happen later, when the baker runs a drop.
  */
 export async function POST(req: Request) {
+  // Pre-launch guard — Bread Club card-on-file sign-ups can't run until the
+  // CFO permit clears. The page's UI is already in waitlist mode; this is the
+  // server-side belt-and-suspenders.
+  if (IS_PRELAUNCH) {
+    return Response.json(
+      {
+        error:
+          "Bread Club sign-ups open the moment our Cottage Food Operation registration clears. Email us in the meantime to grab a founding spot.",
+      },
+      { status: 503 },
+    );
+  }
+
   const stripe = getStripe();
   if (!stripe) {
     return Response.json(

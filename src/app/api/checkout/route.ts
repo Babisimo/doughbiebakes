@@ -6,6 +6,7 @@ import {
   getReservationHoldsForDrop,
 } from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
+import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { getPromoByCode, isRedeemable, normalizeCode } from "@/lib/promo";
 import { shippingOptions } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
@@ -57,6 +58,18 @@ async function ensureFoundingCoupon(
 }
 
 export async function POST(request: Request) {
+  // Pre-launch guard: refuse online checkout server-side even if the UI is
+  // somehow bypassed. Friends pre-order through /reserve and pay at pickup.
+  if (IS_PRELAUNCH) {
+    return Response.json(
+      {
+        error:
+          "Online payments aren't open yet — we're in our founding tasting period while our Cottage Food Operation registration finishes. Reserve a loaf for local pickup instead.",
+      },
+      { status: 503 },
+    );
+  }
+
   const stripe = getStripe();
   if (!stripe) {
     return Response.json(

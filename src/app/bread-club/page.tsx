@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { JoinBreadClub } from "@/components/join-bread-club";
 import { getActiveMemberCount, getFoundingMemberCount } from "@/lib/catalog";
+import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 };
 
 export default async function BreadClubPage() {
-  const enabled = Boolean(process.env.STRIPE_SECRET_KEY);
+  // While we're in pre-launch (friends-only) mode, force the waitlist UI
+  // regardless of whether Stripe is wired up. We can't take card-on-file
+  // signups until the CFO permit is issued.
+  const enabled = !IS_PRELAUNCH && Boolean(process.env.STRIPE_SECRET_KEY);
   const club = site.breadClub;
   const memberCount = await getActiveMemberCount({ fresh: true });
   // Demo mode (no Sanity / no cache) -> we can't enforce the cap. Treat the
@@ -98,11 +102,13 @@ export default async function BreadClubPage() {
           </span>
         </div>
         <p className="mt-1 text-sm text-ink-700">
-          {!enabled
-            ? "Online sign-ups open soon — email to grab one of the spots on the waitlist."
-            : isFull
-              ? `All ${club.seats} seats are taken. Hop on the waitlist and we'll text the moment a seat opens.`
-              : `$10 per drop, billed when the drop runs — you're only charged on weeks we bake.`}
+          {IS_PRELAUNCH
+            ? `Online sign-ups open the moment our Cottage Food Operation registration clears. Email us to claim a founding-member spot — first ${club.foundingSeats} get a bonus loaf in their first delivery.`
+            : !enabled
+              ? "Online sign-ups open soon — email to grab one of the spots on the waitlist."
+              : isFull
+                ? `All ${club.seats} seats are taken. Hop on the waitlist and we'll text the moment a seat opens.`
+                : `$10 per drop, billed when the drop runs — you're only charged on weeks we bake.`}
         </p>
         {enabled && !isFull ? (
           <p className="mt-2 text-xs text-ink-500">

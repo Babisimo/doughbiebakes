@@ -137,11 +137,20 @@ Two classes of variable:
 ```powershell
 wrangler secret put STRIPE_SECRET_KEY
 wrangler secret put STRIPE_WEBHOOK_SECRET
+wrangler secret put STRIPE_BREAD_CLUB_PRICE_ID
 wrangler secret put SANITY_API_WRITE_TOKEN
 wrangler secret put CLUB_LINK_SECRET
 wrangler secret put BAKER_TOKEN
 wrangler secret put RESEND_API_KEY
+wrangler secret put FROM_EMAIL
 ```
+
+`FROM_EMAIL` is **required** for outbound email — without it the app falls back
+to `onboarding@resend.dev`, which Resend only delivers to your own account
+address, so email to real customers silently fails. It isn't sensitive, so you
+can set it as a plain **Variable** instead of a secret if you prefer; either way
+it must exist on the Worker. Use a value on your Resend-verified domain, e.g.
+`Doughbie <hello@doughbiebakes.com>`.
 
 Never put secrets in `wrangler.jsonc` `vars` — that file is committed to git.
 

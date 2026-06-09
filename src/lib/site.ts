@@ -19,6 +19,10 @@ export const site = {
   cottageFood: {
     permitNumber: "CFO Class A Permit #PENDING",
     madeIn: "Made in a Home Kitchen",
+    // TEMP: hide the on-site disclosure everywhere while the permit is pending.
+    // Set back to `false` to restore the notice in the footer, About, product,
+    // and Bread Club pages.
+    muted: true,
   },
   /**
    * Bread Club — per-drop billing model. $10 is charged per drop, only on

@@ -131,9 +131,11 @@ export default async function BreadClubPage() {
         </div>
       </div>
 
-      <div className="mt-8 border-t border-ink/15 pt-4">
-        <CottageFoodNotice />
-      </div>
+      {!site.cottageFood.muted && (
+        <div className="mt-8 border-t border-ink/15 pt-4">
+          <CottageFoodNotice />
+        </div>
+      )}
     </div>
   );
 }

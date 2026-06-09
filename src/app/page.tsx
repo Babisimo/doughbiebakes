@@ -388,9 +388,11 @@ export default async function HomePage() {
             and the occasional standing Bread Club order. If a flavor sells out,
             it&apos;ll be back around next time.
           </p>
-          <div className="nb-card-sm mt-4 bg-white/80 p-4 text-ink">
-            <CottageFoodNotice />
-          </div>
+          {!site.cottageFood.muted && (
+            <div className="nb-card-sm mt-4 bg-white/80 p-4 text-ink">
+              <CottageFoodNotice />
+            </div>
+          )}
         </div>
       </section>
     </>

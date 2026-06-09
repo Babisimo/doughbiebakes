@@ -239,9 +239,11 @@ export default async function ClubDropPage({
         </details>
       </div>
 
-      <div className="mt-6 border-t border-ink/15 pt-4">
-        <CottageFoodNotice />
-      </div>
+      {!site.cottageFood.muted && (
+        <div className="mt-6 border-t border-ink/15 pt-4">
+          <CottageFoodNotice />
+        </div>
+      )}
 
       <noscript>
         <p className="mt-4 text-sm text-ink-500">

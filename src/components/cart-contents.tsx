@@ -287,7 +287,7 @@ export function CartContents({
         ) : null}
         <p className="text-center text-[0.65rem] font-semibold uppercase tracking-wide text-ink-500">
           {IS_PRELAUNCH
-            ? "Local pickup only · pay (or just enjoy) at pickup"
+            ? "Local pickup only · pay at pickup"
             : "Local pickup · pay cash or card when you pick up"}
         </p>
         {/*

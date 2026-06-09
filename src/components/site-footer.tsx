@@ -26,9 +26,11 @@ export function SiteFooter() {
               </span>
               {site.name}
             </div>
-            <div className="nb-card-sm p-4">
-              <CottageFoodNotice />
-            </div>
+            {!site.cottageFood.muted && (
+              <div className="nb-card-sm p-4">
+                <CottageFoodNotice />
+              </div>
+            )}
           </div>
           <div className="space-y-2 text-sm">
             <h4 className="display text-lg text-acid-600">Shop</h4>

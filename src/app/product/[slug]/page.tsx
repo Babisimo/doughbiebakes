@@ -150,9 +150,11 @@ export default async function ProductPage({ params }: Props) {
             </p>
           )}
         </div>
-        <div className="border-t border-ink/15 pt-4 md:col-span-2">
-          <CottageFoodNotice />
-        </div>
+        {!site.cottageFood.muted && (
+          <div className="border-t border-ink/15 pt-4 md:col-span-2">
+            <CottageFoodNotice />
+          </div>
+        )}
       </section>
     </div>
   );

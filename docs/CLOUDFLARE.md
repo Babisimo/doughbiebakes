@@ -132,7 +132,8 @@ Two classes of variable:
 | Class | Which vars | Where they go |
 |---|---|---|
 | **Public, build-time** (`NEXT_PUBLIC_*`) | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `NEXT_PUBLIC_SANITY_API_VERSION` | Dashboard → your Worker → **Settings → Variables & Secrets**. Must exist at **build** time (they get inlined into the client bundle). |
-| **Server secrets** | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_BREAD_CLUB_PRICE_ID`, `SANITY_API_WRITE_TOKEN`, `CLUB_LINK_SECRET`, `BAKER_TOKEN`, `RESEND_API_KEY`, `FROM_EMAIL` | Add as **Secrets** (encrypted). Either the dashboard, or CLI: |
+| **Server secrets** | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_BREAD_CLUB_PRICE_ID`, `SANITY_API_WRITE_TOKEN`, `CLUB_LINK_SECRET`, `BAKER_TOKEN`, `RESEND_API_KEY` | Add as **Secrets** (encrypted). Either the dashboard, or CLI: |
+| **Non-secret server var** | `FROM_EMAIL` | Committed to `wrangler.jsonc` → `vars` (see below). |
 
 ```powershell
 wrangler secret put STRIPE_SECRET_KEY
@@ -142,17 +143,30 @@ wrangler secret put SANITY_API_WRITE_TOKEN
 wrangler secret put CLUB_LINK_SECRET
 wrangler secret put BAKER_TOKEN
 wrangler secret put RESEND_API_KEY
-wrangler secret put FROM_EMAIL
 ```
 
 `FROM_EMAIL` is **required** for outbound email — without it the app falls back
 to `onboarding@resend.dev`, which Resend only delivers to your own account
-address, so email to real customers silently fails. It isn't sensitive, so you
-can set it as a plain **Variable** instead of a secret if you prefer; either way
-it must exist on the Worker. Use a value on your Resend-verified domain, e.g.
-`Doughbie <hello@doughbiebakes.com>`.
+address, so email to real customers silently fails.
 
-Never put secrets in `wrangler.jsonc` `vars` — that file is committed to git.
+> **Footgun (this bit us once):** Do **not** set `FROM_EMAIL` as a dashboard-only
+> plaintext **Variable**. `wrangler deploy` (what the CI build runs on every push)
+> treats `wrangler.jsonc` as the source of truth for `vars` and **wipes any
+> plaintext var that isn't in the file** — so a dashboard-set `FROM_EMAIL`
+> silently disappears on the next deploy and customer email breaks again.
+> **Secrets** persist across deploys; plaintext **vars** do not. Because
+> `FROM_EMAIL` isn't sensitive, the fix is to keep it in `wrangler.jsonc` `vars`
+> (already committed), where it survives every deploy:
+
+```jsonc
+// wrangler.jsonc
+"vars": {
+  "FROM_EMAIL": "Doughbie <hello@doughbiebakes.com>"
+}
+```
+
+Never put true **secrets** (API keys, tokens) in `wrangler.jsonc` `vars` — that
+file is committed to git. `FROM_EMAIL` is a public from-address, so it's fine here.
 
 ---
 

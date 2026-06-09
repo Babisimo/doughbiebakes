@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { HeaderCartLink } from "@/components/header-cart-link";
 import { MobileNav } from "@/components/mobile-nav";
+import { NavLinkPending } from "@/components/nav-link-pending";
 import { site } from "@/lib/site";
 
 const nav = [
@@ -32,6 +33,7 @@ export function SiteHeader() {
               className="rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors hover:bg-white/60 hover:text-acid-600"
             >
               {item.label}
+              <NavLinkPending />
             </Link>
           ))}
         </nav>

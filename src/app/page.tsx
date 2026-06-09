@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { Countdown } from "@/components/countdown";
+import { HashScroller } from "@/components/hash-scroller";
 import { PreviousDrops } from "@/components/previous-drops";
 import { ProductImage } from "@/components/product-image";
 import { availabilityOf, buildAvailability, unavailableLabel } from "@/lib/availability";
@@ -54,6 +55,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <HashScroller />
       {/* ============================== HERO ============================== */}
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-5xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center md:py-20">
@@ -374,7 +376,7 @@ export default async function HomePage() {
       </section>
 
       {/* ============================= ABOUT ============================= */}
-      <section id="about" className="mx-auto max-w-5xl px-4 pb-20 sm:px-6">
+      <section id="about" className="mx-auto max-w-5xl scroll-mt-20 px-4 pb-20 sm:px-6">
         <div className="nb-card panel-mono space-y-4 p-8 sm:p-12">
           <h2 className="display text-4xl sm:text-5xl">About {site.name}</h2>
           <p className="text-white/90">

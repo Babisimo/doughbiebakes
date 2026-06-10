@@ -10,11 +10,17 @@
   // via `wrangler secret put <NAME>` or the dashboard — NOT here. Secrets persist
   // across deploys.
   //
-  // FROM_EMAIL is NOT a secret (it's the public sending identity), so it lives in
-  // `vars` below. This is deliberate: a plaintext var set ONLY in the dashboard is
-  // WIPED on the next `wrangler deploy` (the CI deploy treats this file as the
-  // source of truth for vars), whereas secrets persist. Keeping it here means it
-  // survives every deploy.
+  // FROM_EMAIL and SITE_URL are NOT secrets, so they live in `vars` below. This
+  // is deliberate: a plaintext var set ONLY in the dashboard is WIPED on the next
+  // `wrangler deploy` (the CI deploy treats this file as the source of truth for
+  // vars), whereas secrets persist. Keeping them here means they survive deploys.
+  //
+  // SITE_URL is read at RUNTIME by siteUrl() (lib/url.ts) for verify/Stripe/
+  // metadata links. It is intentionally NOT named NEXT_PUBLIC_SITE_URL: public
+  // vars are inlined at BUILD time, so a local `deploy:cf` build would bake in
+  // whatever `.env.local` has (http://localhost:3000) — which is exactly how
+  // reservation verify links ended up pointing at localhost. A plain runtime var
+  // dodges that entirely.
   //
   // Public NEXT_PUBLIC_* vars are inlined at build time. They need to be in
   // the build environment, set in the Cloudflare dashboard under
@@ -25,7 +31,8 @@
   "compatibility_date": "2026-03-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "vars": {
-    "FROM_EMAIL": "Doughbie <hello@doughbiebakes.com>"
+    "FROM_EMAIL": "Doughbie <hello@doughbiebakes.com>",
+    "SITE_URL": "https://www.doughbiebakes.com"
   },
   "assets": {
     "binding": "ASSETS",

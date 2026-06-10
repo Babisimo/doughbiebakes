@@ -102,12 +102,21 @@ export function ReserveForm({
     <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
       <div className="nb-card space-y-4 p-6">
         <h2 className="display text-xl">Your details</h2>
+        {/* Honeypot. The rendered field name is deliberately NOT "company":
+            Chrome ignores autocomplete="off" for org/company-named fields and
+            silently fills them from the user's profile — which trips the bot
+            check and fake-succeeds the submit. "website" isn't an autofill
+            category, and the password-manager opt-outs cover 1Password/LastPass.
+            The JSON key we send stays `company` (see submit()), so the server
+            is unchanged. */}
         <input
           type="text"
-          name="company"
+          name="website"
           tabIndex={-1}
           autoComplete="off"
           aria-hidden="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
           onChange={(e) => {
             company.current = e.target.value;
           }}

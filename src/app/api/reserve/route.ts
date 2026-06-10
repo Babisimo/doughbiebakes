@@ -55,6 +55,15 @@ export async function POST(req: Request) {
 
   // Layer 1 (bot deterrents) — honeypot/timing silent drop: never signal the bot (fake success).
   if (looksLikeBot(honeypot, elapsedMs)) {
+    // The customer-facing response stays a fake success (don't tip off real
+    // bots), but log server-side so a false positive is never invisible again:
+    // a legit submit suppressed here looks identical to "Check your email" with
+    // no reservation and no email ever sent.
+    console.warn(
+      `[reserve] bot-suppressed (${
+        honeypot.trim() !== "" ? `honeypot="${honeypot.slice(0, 40)}"` : "fast-submit"
+      }, elapsedMs=${Number.isFinite(elapsedMs) ? elapsedMs : "n/a"}) — <${email}>`,
+    );
     return Response.json({ ok: true });
   }
 

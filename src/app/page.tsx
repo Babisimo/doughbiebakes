@@ -20,6 +20,7 @@ import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import type { DropStatus } from "@/lib/types";
+import { pickWeeklyFeatured } from "@/lib/weekly-feature";
 
 // Render per-request so "loaves left" reflects inventory immediately.
 export const dynamic = "force-dynamic";
@@ -52,6 +53,8 @@ export default async function HomePage() {
   const holds = await getReservationHoldsForDrop(drop?.id);
   const availability = buildAvailability(drop, memberSelections, now, holds);
   const featured = products.slice(0, 3);
+  // Hero "loaf of the week" — rotates weekly, favors loaves with a photo.
+  const heroProduct = pickWeeklyFeatured(products, now);
 
   return (
     <>
@@ -98,25 +101,33 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="reveal reveal-3 relative">
-            <div className="nb-card nb-interactive overflow-hidden">
+            <Link
+              href={heroProduct ? `/product/${heroProduct.slug}` : "/menu"}
+              aria-label={
+                heroProduct
+                  ? `${heroProduct.name} — see details and ingredients`
+                  : "See the full menu"
+              }
+              className="nb-card nb-interactive block overflow-hidden"
+            >
               <ProductImage
-                src={featured[0]?.imageUrl}
-                alt={featured[0]?.name ?? "Fresh sourdough"}
+                src={heroProduct?.imageUrl}
+                alt={heroProduct?.name ?? "Fresh sourdough"}
                 priority
                 sizes="(min-width: 768px) 32rem, 100vw"
               />
               <div className="flex items-center justify-between gap-2 p-4">
                 <span className="display text-lg">
-                  {featured[0]?.name ?? "Classic"}
+                  {heroProduct?.name ?? "Classic"}
                 </span>
-                {featured[0] ? (
+                {heroProduct ? (
                   <span className="rounded-full bg-ochre px-2.5 py-1 text-sm font-bold text-ink">
-                    {formatPrice(featured[0].priceCents)}
+                    {formatPrice(heroProduct.priceCents)}
                   </span>
                 ) : null}
               </div>
-            </div>
-            <span className="badge badge-flame absolute -left-3 -top-3 rotate-[-6deg]">
+            </Link>
+            <span className="badge badge-flame pointer-events-none absolute -left-3 -top-3 rotate-[-6deg]">
               ✶ no commercial yeast
             </span>
           </div>

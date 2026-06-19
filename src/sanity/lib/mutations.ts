@@ -431,6 +431,93 @@ export async function redeemPromo(code: string): Promise<boolean> {
   }
 }
 
+export type DropFinancialsInput = {
+  dropId: string;
+  dropTitle: string;
+  periodDate?: string;
+  revenueCents: number;
+  listValueCents: number;
+  favorsCents: number;
+  variableCostCents: number;
+  fixedCostCents: number;
+  netProfitCents: number;
+  unitsTotal: number;
+  actualCollectedCents: number;
+  fixedCosts: { name: string; cents: number }[];
+};
+
+/**
+ * Save (or overwrite) a drop's financial snapshot. Deterministic `_id` keyed by
+ * drop, so re-saving the same drop updates in place rather than duplicating.
+ * Returns false when Sanity write isn't configured.
+ */
+export async function upsertDropFinancials(
+  input: DropFinancialsInput,
+): Promise<boolean> {
+  if (!writeClient || !input.dropId) return false;
+  await writeClient.createOrReplace({
+    _id: `dropFinancials.${input.dropId}`,
+    _type: "dropFinancials",
+    drop: { _type: "reference", _ref: input.dropId },
+    dropTitle: input.dropTitle,
+    ...(input.periodDate ? { periodDate: input.periodDate } : {}),
+    revenueCents: input.revenueCents,
+    listValueCents: input.listValueCents,
+    favorsCents: input.favorsCents,
+    variableCostCents: input.variableCostCents,
+    fixedCostCents: input.fixedCostCents,
+    netProfitCents: input.netProfitCents,
+    unitsTotal: input.unitsTotal,
+    actualCollectedCents: input.actualCollectedCents,
+    source: "drop",
+    fixedCosts: input.fixedCosts.map((f) => ({
+      _type: "fixedCostLine",
+      name: f.name,
+      cents: f.cents,
+    })),
+    savedAt: new Date().toISOString(),
+  });
+  return true;
+}
+
+export type ManualFinancialsInput = {
+  title: string;
+  periodDate?: string;
+  revenueCents: number;
+  costCents: number;
+  favorsCents: number;
+  unitsTotal: number;
+};
+
+/**
+ * Create a manual (pre-website) financial entry not tied to any drop. Each call
+ * creates a new document — there's no natural key to dedupe on, so fix mistakes
+ * by deleting the entry in the Studio.
+ */
+export async function createManualDropFinancials(
+  input: ManualFinancialsInput,
+): Promise<boolean> {
+  if (!writeClient || !input.title) return false;
+  const netProfitCents = input.revenueCents - input.costCents;
+  await writeClient.create({
+    _type: "dropFinancials",
+    source: "manual",
+    dropTitle: input.title,
+    ...(input.periodDate ? { periodDate: input.periodDate } : {}),
+    revenueCents: input.revenueCents,
+    listValueCents: input.revenueCents + input.favorsCents,
+    favorsCents: input.favorsCents,
+    variableCostCents: input.costCents,
+    fixedCostCents: 0,
+    netProfitCents,
+    unitsTotal: input.unitsTotal,
+    actualCollectedCents: input.revenueCents,
+    fixedCosts: [],
+    savedAt: new Date().toISOString(),
+  });
+  return true;
+}
+
 type MemberChargeInput = {
   dropId: string;
   stripeCustomerId: string;

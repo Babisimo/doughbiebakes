@@ -54,11 +54,62 @@ export const productType = defineType({
       validation: (rule) => rule.required().integer().min(0),
     }),
     defineField({
+      name: "defaultCostCents",
+      title: "Cost to make (in cents)",
+      type: "number",
+      group: "details",
+      description:
+        "Your variable cost to produce one — ingredients, packaging, etc. e.g. 150 for $1.50. Pre-fills the ROI calculator; safe to leave blank.",
+      validation: (rule) => rule.integer().min(0),
+    }),
+    defineField({
       name: "category",
       title: "Category",
       type: "reference",
       to: [{ type: "category" }],
       group: "details",
+    }),
+    defineField({
+      name: "recipe",
+      title: "Recipe (auto-costing)",
+      type: "array",
+      group: "details",
+      description:
+        "Optional. List the pantry ingredients and how much each loaf uses. When set, the ROI calculator costs this loaf automatically and ignores the flat cost above.",
+      of: [
+        defineArrayMember({
+          type: "object",
+          name: "recipeLine",
+          fields: [
+            defineField({
+              name: "ingredient",
+              title: "Ingredient",
+              type: "reference",
+              to: [{ type: "ingredient" }],
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "qtyPerLoaf",
+              title: "Amount used per loaf",
+              type: "number",
+              description:
+                "In the ingredient's unit (e.g. 550 grams of flour, 1 jalapeño).",
+              validation: (rule) => rule.required().positive(),
+            }),
+          ],
+          preview: {
+            select: {
+              name: "ingredient.name",
+              unit: "ingredient.unit",
+              qty: "qtyPerLoaf",
+            },
+            prepare: ({ name, unit, qty }) => ({
+              title: name ?? "(pick ingredient)",
+              subtitle: `${qty ?? 0}${unit ? ` ${unit}` : ""} / loaf`,
+            }),
+          },
+        }),
+      ],
     }),
     defineField({
       name: "available",

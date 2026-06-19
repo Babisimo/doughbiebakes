@@ -7,11 +7,22 @@ const PRODUCT_FIELDS = groq`
   tagline,
   description,
   priceCents,
+  defaultCostCents,
   "available": coalesce(available, true),
   "category": category->title,
   "imageUrl": image.asset->url,
   ingredients,
-  allergens
+  allergens,
+  "recipe": recipe[]{
+    qtyPerLoaf,
+    "ingredient": ingredient->{
+      "id": _id,
+      name,
+      packagePriceCents,
+      packageQty,
+      unit
+    }
+  }
 `;
 
 export const ALL_PRODUCTS_QUERY = groq`
@@ -46,6 +57,35 @@ export const RECENT_DROPS_QUERY = groq`
   *[_type == "drop" && status != "draft"]
     | order(coalesce(ordersCloseAt, pickupOrShipDate, _createdAt) desc)[0...8] {
     ${DROP_FIELDS}
+  }
+`;
+
+const DROP_FINANCIALS_FIELDS = groq`
+  "id": _id,
+  "dropId": drop._ref,
+  dropTitle,
+  periodDate,
+  "revenueCents": coalesce(revenueCents, 0),
+  "listValueCents": coalesce(listValueCents, 0),
+  "favorsCents": coalesce(favorsCents, 0),
+  "variableCostCents": coalesce(variableCostCents, 0),
+  "fixedCostCents": coalesce(fixedCostCents, 0),
+  "netProfitCents": coalesce(netProfitCents, 0),
+  "unitsTotal": coalesce(unitsTotal, 0),
+  "actualCollectedCents": coalesce(actualCollectedCents, 0),
+  savedAt
+`;
+
+export const ALL_DROP_FINANCIALS_QUERY = groq`
+  *[_type == "dropFinancials"] | order(coalesce(periodDate, savedAt) desc) {
+    ${DROP_FINANCIALS_FIELDS}
+  }
+`;
+
+export const DROP_FINANCIALS_BY_DROP_QUERY = groq`
+  *[_type == "dropFinancials" && drop._ref == $dropId][0]{
+    ${DROP_FINANCIALS_FIELDS},
+    "fixedCosts": fixedCosts[]{ name, "cents": coalesce(cents, 0) }
   }
 `;
 

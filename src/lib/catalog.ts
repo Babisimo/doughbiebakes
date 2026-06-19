@@ -17,6 +17,8 @@ import {
   PRODUCT_BY_SLUG_QUERY,
   PRODUCTS_BY_SLUGS_QUERY,
   RECENT_DROPS_QUERY,
+  ALL_DROP_FINANCIALS_QUERY,
+  DROP_FINANCIALS_BY_DROP_QUERY,
 } from "@/sanity/lib/queries";
 
 import type { MemberSelection } from "./availability";
@@ -30,7 +32,7 @@ import {
 import { coerceStage } from "./fulfillment";
 import { seedDrop, seedPreviousDrops, seedProducts } from "./seed-products";
 import { site } from "./site";
-import type { Drop, Product } from "./types";
+import type { Drop, DropFinancials, Product } from "./types";
 
 /**
  * Catalog data access. When Sanity is configured we read from the Content Lake;
@@ -76,6 +78,8 @@ function normalizeProduct(p: Partial<Product> | null | undefined): Product | nul
     tagline: p.tagline,
     description: p.description,
     priceCents: p.priceCents,
+    defaultCostCents: p.defaultCostCents,
+    recipe: p.recipe,
     available: p.available ?? true,
     category: p.category,
     imageUrl: p.imageUrl,
@@ -112,6 +116,33 @@ export async function getProductsBySlugs(slugs: string[]): Promise<Product[]> {
     return fromSanity.map(normalizeProduct).filter((p): p is Product => p !== null);
   }
   return seedProducts.filter((p) => slugs.includes(p.slug));
+}
+
+/** Every saved drop financial snapshot (for the dashboard). `[]` in demo mode. */
+export async function getAllDropFinancials(
+  opts: FetchOpts = {},
+): Promise<DropFinancials[]> {
+  const rows = await fetchSanity<DropFinancials[]>(
+    ALL_DROP_FINANCIALS_QUERY,
+    {},
+    opts,
+  );
+  return Array.isArray(rows) ? rows : [];
+}
+
+/** The saved snapshot for one drop, or `null`. Used to seed the calculator's
+ * fixed costs across devices. */
+export async function getDropFinancials(
+  dropId: string,
+  opts: FetchOpts = {},
+): Promise<DropFinancials | null> {
+  if (!dropId) return null;
+  const row = await fetchSanity<DropFinancials | null>(
+    DROP_FINANCIALS_BY_DROP_QUERY,
+    { dropId },
+    opts,
+  );
+  return row ?? null;
 }
 
 function normalizeDrop(raw: Drop | null | undefined): Drop | null {

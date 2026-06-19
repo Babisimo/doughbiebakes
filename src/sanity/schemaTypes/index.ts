@@ -2,6 +2,8 @@ import type { SchemaTypeDefinition } from "sanity";
 
 import { categoryType } from "./category";
 import { dropType } from "./drop";
+import { dropFinancialsType } from "./dropFinancials";
+import { ingredientType } from "./ingredient";
 import { memberType } from "./member";
 import { memberSelectionType } from "./memberSelection";
 import { memberChargeType } from "./memberCharge";
@@ -13,7 +15,9 @@ import { reservationType } from "./reservation";
 export const schemaTypes: SchemaTypeDefinition[] = [
   productType,
   categoryType,
+  ingredientType,
   dropType,
+  dropFinancialsType,
   memberType,
   memberSelectionType,
   memberChargeType,

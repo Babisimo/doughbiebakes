@@ -372,3 +372,22 @@ a,
     transform: translateY(0) scale(1);
   }
 }
+
+/* ---- Print / Save-as-PDF ---------------------------------------------------
+   Admin pages add `.no-print` to interactive controls (toggles, buttons,
+   selectors). When printing we drop the site chrome and those controls so the
+   sheet is a clean report the baker can keep on paper or save as a PDF. */
+@media print {
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+  .nb-card {
+    box-shadow: none !important;
+    border: 1px solid #d8d2c4 !important;
+  }
+  body {
+    background: #fff !important;
+  }
+}

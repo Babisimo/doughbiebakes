@@ -30,7 +30,8 @@ export default async function AdminHomePage() {
       </p>
       <h1 className="display mt-1 text-4xl">All admin pages</h1>
       <p className="mt-3 text-ink-700">
-        Everything baker-side, in one place. You'll stay logged in for 30 days.
+        Everything baker-side, in one place. You&apos;ll stay logged in for 30
+        days.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -53,6 +54,28 @@ export default async function AdminHomePage() {
           <h2 className="display text-2xl">Reservations</h2>
           <p className="mt-2 text-sm text-ink-700">
             Review, approve, or deny custom-order requests.
+          </p>
+        </Link>
+
+        <Link
+          href="/admin/calculator"
+          className="nb-card nb-interactive block p-5"
+        >
+          <h2 className="display text-2xl">ROI &amp; profitability</h2>
+          <p className="mt-2 text-sm text-ink-700">
+            Cost out a drop, track favors to regulars, and see margin, ROI, and
+            break-even.
+          </p>
+        </Link>
+
+        <Link
+          href="/admin/dashboard"
+          className="nb-card nb-interactive block p-5"
+        >
+          <h2 className="display text-2xl">Financial dashboard</h2>
+          <p className="mt-2 text-sm text-ink-700">
+            Weekly &amp; monthly revenue, cost, and profit across your saved
+            drops.
           </p>
         </Link>
 

@@ -83,9 +83,10 @@ export default async function HomePage() {
               <span className="block">Dropped weekly.</span>
             </h1>
             <p className="reveal reveal-3 max-w-prose text-lg text-ink-700">
-              Naturally leavened and lovingly obsessed over. New flavors hit the
-              feed every weekend — it&apos;s giving artisanal, it&apos;s giving
-              limited drop, and yeah, it slaps. Don&apos;t sleep on it. 🍞✨
+              Every loaf starts with our own sourdough starter, fed by hand and
+              slow-fermented for that deep, real flavor. We shape each small batch
+              by hand and drop fresh loaves every weekend. Set your alarm — they
+              lowkey sell out quick. 🥖
             </p>
             <div className="reveal reveal-4 flex flex-wrap gap-3">
               <Link href="#current-drop" className="btn-acid text-sm">

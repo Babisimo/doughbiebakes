@@ -31,6 +31,7 @@ export type CalculatorProps = {
   drops: { id: string; title: string }[];
   seedLines: SeedLine[];
   actualCollectedCents: number;
+  actualFavorsCents: number;
   savedFixedCosts: FixedCost[] | null;
 };
 
@@ -203,6 +204,7 @@ export function ProfitabilityCalculator({
   drops,
   seedLines,
   actualCollectedCents,
+  actualFavorsCents,
   savedFixedCosts,
 }: CalculatorProps) {
   const router = useRouter();
@@ -406,12 +408,18 @@ export function ProfitabilityCalculator({
         <Metric label="ROI" value={pct(result.roiRatio)} valueClass={profitTone} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <Metric label="Gross margin" value={pct(result.grossMarginRatio)} small />
         <Metric
           label="Favors / discounts given"
           value={formatPrice(result.favorsCents)}
           hint={`At full price these loaves are worth ${formatPrice(result.listValueCents)}.`}
+          small
+        />
+        <Metric
+          label="Favors given (actual)"
+          value={formatPrice(actualFavorsCents)}
+          hint="Real discounts handed out — from the per-loaf prices on actual orders & in-person sales."
           small
         />
         <Metric

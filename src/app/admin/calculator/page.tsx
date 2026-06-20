@@ -13,6 +13,7 @@ import {
   getMemberSelectionsForDrop,
   getPendingReservationCountForDrop,
 } from "@/lib/catalog";
+import { actualFavorsCents } from "@/lib/favors";
 import { productCostCents } from "@/lib/profitability";
 import { ProfitabilityCalculator } from "./calculator-client";
 
@@ -90,6 +91,11 @@ export default async function CalculatorPage({ searchParams }: Props) {
     };
   });
 
+  const listBySlug = new Map(
+    drop.lineItems.map((li) => [li.product.slug, li.product.priceCents] as const),
+  );
+  const favorsActualCents = actualFavorsCents([...orders, ...reservations], listBySlug);
+
   const actualCollectedCents =
     orders.reduce((s, o) => s + o.totalCents, 0) +
     reservations.reduce((s, r) => s + r.totalCents, 0) +
@@ -111,6 +117,7 @@ export default async function CalculatorPage({ searchParams }: Props) {
           drops={drops}
           seedLines={seedLines}
           actualCollectedCents={actualCollectedCents}
+          actualFavorsCents={favorsActualCents}
           savedFixedCosts={saved?.fixedCosts ?? null}
         />
       </div>

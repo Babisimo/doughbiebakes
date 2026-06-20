@@ -52,11 +52,11 @@ type LineState = {
   components: ClientComponent[];
 };
 
-// Units are intentionally NOT persisted — they always reflect live actual
-// sales from the server. Only price/cost overrides stick per drop.
+// Units and the flat cost are intentionally NOT persisted — they always reflect
+// live data from the server (actual sales; the product's current "cost to make"
+// from the Studio). Only the sale-price what-if and itemized build stick.
 type SavedLine = {
   salePriceCents: number;
-  manualCostCents: number;
   components: CostComponent[];
 };
 type Persisted = { lines: Record<string, SavedLine>; fixed: FixedCost[] };
@@ -92,7 +92,9 @@ function initialLines(dropId: string, seedLines: SeedLine[]): LineState[] {
       planned: s.planned,
       listPriceCents: s.listPriceCents,
       salePriceCents: o?.salePriceCents ?? s.listPriceCents,
-      manualCostCents: o?.manualCostCents ?? s.defaultCostCents,
+      // Always seed from the product's live "cost to make" — never a stale
+      // saved value. To make a cost stick, set it on the product in the Studio.
+      manualCostCents: s.defaultCostCents,
       components: withIds(o?.components),
     };
   });
@@ -240,7 +242,6 @@ export function ProfitabilityCalculator({
           l.slug,
           {
             salePriceCents: l.salePriceCents,
-            manualCostCents: l.manualCostCents,
             // Strip client-only ids before saving.
             components: l.components.map((c) => ({
               name: c.name,

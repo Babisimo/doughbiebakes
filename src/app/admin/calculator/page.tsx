@@ -83,8 +83,11 @@ export default async function CalculatorPage({ searchParams }: Props) {
       slug: li.product.slug,
       name: li.product.name,
       sold,
-      // Default to actual sold; fall back to the planned quantity pre-sales.
-      units: sold > 0 ? sold : li.quantity,
+      // Planned quantity on the drop — shown as a reference hint.
+      planned: li.quantity,
+      // Default to what has ACTUALLY sold so far (0 until a sale lands), so the
+      // ROI reflects real current sales while the drop is still open.
+      units: sold,
       listPriceCents: li.product.priceCents,
       // Hybrid cost: recipe-from-pantry when set, else the flat field.
       defaultCostCents: productCostCents(li.product),

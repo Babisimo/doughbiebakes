@@ -22,6 +22,7 @@ type SeedLine = {
   listPriceCents: number;
   defaultCostCents: number;
   sold: number;
+  planned: number;
 };
 
 export type CalculatorProps = {
@@ -41,6 +42,9 @@ type LineState = {
   slug: string;
   name: string;
   units: number;
+  /** Actually-sold count and planned drop quantity — reference hints only. */
+  sold: number;
+  planned: number;
   listPriceCents: number;
   salePriceCents: number;
   /** Flat cost used only when there are no itemized components. */
@@ -48,8 +52,9 @@ type LineState = {
   components: ClientComponent[];
 };
 
+// Units are intentionally NOT persisted — they always reflect live actual
+// sales from the server. Only price/cost overrides stick per drop.
 type SavedLine = {
-  units: number;
   salePriceCents: number;
   manualCostCents: number;
   components: CostComponent[];
@@ -81,7 +86,10 @@ function initialLines(dropId: string, seedLines: SeedLine[]): LineState[] {
     return {
       slug: s.slug,
       name: s.name,
-      units: o?.units ?? s.units,
+      // Always seed from live actual sales — never a stale saved number.
+      units: s.units,
+      sold: s.sold,
+      planned: s.planned,
       listPriceCents: s.listPriceCents,
       salePriceCents: o?.salePriceCents ?? s.listPriceCents,
       manualCostCents: o?.manualCostCents ?? s.defaultCostCents,
@@ -231,7 +239,6 @@ export function ProfitabilityCalculator({
         lines.map((l) => [
           l.slug,
           {
-            units: l.units,
             salePriceCents: l.salePriceCents,
             manualCostCents: l.manualCostCents,
             // Strip client-only ids before saving.
@@ -303,7 +310,10 @@ export function ProfitabilityCalculator({
           periodDate: dropDate,
           revenueCents: result.revenueCents,
           listValueCents: result.listValueCents,
-          favorsCents: result.favorsCents,
+          // Save the REAL favors handed out (from actual per-item prices), so
+          // the financial dashboard reflects true discounts, not the modeled
+          // what-if from the editable sale-price column.
+          favorsCents: actualFavorsCents,
           variableCostCents: result.variableCostCents,
           fixedCostCents: result.fixedCostCents,
           netProfitCents: result.netProfitCents,
@@ -479,6 +489,9 @@ export function ProfitabilityCalculator({
                             }
                             className="w-16 rounded-lg border border-ink/20 bg-white px-2 py-1 text-right text-sm"
                           />
+                          <span className="mt-1 block text-[10px] text-ink-500">
+                            {l.sold} sold · {l.planned} planned
+                          </span>
                         </td>
                         <td className="px-3 py-3 text-ink-500">
                           {formatPrice(l.listPriceCents)}

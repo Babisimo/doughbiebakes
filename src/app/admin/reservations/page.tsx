@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { InPersonSaleForm, type SaleDrop } from "@/components/in-person-sale-form";
 import { ReservationActions } from "@/components/reservation-actions";
 import { getAdminSession } from "@/lib/admin-auth";
+import { getDropsView } from "@/lib/catalog";
 import { formatPrice } from "@/lib/money";
 import { sanityClient } from "@/sanity/client";
 import { RESERVATIONS_QUERY } from "@/sanity/lib/queries";
@@ -23,6 +25,7 @@ type Row = {
   customerPhone: string;
   dropTitle?: string;
   status: "pending" | "confirmed" | "declined";
+  channel?: "online" | "in-person";
   totalCents: number;
   createdAt: string;
   items: { productName: string; quantity: number }[];
@@ -38,9 +41,25 @@ export default async function AdminReservationsPage() {
     ? await fresh.fetch<Row[]>(RESERVATIONS_QUERY, {}, { cache: "no-store" })
     : [];
 
+  const { current, previous } = await getDropsView({ fresh: true });
+  const saleDrops: SaleDrop[] = [current, ...previous]
+    .filter((d): d is NonNullable<typeof d> => d !== null)
+    .map((d) => ({
+      id: d.id,
+      title: d.title,
+      lines: d.lineItems.map((li) => ({
+        productSlug: li.product.slug,
+        productName: li.product.name,
+        listPriceCents: li.product.priceCents,
+      })),
+    }));
+
   return (
     <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <h1 className="display text-4xl">Pickup reservations</h1>
+      <div className="mt-4">
+        <InPersonSaleForm drops={saleDrops} />
+      </div>
       {rows.length === 0 ? (
         <p className="mt-6 text-ink-700">No reservations yet.</p>
       ) : (
@@ -53,6 +72,9 @@ export default async function AdminReservationsPage() {
                   <span className={`badge ${r.status === "pending" ? "badge-acid" : r.status === "confirmed" ? "badge-sage" : "badge-flame"}`}>
                     {r.status}
                   </span>
+                  {r.channel === "in-person" ? (
+                    <span className="badge badge-sage">in-person</span>
+                  ) : null}
                 </p>
                 <p className="text-sm text-ink-700">
                   {r.customerEmail} · {r.customerPhone} ·{" "}

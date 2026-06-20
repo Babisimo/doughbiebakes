@@ -156,7 +156,7 @@ export const RESERVATIONS_QUERY = groq`
   *[_type == "reservation" && status != "unverified"] | order(
     select(status == "pending" => 0, 1) asc, createdAt desc
   ){
-    "id": _id, customerName, customerEmail, customerPhone,
+    "id": _id, customerName, customerEmail, customerPhone, channel,
     "dropTitle": drop->title, status, totalCents, createdAt, decidedAt,
     promoCode, promoPercentOff, discountedTotalCents,
     items[]{ productSlug, productName, quantity, priceCents }

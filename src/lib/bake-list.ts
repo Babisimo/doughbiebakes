@@ -4,6 +4,9 @@ export type BakeListItem = {
   productSlug: string;
   productName: string;
   quantity: number;
+  /** Charged unit price in cents. Present on order/reservation items;
+   * absent on member selections (used for favor math, optional everywhere). */
+  priceCents?: number;
 };
 
 export type BakeOrderShipAddress = {

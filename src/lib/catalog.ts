@@ -388,10 +388,12 @@ function normItems(items: unknown): BakeListItem[] {
   return items.map((it) => {
     const o = (it ?? {}) as Record<string, unknown>;
     const q = Number(o.quantity);
+    const p = Number(o.priceCents);
     return {
       productSlug: typeof o.productSlug === "string" ? o.productSlug : "",
       productName: typeof o.productName === "string" ? o.productName : "",
       quantity: Number.isFinite(q) ? q : 0,
+      ...(Number.isFinite(p) ? { priceCents: p } : {}),
     };
   });
 }

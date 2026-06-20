@@ -175,7 +175,7 @@ export const LIVE_ORDERS_FOR_DROP_QUERY = groq`
       fulfillment,
       "shipAddress": shipAddress{ line1, line2, city, state, postalCode },
       totalCents,
-      "items": items[]{ productSlug, productName, quantity }
+      "items": items[]{ productSlug, productName, quantity, priceCents }
     }`;
 
 // Confirmed reservations for one drop, oldest first. Pending/declined are
@@ -189,7 +189,7 @@ export const CONFIRMED_RESERVATIONS_FOR_DROP_QUERY = groq`
       "customerName": customerName,
       "customerPhone": customerPhone,
       totalCents,
-      "items": items[]{ productSlug, productName, quantity }
+      "items": items[]{ productSlug, productName, quantity, priceCents }
     }`;
 
 // Heads-up count only — pending reservations the baker hasn't decided yet.

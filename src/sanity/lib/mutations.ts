@@ -232,6 +232,48 @@ export async function createReservation(input: {
 }
 
 /**
+ * Create a hand-logged in-person sale as an already-confirmed reservation
+ * (channel "in-person"). Name required; email/phone optional. Decrements drop
+ * stock like a normal confirm. Best-effort decrement: if it throws, the doc is
+ * still authoritative — log a greppable signal (mirrors decideReservation).
+ */
+export async function createInPersonSale(input: {
+  dropId: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  items: ReservationItemInput[];
+  totalCents: number;
+}): Promise<string | null> {
+  if (!writeClient || !input.dropId) return null;
+  const now = new Date().toISOString();
+  const email = input.customerEmail?.trim().toLowerCase();
+  const doc = await writeClient.create({
+    _type: "reservation",
+    channel: "in-person",
+    customerName: input.customerName,
+    ...(email ? { customerEmail: email } : {}),
+    ...(input.customerPhone ? { customerPhone: input.customerPhone } : {}),
+    drop: { _type: "reference", _ref: input.dropId },
+    items: input.items.map((i) => ({ _type: "reservationItem", ...i })),
+    totalCents: input.totalCents,
+    status: "confirmed",
+    createdAt: now,
+    decidedAt: now,
+    fulfillmentStatus: "new",
+  });
+  try {
+    await decrementDropQuantities(
+      input.dropId,
+      input.items.map((i) => ({ slug: i.productSlug, quantity: i.quantity })),
+    );
+  } catch (err) {
+    console.error("[in-person] SALE SAVED BUT STOCK NOT DECREMENTED", doc._id, err);
+  }
+  return doc._id;
+}
+
+/**
  * Atomically transition a reservation only if it is still `fromStatus`
  * (fetch current `_rev`, patch with `ifRevisionId`). Returns true if THIS
  * call performed the transition; false if it was already decided / lost the

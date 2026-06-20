@@ -20,13 +20,25 @@ export const reservationType = defineType({
       name: "customerEmail",
       title: "Customer email",
       type: "string",
-      validation: (rule) => rule.required().email(),
+      validation: (rule) => rule.email(),
     }),
     defineField({
       name: "customerPhone",
       title: "Customer phone",
       type: "string",
-      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "channel",
+      title: "Channel",
+      type: "string",
+      options: {
+        list: [
+          { title: "Online", value: "online" },
+          { title: "In-person (hand-logged)", value: "in-person" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "online",
     }),
     defineField({
       name: "drop",

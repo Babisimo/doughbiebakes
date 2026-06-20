@@ -65,7 +65,7 @@ export default async function CalculatorPage({ searchParams }: Props) {
       getConfirmedReservationsForDrop(drop.id, { fresh: true }),
       getPendingReservationCountForDrop(drop.id, { fresh: true }),
       getMemberChargesForDrop(drop.id, { fresh: true }),
-      getDropFinancials(drop.id, { fresh: true }),
+      getDropFinancials(drop.id),
     ]);
 
   const view = buildBakeListView({

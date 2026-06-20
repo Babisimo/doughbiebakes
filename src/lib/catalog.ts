@@ -1,6 +1,7 @@
 import "server-only";
 
 import { sanityClient } from "@/sanity/client";
+import { writeToken } from "@/sanity/env";
 import {
   ACTIVE_MEMBER_COUNT_QUERY,
   ACTIVE_MEMBERS_QUERY,
@@ -46,6 +47,19 @@ import type { Drop, DropFinancials, Product } from "./types";
 // cleverly-cached. `freshClient` is kept as an explicit non-CDN handle for
 // freshness-critical reads (Bread Club window, bake list, seat cap).
 const freshClient = sanityClient?.withConfig({ useCdn: false }) ?? null;
+
+// Authenticated, server-only read client. Some document types (e.g.
+// `dropFinancials`) are intentionally NOT readable without a token — financials
+// are sensitive — so the public/tokenless client returns nothing for them.
+// Admin reads of those go through this. `null` when no write token is set.
+const authedClient =
+  writeToken ? sanityClient?.withConfig({ token: writeToken, useCdn: false }) ?? null : null;
+
+function fetchAuthed<T>(query: string, params: Record<string, unknown> = {}) {
+  const client = authedClient ?? sanityClient;
+  if (!client) return null;
+  return client.fetch<T>(query, params, { cache: "no-store" as const });
+}
 
 type FetchOpts = {
   /** Read straight from the live Content Lake (skip the Sanity CDN *and* the
@@ -119,14 +133,9 @@ export async function getProductsBySlugs(slugs: string[]): Promise<Product[]> {
 }
 
 /** Every saved drop financial snapshot (for the dashboard). `[]` in demo mode. */
-export async function getAllDropFinancials(
-  opts: FetchOpts = {},
-): Promise<DropFinancials[]> {
-  const rows = await fetchSanity<DropFinancials[]>(
-    ALL_DROP_FINANCIALS_QUERY,
-    {},
-    opts,
-  );
+export async function getAllDropFinancials(): Promise<DropFinancials[]> {
+  // Token-bearing read: dropFinancials isn't publicly readable.
+  const rows = await fetchAuthed<DropFinancials[]>(ALL_DROP_FINANCIALS_QUERY, {});
   return Array.isArray(rows) ? rows : [];
 }
 
@@ -134,13 +143,12 @@ export async function getAllDropFinancials(
  * fixed costs across devices. */
 export async function getDropFinancials(
   dropId: string,
-  opts: FetchOpts = {},
 ): Promise<DropFinancials | null> {
   if (!dropId) return null;
-  const row = await fetchSanity<DropFinancials | null>(
+  // Token-bearing read: dropFinancials isn't publicly readable.
+  const row = await fetchAuthed<DropFinancials | null>(
     DROP_FINANCIALS_BY_DROP_QUERY,
     { dropId },
-    opts,
   );
   return row ?? null;
 }

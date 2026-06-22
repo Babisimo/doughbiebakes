@@ -63,3 +63,17 @@ export function actualFavorsCents(
   }
   return favors;
 }
+
+/**
+ * What a reservation actually collected: the explicit `collectedCents` override
+ * when set, otherwise the reserved `totalCents`. A `$0` override is honored
+ * (a loaf reserved for yourself), so only a non-number falls back.
+ */
+export function reservationCollectedCents(r: {
+  collectedCents?: number | null;
+  totalCents: number;
+}): number {
+  return typeof r.collectedCents === "number" && Number.isFinite(r.collectedCents)
+    ? r.collectedCents
+    : r.totalCents;
+}

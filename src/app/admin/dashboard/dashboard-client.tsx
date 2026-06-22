@@ -236,6 +236,7 @@ export function DashboardClient({ rows }: { rows: DropFinancials[] }) {
                     <th className="px-3 py-2 text-right">Revenue</th>
                     <th className="px-3 py-2 text-right">Cost</th>
                     <th className="px-3 py-2 text-right">Profit</th>
+                    <th className="px-3 py-2 text-right">Favors</th>
                     <th className="px-5 py-2 text-right">Units</th>
                   </tr>
                 </thead>
@@ -253,6 +254,15 @@ export function DashboardClient({ rows }: { rows: DropFinancials[] }) {
                         className={`px-3 py-2 text-right font-semibold ${tone(d.netProfitCents)}`}
                       >
                         {formatPrice(d.netProfitCents)}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        {d.favorsCents > 0 ? (
+                          <span className="font-semibold text-flame-700">
+                            {formatPrice(d.favorsCents)}
+                          </span>
+                        ) : (
+                          <span className="text-ink-400">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-2 text-right">{d.unitsTotal}</td>
                     </tr>

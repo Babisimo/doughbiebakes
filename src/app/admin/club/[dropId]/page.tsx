@@ -4,9 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { buildBakeListView } from "@/lib/bake-list";
 import { getAdminSession } from "@/lib/admin-auth";
 import {
-  getActiveDrop,
   getActiveMembers,
   getConfirmedReservationsForDrop,
+  getDropById,
   getLiveOrdersForDrop,
   getMemberSelectionsForDrop,
   getPendingReservationCountForDrop,
@@ -94,8 +94,11 @@ export default async function BakeListPage({
     redirect(`/admin/login?next=/admin/club/${encodeURIComponent(dropId)}`);
   }
 
-  const drop = await getActiveDrop({ fresh: true });
-  if (!drop || drop.id !== dropId) notFound();
+  // Fetch the drop by id, not by "is it the active drop": the bake list must
+  // stay open after the order window's timer closes. A drop being over doesn't
+  // close its bake list — the baker still has to bake and fulfill those orders.
+  const drop = await getDropById(dropId, { fresh: true });
+  if (!drop) notFound();
 
   const [selections, orders, reservations, pendingReservationCount, activeMembers] =
     await Promise.all([

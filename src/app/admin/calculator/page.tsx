@@ -13,7 +13,7 @@ import {
   getMemberSelectionsForDrop,
   getPendingReservationCountForDrop,
 } from "@/lib/catalog";
-import { actualFavorsCents } from "@/lib/favors";
+import { actualFavorsCents, reservationCollectedCents } from "@/lib/favors";
 import { productCostCents } from "@/lib/profitability";
 import { ProfitabilityCalculator } from "./calculator-client";
 
@@ -101,7 +101,7 @@ export default async function CalculatorPage({ searchParams }: Props) {
 
   const actualCollectedCents =
     orders.reduce((s, o) => s + o.totalCents, 0) +
-    reservations.reduce((s, r) => s + r.totalCents, 0) +
+    reservations.reduce((s, r) => s + reservationCollectedCents(r), 0) +
     charges
       .filter((c) => c.status === "paid")
       .reduce((s, c) => s + c.amountCents, 0);

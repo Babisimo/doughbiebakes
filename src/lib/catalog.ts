@@ -489,6 +489,7 @@ export async function getConfirmedReservationsForDrop(
         customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : "",
         items: normItems(r.items),
         totalCents: Number.isFinite(tc) ? tc : 0,
+        ...(typeof r.collectedCents === "number" ? { collectedCents: r.collectedCents } : {}),
       });
     });
   } catch (err) {

@@ -70,6 +70,13 @@ export const reservationType = defineType({
       ],
     }),
     defineField({ name: "totalCents", title: "Total due at pickup (cents)", type: "number", validation: (r) => r.required().integer().min(0) }),
+    defineField({
+      name: "collectedCents",
+      title: "Actually collected (cents)",
+      type: "number",
+      description: "What was really taken in, if different from the total due. Blank = same as total.",
+      validation: (r) => r.integer().min(0),
+    }),
     defineField({ name: "promoCode", title: "Promo code", type: "string", readOnly: true }),
     defineField({ name: "promoPercentOff", title: "Promo % off", type: "number", readOnly: true }),
     defineField({ name: "discountedTotalCents", title: "Discounted total (cents)", type: "number", readOnly: true }),

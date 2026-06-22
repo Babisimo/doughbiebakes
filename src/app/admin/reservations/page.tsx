@@ -23,10 +23,12 @@ type Row = {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  dropId?: string;
   dropTitle?: string;
   status: "pending" | "confirmed" | "declined";
   channel?: "online" | "in-person";
   totalCents: number;
+  collectedCents?: number;
   createdAt: string;
   items: { productName: string; quantity: number }[];
   promoCode?: string;

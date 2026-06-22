@@ -157,7 +157,7 @@ export const RESERVATIONS_QUERY = groq`
     select(status == "pending" => 0, 1) asc, createdAt desc
   ){
     "id": _id, customerName, customerEmail, customerPhone, channel,
-    "dropTitle": drop->title, status, totalCents, createdAt, decidedAt,
+    "dropId": drop->_id, "dropTitle": drop->title, status, totalCents, collectedCents, createdAt, decidedAt,
     promoCode, promoPercentOff, discountedTotalCents,
     items[]{ productSlug, productName, quantity, priceCents }
   }`;
@@ -189,6 +189,7 @@ export const CONFIRMED_RESERVATIONS_FOR_DROP_QUERY = groq`
       "customerName": customerName,
       "customerPhone": customerPhone,
       totalCents,
+      collectedCents,
       "items": items[]{ productSlug, productName, quantity, priceCents }
     }`;
 

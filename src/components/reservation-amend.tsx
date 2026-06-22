@@ -57,6 +57,10 @@ export function ReservationAmend({
 
   // Actually-collected input (cents). Seeded from the override or the total.
   const [collected, setCollected] = useState<number>(collectedCents ?? totalCents);
+  // True once the baker explicitly types a collected amount (or a pre-existing
+  // override was loaded). Until then, the field tracks the live recomputed total.
+  const [collectedTouched, setCollectedTouched] = useState<boolean>(collectedCents != null);
+  const effectiveCollected = collectedTouched ? collected : newTotal;
 
   async function save() {
     setBusy(true);
@@ -75,7 +79,7 @@ export function ReservationAmend({
         };
       });
       // Equal to the recomputed total ⇒ clear the override (null) for clean data.
-      const collectedCentsPayload = collected === newTotal ? null : collected;
+      const collectedCentsPayload = effectiveCollected === newTotal ? null : effectiveCollected;
 
       const res = await fetch(
         `/api/admin/reservations/${reservationId}/amend`,
@@ -163,8 +167,11 @@ export function ReservationAmend({
             type="number"
             min={0}
             step="0.01"
-            value={dollars(collected)}
-            onChange={(e) => setCollected(toCents(e.target.value))}
+            value={dollars(effectiveCollected)}
+            onChange={(e) => {
+              setCollected(toCents(e.target.value));
+              setCollectedTouched(true);
+            }}
             className="ml-1 w-24 rounded-lg border border-ink/20 bg-white px-2 py-1 text-right"
           />
         </label>

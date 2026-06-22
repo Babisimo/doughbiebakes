@@ -274,6 +274,47 @@ export async function createInPersonSale(input: {
 }
 
 /**
+ * Amend a reservation's pricing after the fact: overwrite item prices + total
+ * and/or set the actually-collected override. Quantities/status/stock/buyer are
+ * never touched here. `collectedCents: null` clears the override (reverts to
+ * total). Items are rewritten wholesale because reservation items carry no
+ * array `_key`. Returns false when the write client is unconfigured.
+ */
+export async function updateReservationPricing(
+  id: string,
+  input: {
+    items?: ReservationItemInput[];
+    totalCents?: number;
+    collectedCents?: number | null;
+  },
+): Promise<boolean> {
+  if (!writeClient || !id) return false;
+  const set: Record<string, unknown> = {};
+  const unset: string[] = [];
+
+  if (input.items && typeof input.totalCents === "number") {
+    set.items = input.items.map((i) => ({ _type: "reservationItem", ...i }));
+    set.totalCents = input.totalCents;
+  }
+  if (input.collectedCents === null) {
+    unset.push("collectedCents");
+  } else if (typeof input.collectedCents === "number") {
+    set.collectedCents = input.collectedCents;
+  }
+
+  try {
+    let patch = writeClient.patch(id);
+    if (Object.keys(set).length > 0) patch = patch.set(set);
+    if (unset.length > 0) patch = patch.unset(unset);
+    await patch.commit({ autoGenerateArrayKeys: false });
+    return true;
+  } catch (err) {
+    console.error("[reservations] amend pricing failed", id, err);
+    return false;
+  }
+}
+
+/**
  * Atomically transition a reservation only if it is still `fromStatus`
  * (fetch current `_rev`, patch with `ifRevisionId`). Returns true if THIS
  * call performed the transition; false if it was already decided / lost the

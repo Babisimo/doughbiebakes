@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAdminSession } from "@/lib/admin-auth";
-import { getActiveDrop } from "@/lib/catalog";
+import { getDropsView } from "@/lib/catalog";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -20,8 +20,11 @@ export default async function AdminHomePage() {
     redirect("/admin/login?next=/admin");
   }
 
-  // Surface the active drop so the bake-list link is one click.
-  const drop = await getActiveDrop({ fresh: true });
+  // Surface a drop so the bake-list link is one click. Prefer the active drop,
+  // but fall back to the most recently-ended one — its bake list stays open
+  // (and useful) after the order window closes.
+  const { current, previous } = await getDropsView({ fresh: true });
+  const drop = current ?? previous[0] ?? null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">

@@ -46,6 +46,7 @@ export type ReservationSource = {
   customerPhone: string;
   items: BakeListItem[];
   totalCents: number;
+  collectedCents?: number;
 };
 
 export type DropForBake = {

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { InPersonSaleForm, type SaleDrop } from "@/components/in-person-sale-form";
 import { ReservationActions } from "@/components/reservation-actions";
+import { ReservationAmend } from "@/components/reservation-amend";
 import { getAdminSession } from "@/lib/admin-auth";
 import { getDropsView } from "@/lib/catalog";
 import { formatPrice } from "@/lib/money";
@@ -23,12 +24,14 @@ type Row = {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  dropId?: string;
   dropTitle?: string;
   status: "pending" | "confirmed" | "declined";
   channel?: "online" | "in-person";
   totalCents: number;
+  collectedCents?: number;
   createdAt: string;
-  items: { productName: string; quantity: number }[];
+  items: { productSlug: string; productName: string; quantity: number; priceCents: number }[];
   promoCode?: string;
   promoPercentOff?: number;
   discountedTotalCents?: number;
@@ -53,6 +56,7 @@ export default async function AdminReservationsPage() {
         listPriceCents: li.product.priceCents,
       })),
     }));
+  const linesByDropId = new Map(saleDrops.map((d) => [d.id, d.lines]));
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
@@ -95,6 +99,20 @@ export default async function AdminReservationsPage() {
                 </p>
               </div>
               {r.status === "pending" ? <ReservationActions id={r.id} /> : null}
+              {r.status === "confirmed" ? (
+                <ReservationAmend
+                  reservationId={r.id}
+                  dropLines={linesByDropId.get(r.dropId ?? "") ?? []}
+                  items={r.items.map((i) => ({
+                    productSlug: i.productSlug,
+                    productName: i.productName,
+                    quantity: i.quantity,
+                    priceCents: i.priceCents,
+                  }))}
+                  totalCents={r.totalCents}
+                  collectedCents={r.collectedCents}
+                />
+              ) : null}
             </li>
           ))}
         </ul>

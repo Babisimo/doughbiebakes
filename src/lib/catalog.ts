@@ -20,6 +20,7 @@ import {
   RECENT_DROPS_QUERY,
   ALL_DROP_FINANCIALS_QUERY,
   DROP_FINANCIALS_BY_DROP_QUERY,
+  DROP_BY_ID_QUERY,
 } from "@/sanity/lib/queries";
 
 import type { MemberSelection } from "./availability";
@@ -208,6 +209,25 @@ export async function getActiveDrop(opts: FetchOpts = {}): Promise<Drop | null> 
   const drops = await getRecentDrops(opts);
   if (drops.length === 0) return seedDrop();
   return drops.find((d) => isCurrentDrop(d, now)) ?? null;
+}
+
+/**
+ * One drop by its document id, regardless of effective status. Unlike
+ * {@link getActiveDrop} this never time-filters: the bake list must stay open
+ * for a drop whose ordering window has already closed — a closed *order*
+ * window doesn't mean the bake/fulfillment work is done. Falls back to the
+ * bundled seed drops in demo mode (Sanity not configured) so the demo bake
+ * list keeps working for both the current and previous seed drops.
+ */
+export async function getDropById(
+  id: string,
+  opts: FetchOpts = {},
+): Promise<Drop | null> {
+  if (!id) return null;
+  const raw = await fetchSanity<Drop | null>(DROP_BY_ID_QUERY, { id }, opts);
+  const normalized = normalizeDrop(raw);
+  if (normalized) return normalized;
+  return [seedDrop(), ...seedPreviousDrops()].find((d) => d.id === id) ?? null;
 }
 
 /**
@@ -469,6 +489,7 @@ export async function getConfirmedReservationsForDrop(
         customerPhone: typeof r.customerPhone === "string" ? r.customerPhone : "",
         items: normItems(r.items),
         totalCents: Number.isFinite(tc) ? tc : 0,
+        ...(typeof r.collectedCents === "number" ? { collectedCents: r.collectedCents } : {}),
       });
     });
   } catch (err) {

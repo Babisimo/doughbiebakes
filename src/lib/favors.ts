@@ -64,6 +64,67 @@ export function actualFavorsCents(
   return favors;
 }
 
+export type FavorSource = {
+  who: string;
+  items: {
+    productSlug: string;
+    productName?: string;
+    quantity: number;
+    priceCents?: number;
+  }[];
+};
+
+export type FavorLine = {
+  who: string;
+  productName: string;
+  /** Whole units, ≥ 1. */
+  quantity: number;
+  /** Per-unit price actually charged. */
+  chargedCents: number;
+  /** Per-unit list price. */
+  listCents: number;
+  /** Line total given away = qty × max(0, list − charged). */
+  favorCents: number;
+};
+
+/**
+ * Itemized favors given across a drop's orders/reservations: one line per item
+ * actually sold below list, carrying who got it and on what loaf. Items at/above
+ * list, with an unknown slug, or with no recorded charged price produce no line.
+ * Sorted by favor descending (biggest giveaways first); the summed `favorCents`
+ * equals {@link actualFavorsCents} for the same input.
+ */
+export function favorLines(
+  sources: FavorSource[],
+  listPriceBySlug: Map<string, number>,
+): FavorLine[] {
+  const lines: FavorLine[] = [];
+  for (const src of sources) {
+    for (const it of src.items) {
+      if (typeof it.priceCents !== "number") continue;
+      const list = listPriceBySlug.get(it.productSlug);
+      if (typeof list !== "number") continue;
+      const qty = intNonNeg(it.quantity);
+      if (qty === 0) continue;
+      const charged = centsNonNeg(it.priceCents);
+      const listCents = centsNonNeg(list);
+      const favorCents = qty * Math.max(0, listCents - charged);
+      if (favorCents <= 0) continue;
+      lines.push({
+        who: src.who,
+        productName: it.productName ?? it.productSlug,
+        quantity: qty,
+        chargedCents: charged,
+        listCents,
+        favorCents,
+      });
+    }
+  }
+  // Stable sort (Node/V8) keeps input order on ties.
+  lines.sort((a, b) => b.favorCents - a.favorCents);
+  return lines;
+}
+
 /**
  * What a reservation actually collected: the explicit `collectedCents` override
  * when set, otherwise the reserved `totalCents`. A `$0` override is honored

@@ -4,7 +4,9 @@ import { test } from "node:test";
 import {
   actualFavorsCents,
   computeSaleTotals,
+  favorLines,
   reservationCollectedCents,
+  type FavorSource,
   type SaleLineInput,
   type SoldSource,
 } from "./favors.ts";
@@ -76,4 +78,79 @@ test("reservationCollectedCents: falls back to totalCents when no override", () 
 test("reservationCollectedCents: uses the override when present (incl. 0)", () => {
   assert.equal(reservationCollectedCents({ totalCents: 1200, collectedCents: 1000 }), 1000);
   assert.equal(reservationCollectedCents({ totalCents: 1200, collectedCents: 0 }), 0);
+});
+
+test("favorLines: two buyers of one loaf at different prices → two lines, biggest first", () => {
+  const list = new Map([["classic", 1200]]);
+  const lines = favorLines(
+    [
+      { who: "Maria", items: [{ productSlug: "classic", productName: "Classic", quantity: 1, priceCents: 1000 }] },
+      { who: "Babo", items: [{ productSlug: "classic", productName: "Classic", quantity: 1, priceCents: 0 }] },
+    ],
+    list,
+  );
+  assert.equal(lines.length, 2);
+  assert.deepEqual(
+    { who: lines[0].who, favor: lines[0].favorCents, charged: lines[0].chargedCents, list: lines[0].listCents },
+    { who: "Babo", favor: 1200, charged: 0, list: 1200 },
+  );
+  assert.equal(lines[1].who, "Maria");
+  assert.equal(lines[1].favorCents, 200);
+});
+
+test("favorLines: full-price and above-list items produce no line", () => {
+  const list = new Map([["classic", 1200]]);
+  const lines = favorLines(
+    [
+      { who: "A", items: [{ productSlug: "classic", productName: "Classic", quantity: 1, priceCents: 1200 }] },
+      { who: "B", items: [{ productSlug: "classic", productName: "Classic", quantity: 1, priceCents: 1500 }] },
+    ],
+    list,
+  );
+  assert.equal(lines.length, 0);
+});
+
+test("favorLines: unknown list price or missing charged price are skipped", () => {
+  const list = new Map([["classic", 1200]]);
+  const lines = favorLines(
+    [
+      { who: "A", items: [{ productSlug: "mystery", productName: "?", quantity: 1, priceCents: 0 }] },
+      { who: "B", items: [{ productSlug: "classic", productName: "Classic", quantity: 1 }] },
+    ],
+    list,
+  );
+  assert.equal(lines.length, 0);
+});
+
+test("favorLines: $0 comp → one line with favor = qty × list; quantity respected", () => {
+  const list = new Map([["classic", 1200]]);
+  const lines = favorLines(
+    [{ who: "Babo", items: [{ productSlug: "classic", productName: "Classic", quantity: 2, priceCents: 0 }] }],
+    list,
+  );
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0].quantity, 2);
+  assert.equal(lines[0].favorCents, 2400);
+});
+
+test("favorLines: productName falls back to slug when absent", () => {
+  const list = new Map([["classic", 1200]]);
+  const lines = favorLines([{ who: "A", items: [{ productSlug: "classic", quantity: 1, priceCents: 1000 }] }], list);
+  assert.equal(lines[0].productName, "classic");
+});
+
+test("favorLines: line favors sum to actualFavorsCents for the same input", () => {
+  const list = new Map([["classic", 1200], ["rye", 1000]]);
+  const sources: FavorSource[] = [
+    {
+      who: "A",
+      items: [
+        { productSlug: "classic", productName: "Classic", quantity: 2, priceCents: 1000 },
+        { productSlug: "rye", productName: "Rye", quantity: 1, priceCents: 1000 },
+      ],
+    },
+    { who: "B", items: [{ productSlug: "classic", productName: "Classic", quantity: 1, priceCents: 0 }] },
+  ];
+  const sum = favorLines(sources, list).reduce((s, l) => s + l.favorCents, 0);
+  assert.equal(sum, actualFavorsCents(sources, list));
 });

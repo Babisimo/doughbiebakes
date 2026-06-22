@@ -13,7 +13,14 @@ import {
   getMemberSelectionsForDrop,
   getPendingReservationCountForDrop,
 } from "@/lib/catalog";
-import { actualFavorsCents, reservationCollectedCents } from "@/lib/favors";
+import {
+  actualFavorsCents,
+  favorLines,
+  reservationCollectedCents,
+  type FavorLine,
+  type FavorSource,
+} from "@/lib/favors";
+import { formatPrice } from "@/lib/money";
 import { productCostCents } from "@/lib/profitability";
 import { ProfitabilityCalculator } from "./calculator-client";
 
@@ -106,6 +113,14 @@ export default async function CalculatorPage({ searchParams }: Props) {
       .filter((c) => c.status === "paid")
       .reduce((s, c) => s + c.amountCents, 0);
 
+  // Itemized "who got a favor, on what loaf" from the same live orders +
+  // reservations the favor total is computed from.
+  const favorSources: FavorSource[] = [
+    ...orders.map((o) => ({ who: o.customerName || "(no name)", items: o.items })),
+    ...reservations.map((r) => ({ who: r.customerName || "(no name)", items: r.items })),
+  ];
+  const favors = favorLines(favorSources, listBySlug);
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <Header />
@@ -124,7 +139,54 @@ export default async function CalculatorPage({ searchParams }: Props) {
           savedFixedCosts={saved?.fixedCosts ?? null}
         />
       </div>
+      <FavorBreakdown lines={favors} />
     </div>
+  );
+}
+
+/** Read-only "who got a favor, on what loaf" list for the selected drop. */
+function FavorBreakdown({ lines }: { lines: FavorLine[] }) {
+  const total = lines.reduce((s, l) => s + l.favorCents, 0);
+  return (
+    <section className="mt-10">
+      <h2 className="display text-2xl">
+        Favors given — who &amp; what
+        {lines.length > 0 ? (
+          <span className="ml-2 align-middle text-base font-normal text-ink-500">
+            · total {formatPrice(total)}
+          </span>
+        ) : null}
+      </h2>
+      {lines.length === 0 ? (
+        <p className="nb-card mt-3 p-5 text-ink-700">
+          No favors given on this drop.
+        </p>
+      ) : (
+        <ul className="nb-card mt-3 divide-y divide-ink/10 p-0">
+          {lines.map((l, i) => (
+            <li
+              key={`${l.who}-${l.productName}-${i}`}
+              className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3"
+            >
+              <span>
+                <span className="font-semibold">{l.who}</span>
+                <span className="text-ink-700">
+                  {" "}
+                  · {l.quantity}× {l.productName}
+                </span>
+              </span>
+              <span className="text-sm text-ink-500">
+                charged {formatPrice(l.chargedCents)} of {formatPrice(l.listCents)}{" "}
+                ea ·{" "}
+                <span className="font-bold text-flame-700">
+                  {formatPrice(l.favorCents)} given
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

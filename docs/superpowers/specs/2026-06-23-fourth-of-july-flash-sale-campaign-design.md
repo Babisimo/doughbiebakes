@@ -1,0 +1,114 @@
+# Fourth of July Flash Sale — Campaign Design
+
+**Date:** 2026-06-23
+**Status:** Approved (brainstorm) → ready to produce content
+**Depends on:** the shipped flash-sales feature
+(`2026-06-23-flash-sales-design.md`). This campaign *uses* that engine; it adds
+no code to the discount/storefront machinery.
+
+## Goal
+
+Drive pre-orders for a Fourth of July drop by promoting a time-boxed 15% flash
+sale on Instagram, aimed at party hosts who need something to bring. Honest
+urgency comes from a real deadline: the baker leaves town Fri Jul 3, so the
+holiday batch must be ordered, baked, and delivered before then.
+
+## Campaign angle
+
+Lean into the **250th** (America's semiquincentennial) — July 4, 2026 is a
+Saturday and the once-in-a-lifetime "America 250" Fourth.
+
+- **Lead:** "The biggest Fourth of our lifetime deserves better than
+  store-bought."
+- **Scarcity close (authentic):** "This is my last batch before I'm out of town
+  for the holiday weekend — order by Monday."
+- **Make-ahead reassurance:** bread is delivered Jul 1–2 for a Jul 4 party, so
+  every piece of copy carries a one-line serving tip: "refresh 10 min in a 350°
+  oven and the crust comes right back." Turns the only objection (2–3 days
+  ahead) into a useful tip.
+
+## Offer & mechanics
+
+A **drop-wide 15% flash sale** on the Fourth of July drop, run entirely through
+the existing engine — no manual discounting.
+
+**Exact Sanity `flashSale` values** (set on the open Fourth of July drop in
+Studio → drop → "Flash sale"):
+
+| Field | Value |
+|---|---|
+| `enabled` | `true` |
+| `percentOff` | `15` |
+| `startsAt` | *(blank — live the moment enabled)* |
+| `endsAt` | **Mon Jun 29, 2026, 23:59 America/Los_Angeles** |
+| `headline` | `America's 250th — order by Monday` |
+
+**Drop settings the campaign assumes:**
+- A drop is **open** for the window (≈ Jun 24 → Jun 29). The flash sale only
+  applies while the drop's effective status is `open` (per `flashSaleStatus`).
+- `ordersCloseAt` = Mon Jun 29 EOD (so the storefront closes ordering in lockstep
+  with the sale ending).
+- `pickupOrShipDate` = Jul 1–2 (delivery/pickup before the Fri Jul 3 departure).
+- `lineItems` include the hero loaves below, in whatever quantities the baker can
+  produce in the Wed Jul 1 / Thu Jul 2 bake.
+
+On-site, the countdown banner + struck-through prices sell automatically;
+Instagram's only job is to drive traffic to the site.
+
+## Timeline (2026)
+
+| Date | Day | Event |
+|---|---|---|
+| Jun 23 | Tue | Today (planning) |
+| Jun 24 | Wed | Sale enabled in Studio + **launch carousel** posted |
+| Jun 25–28 | Thu–Sun | Story rotation (countdown + one hero loaf/day + serving tip) |
+| Jun 28 | Sun | "24 hours left" story |
+| **Jun 29** | **Mon** | **Orders close EOD** + "LAST CALL" feed post & story |
+| Jul 1–2 | Wed–Thu | Bake + deliver/pickup |
+| Jul 3 | Fri | Baker leaves for Arizona |
+| Jul 4 | Sat | The 250th Fourth |
+
+## Hero products
+
+All loaves get 15%; these get the screen time. (From the canonical lineup in
+`src/lib/seed-products.ts`.)
+
+- **Cheddar & Jalapeño** ($13) — savory cookout hero; "toasts into a grilled
+  cheese on its own."
+- **Pepperoni & Garlic** ($13) — "pizza night in loaf form," tear-and-share.
+- **Strawberry** ($13) — literally red; the red-white-&-blue brunch/dessert loaf.
+- **Classic** ($11) — the do-anything base: crostini, sliders, burger night.
+- (Banana, Brown Sugar & Cinnamon — optional brunch mention.)
+
+## Channels
+
+**Instagram only** (feed + stories). No email/LinkedIn/SMS this round.
+
+## Deliverables (what gets produced at implementation)
+
+1. **Launch carousel** — caption + slide-by-slide text (≈5 slides: hook → offer
+   → hero loaves → how-to-serve → deadline/CTA).
+2. **Story frame scripts** — 5–6 frames: countdown-sticker frame, one per hero
+   loaf with a serving tip, a "24 hours left" frame.
+3. **Last-call feed post** — short, urgent, "closes tonight."
+4. **Hashtag + location set** — local (Corona/Inland Empire) + Fourth/250th tags.
+5. **Exact Sanity `flashSale` values** — the table above, ready to paste.
+6. **Serving-tip sheet** — the make-ahead/refresh suggestions referenced in copy,
+   so captions stay consistent.
+
+All copy must:
+- Carry the **order-by Mon Jun 29** deadline and the **deliver-by Jul 2 / "before
+  I leave town"** framing consistently (no contradictory dates).
+- Include the **350° refresh tip** wherever a "fresh for your party" expectation
+  could otherwise be set.
+- Drive to the **site** (where the auto-discount + countdown live) — the link in
+  bio / "order at the link."
+- Stay true to the **Cottage Food** voice (home kitchen, made to order, local
+  pickup/delivery in the Corona area).
+
+## Out of scope
+
+- Email / LinkedIn / SMS content (IG-only this round).
+- Any change to the flash-sale code (the engine already shipped).
+- Paid ads.
+- A reusable annual template (this is a one-off; the 250th hook doesn't repeat).

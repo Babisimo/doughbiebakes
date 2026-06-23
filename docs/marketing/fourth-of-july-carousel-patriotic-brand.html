@@ -52,14 +52,14 @@
   .fw::after{content:"";position:absolute;inset:32%;border-radius:50%;background:var(--fc);opacity:.5;filter:blur(5px)}
   .cream .sky{opacity:.28}  /* keep fireworks faint behind dark text */
 
-  .kicker{font-weight:800;letter-spacing:.26em;text-transform:uppercase;font-size:24px}
+  .kicker{font-weight:700;letter-spacing:.24em;text-transform:uppercase;font-size:23px}
   .cream .kicker{color:var(--brick)} .dark .kicker{color:var(--gold)}
   .chip{display:inline-flex;align-items:center;gap:.5ch;background:var(--ochre);color:var(--ink);
     font-family:var(--display);border-radius:999px;padding:10px 30px;font-size:46px;box-shadow:var(--shadow-sm)}
   .chip.sm{font-size:30px;padding:7px 22px}
 
   .foot{position:absolute;left:92px;right:92px;bottom:64px;z-index:3;display:flex;align-items:center;
-    justify-content:space-between;font-size:20px;font-weight:700;letter-spacing:.04em}
+    justify-content:space-between;font-size:20px;font-weight:600;letter-spacing:.04em}
   .cream .foot{color:var(--ink500)} .dark .foot{color:rgba(254,250,224,.72)}
   .dots{display:flex;gap:10px}.dot{width:11px;height:11px;border-radius:999px;background:currentColor;opacity:.32}.dot.on{opacity:1}
 
@@ -67,22 +67,28 @@
   .s1 .sub{font-family:var(--display);font-size:62px;line-height:1.02;margin-top:30px}
   .s1 .stars{font-size:30px;letter-spacing:.42em;color:var(--gold);margin-top:28px}
   .s2 .big{font-size:150px;margin:14px 0 30px}.s2 .big .pct{color:var(--acid)}
-  .s2 .line{font-size:34px;font-weight:600;color:var(--ink700);max-width:780px;line-height:1.35;margin-top:34px}
-  .s3 h2{font-size:90px;margin-bottom:40px}
-  .row{display:flex;gap:26px;align-items:flex-start;padding:20px 0;border-top:2px solid rgba(40,54,24,.16)}
-  .row:last-of-type{border-bottom:2px solid rgba(40,54,24,.16)}
-  .row .em{font-size:50px;width:78px;flex:none}.row .nm{font-family:var(--display);font-size:44px;line-height:1}
-  .row .ds{font-size:26px;color:var(--ink500);font-weight:600;margin-top:8px}
-  .s3 .alloff{margin-top:30px;font-weight:800;font-size:30px;color:var(--brick)}
+  .s2 .line{font-size:34px;font-weight:500;color:var(--ink700);max-width:780px;line-height:1.4;margin-top:34px}
+  .s3 h2{font-size:76px}
+  .s3 .sub3{margin-top:12px;font-weight:600;font-size:26px;color:var(--brick);letter-spacing:.01em}
+  .grid3{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:30px}
+  .pcard{background:rgba(255,253,242,.5);border:1.5px solid rgba(40,54,24,.14);border-radius:22px;
+    padding:16px 16px 18px;display:flex;flex-direction:column;gap:12px}
+  /* dashed drop-zone: replace with a loaf photo in Canva, then delete the emoji + label */
+  .ph{position:relative;height:182px;border-radius:14px;border:2px dashed rgba(40,54,24,.32);
+    background:rgba(221,161,94,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink500)}
+  .ph .pe{font-size:46px;line-height:1}
+  .ph .pl{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.78}
+  .pcard .nm{font-family:var(--display);font-size:34px;line-height:1}
+  .pcard .ds{font-size:21px;color:var(--ink500);font-weight:500;line-height:1.25}
   .s4 .big{font-size:114px;line-height:.98}.s4 .big em{font-style:normal;color:var(--brick)}
   .s4 ul{list-style:none;margin-top:44px;display:flex;flex-direction:column;gap:24px}
-  .s4 li{font-size:32px;font-weight:600;color:var(--ink700);display:flex;gap:18px;align-items:flex-start;line-height:1.3}
-  .s4 li b{color:var(--ink)}.s4 li .ic{font-size:36px;flex:none}
+  .s4 li{font-size:32px;font-weight:500;color:var(--ink700);display:flex;gap:18px;align-items:flex-start;line-height:1.35}
+  .s4 li b{color:var(--ink);font-weight:600}.s4 li .ic{font-size:36px;flex:none}
   .s5{text-align:center}.s5 .content{align-items:center}
   .s5 .when{font-family:var(--display);font-size:92px;margin-top:8px}
   .s5 .noon{font-family:var(--display);font-size:226px;color:var(--gold);line-height:.9;margin:6px 0 28px}
-  .s5 .cta{font-size:44px;font-weight:800;margin-top:8px}
-  .s5 .small{font-size:30px;color:rgba(254,250,224,.8);font-weight:600;margin-top:28px;max-width:760px;line-height:1.35}
+  .s5 .cta{font-size:44px;font-weight:700;margin-top:8px}
+  .s5 .small{font-size:30px;color:rgba(254,250,224,.82);font-weight:500;margin-top:28px;max-width:760px;line-height:1.4}
   .s5 .foot{justify-content:center;gap:26px}
 
   @media print{
@@ -133,17 +139,19 @@
         <div class="foot"><span>MADE IN A HOME KITCHEN</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>
 
-    <!-- 3 LINEUP -->
-    <div class="slidewrap"><p class="slidelabel">Slide 3 / 5 — the lineup</p>
+    <!-- 3 LINEUP — each .ph is a photo drop-zone: in Canva drop a loaf photo on it, then delete the emoji + "add photo" label -->
+    <div class="slidewrap"><p class="slidelabel">Slide 3 / 5 — the lineup (drop a loaf photo into each dashed box)</p>
       <div class="slide cream blobs">
         <div class="sky"><span class="fw" style="--fc:var(--gold);width:220px;height:220px;top:-40px;right:90px"></span></div>
         <div class="content">
-          <h2 class="display">Pick your<br>party loaf.</h2>
-          <div class="row"><span class="em">🧀🌶️</span><div><div class="nm">Jalapeño Cheddar</div><div class="ds">Toasts into grilled cheese on its own. Sliders, burgers, done.</div></div></div>
-          <div class="row"><span class="em">🍕</span><div><div class="nm">Pepperoni</div><div class="ds">Pizza night in loaf form. Tear it, share it, no sauce needed.</div></div></div>
-          <div class="row"><span class="em">🥖</span><div><div class="nm">Classic</div><div class="ds">The do-anything base: crostini, dips, the cheese-board centerpiece.</div></div></div>
-          <div class="row"><span class="em">🍫🍌</span><div><div class="nm">Banana Chocolate Chip</div><div class="ds">Dessert, the kids' pick, and Fourth-of-July-morning toast.</div></div></div>
-          <p class="alloff">↓ all 15% off this weekend ↓</p>
+          <h2 class="display">Pick your party loaf.</h2>
+          <p class="sub3">All four — 15% off this weekend.</p>
+          <div class="grid3">
+            <div class="pcard"><div class="ph"><span class="pe">🧀🌶️</span><span class="pl">add photo</span></div><div class="nm">Jalapeño Cheddar</div><div class="ds">Grilled cheese on its own.</div></div>
+            <div class="pcard"><div class="ph"><span class="pe">🍕</span><span class="pl">add photo</span></div><div class="nm">Pepperoni</div><div class="ds">Pizza night, in a loaf.</div></div>
+            <div class="pcard"><div class="ph"><span class="pe">🥖</span><span class="pl">add photo</span></div><div class="nm">Classic</div><div class="ds">The do-anything base.</div></div>
+            <div class="pcard"><div class="ph"><span class="pe">🍫🍌</span><span class="pl">add photo</span></div><div class="nm">Banana Choc Chip</div><div class="ds">Dessert + the kids' pick.</div></div>
+          </div>
         </div>
         <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>

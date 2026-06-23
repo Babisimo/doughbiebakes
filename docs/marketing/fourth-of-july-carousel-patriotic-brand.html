@@ -95,6 +95,11 @@
   .s5 .cta{font-size:44px;font-weight:700;margin-top:8px}
   .s5 .small{font-size:30px;color:rgba(254,250,224,.82);font-weight:500;margin-top:28px;max-width:760px;line-height:1.4}
   .s5 .foot{justify-content:center;gap:26px}
+  /* transition / "where to get it" interstitial (dark) */
+  .sx .content{justify-content:center;gap:30px}
+  .sx .head{font-family:var(--display);font-size:96px;line-height:1.0;color:var(--bone)}
+  .sx .tease{font-family:var(--display);font-size:50px;color:var(--gold);line-height:1.06}
+  .sx .hint{font-weight:600;font-size:26px;color:rgba(254,250,224,.8);letter-spacing:.02em}
 
   @media print{
     @page{size:11.25in 11.25in;margin:0}
@@ -110,7 +115,7 @@
   <div class="deck">
 
     <!-- 1 COVER -->
-    <div class="slidewrap"><p class="slidelabel">Slide 1 / 5 — cover</p>
+    <div class="slidewrap"><p class="slidelabel">Slide 1 / 6 — cover</p>
       <div class="slide dark s1">
         <div class="sky">
           <span class="fw" style="--fc:var(--gold);--fo:.55;width:340px;height:340px;top:-70px;right:-40px"></span>
@@ -123,11 +128,11 @@
           <p class="setup">DON'T BRING <span class="strike">CHIPS</span> TO YOUR FOURTH OF JULY PARTY.</p>
           <p class="punch">BRING THIS<br>INSTEAD <span class="arr">→</span></p>
         </div>
-        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>
 
     <!-- 2 LINEUP — each .ph is a photo drop-zone: in Canva drop a loaf photo on it, then delete the emoji + "add photo" label -->
-    <div class="slidewrap"><p class="slidelabel">Slide 2 / 5 — the lineup (drop a loaf photo into each dashed box)</p>
+    <div class="slidewrap"><p class="slidelabel">Slide 2 / 6 — the lineup (drop a loaf photo into each dashed box)</p>
       <div class="slide cream blobs s3">
         <div class="sky"><span class="fw" style="--fc:var(--gold);width:220px;height:220px;top:-40px;right:90px"></span></div>
         <div class="content">
@@ -140,11 +145,28 @@
             <div class="pcard"><div class="ph"><span class="pe">🍫🍌</span><span class="pl">add photo</span></div><div class="nm">Banana Choc Chip</div><div class="ds">→ Dessert + 4th-of-July-morning toast.</div></div>
           </div>
         </div>
-        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>
 
-    <!-- 3 OFFER -->
-    <div class="slidewrap"><p class="slidelabel">Slide 3 / 5 — the offer</p>
+    <!-- 3 TRANSITION — where to get them + tease the discount -->
+    <div class="slidewrap"><p class="slidelabel">Slide 3 / 6 — where to get them</p>
+      <div class="slide dark sx">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--gold);--fo:.5;width:300px;height:300px;top:-60px;right:-40px"></span>
+          <span class="fw" style="--fc:#5b7bb0;--fo:.4;width:220px;height:220px;bottom:130px;left:-60px"></span>
+          <span class="star" style="top:140px;left:300px"></span><span class="star" style="bottom:280px;right:240px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">Where to get 'em</p>
+          <p class="head">Reserve online.<br>I bring them<br>to your door.</p>
+          <p class="tease">…and every loaf's on sale. →</p>
+          <p class="hint">🔗 link in bio · free Corona-area hand-delivery</p>
+        </div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 4 OFFER -->
+    <div class="slidewrap"><p class="slidelabel">Slide 4 / 6 — the offer</p>
       <div class="slide cream blobs s2">
         <div class="sky">
           <span class="fw" style="--fc:var(--brick);width:260px;height:260px;top:-50px;right:-30px"></span>
@@ -156,11 +178,11 @@
           <span class="chip">⚡ AUTO-APPLIED AT CHECKOUT</span>
           <p class="line">Naturally leavened, baked to order in my home kitchen. No code to remember — the discount comes off at the link. 🤍</p>
         </div>
-        <div class="foot"><span>MADE IN A HOME KITCHEN</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>
+        <div class="foot"><span>MADE IN A HOME KITCHEN</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>
 
-    <!-- 4 CATCH -->
-    <div class="slidewrap"><p class="slidelabel">Slide 4 / 5 — the catch</p>
+    <!-- 5 CATCH -->
+    <div class="slidewrap"><p class="slidelabel">Slide 5 / 6 — the catch</p>
       <div class="slide cream blobs s4">
         <div class="sky"><span class="fw" style="--fc:#27365c;width:240px;height:240px;bottom:-50px;right:-40px"></span></div>
         <div class="content">
@@ -172,11 +194,11 @@
             <li><span class="ic">🔥</span><span>Day-of: <b>10 min in a 350° oven</b> and the crust crackles like it just came out of mine.</span></li>
           </ul>
         </div>
-        <div class="foot"><span>BEFORE I LEAVE FOR THE HOLIDAY ✈️</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i></span></div>
+        <div class="foot"><span>BEFORE I LEAVE FOR THE HOLIDAY ✈️</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i></span></div>
       </div></div>
 
-    <!-- 5 CTA -->
-    <div class="slidewrap"><p class="slidelabel">Slide 5 / 5 — the call to action</p>
+    <!-- 6 CTA -->
+    <div class="slidewrap"><p class="slidelabel">Slide 6 / 6 — the call to action</p>
       <div class="slide dark s5">
         <div class="sky">
           <span class="fw" style="--fc:var(--gold);--fo:.6;width:360px;height:360px;top:-80px;left:-50px"></span>
@@ -192,7 +214,7 @@
           <p class="cta">👉 Tap the link in my bio</p>
           <p class="small">When they're gone, I'm already gone. Let's do the 250th right. 🎆🤍</p>
         </div>
-        <div class="foot"><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i></span></div>
+        <div class="foot"><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i></span></div>
       </div></div>
 
   </div>

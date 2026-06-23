@@ -14,11 +14,11 @@
 
 **At a glance, do this in order:**
 1. ~8 AM PT, when the drop opens, confirm the **site shows the ⚡ banner + struck prices** (proves the sale is live).
-2. Export the **5 carousel slides** (open the HTML → DevTools → right-click the `.slide` → *Capture node screenshot* for full-res; or screenshot on a high-res display). **Three versions to choose from** (each also has a matching `.pdf` for Canva import):
+2. Export the **6 carousel slides** (open the HTML → DevTools → right-click the `.slide` → *Capture node screenshot* for full-res; or screenshot on a high-res display). **Three versions to choose from** (each also has a matching `.pdf` for Canva import):
    - `fourth-of-july-launch-carousel.html` — the on-brand earthy version.
    - `fourth-of-july-carousel-patriotic-brand.html` — brand palette + navy/brick accents + gold fireworks.
    - `fourth-of-july-carousel-patriotic-bold.html` — full red/white/blue/gold Americana with fireworks (ignores brand colors; keeps the font).
-3. New IG post → add the 5 images **in order 1→5** → paste the **caption below** →
+3. New IG post → add the 6 images **in order 1→6** → paste the **caption below** →
    set **location: Corona, California** → share.
 4. Paste the **hashtags as the FIRST COMMENT** (keeps the caption clean; same reach).
 5. Post **Story Frame A** (§2) with the **countdown sticker → Sun Jun 28, 12:00 PM** and a **link sticker** to the site.
@@ -42,7 +42,7 @@
 
 ### Per-slide design direction (for the built slides — and if you rebuild in Canva)
 
-Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. Palette — cream `#fefae0`, deep forest `#283618`, terracotta `#a55d1f`, ochre `#dda15e`, olive `#606c38`, sage `#ccd5ae`. The **ochre "15% OFF" chip** is the recurring hot accent. Footer on every slide: brand + 5 progress dots. **Rhythm: dark → cream → cream → cream → dark** (slides 1 and 5 are the dark "grove" bookends; the middle three are bright cream with the warm blobs).
+Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. Palette — cream `#fefae0`, deep forest `#283618`, terracotta `#a55d1f`, ochre `#dda15e`, olive `#606c38`, sage `#ccd5ae`. The **ochre "15% OFF" chip** is the recurring hot accent. Footer on every slide: brand + 6 progress dots. **Rhythm: dark → cream → cream → cream → dark** (slides 1 and 5 are the dark "grove" bookends; the middle three are bright cream with the warm blobs).
 
 1. **Cover (dark):** kicker "JULY 4, 2026 · THE 250TH", giant "AMERICA TURNS **250**" (250 in ochre), sub "Don't show up with store-bought ⚡", a row of 5 ochre stars. Job: stop the scroll.
 2. **Offer (cream):** "**15%** off every loaf", the ochre AUTO-APPLIED chip, one warm line about home-kitchen + no code.

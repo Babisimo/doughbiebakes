@@ -39,3 +39,30 @@ export function flashSaleStatus(drop: Drop | null, now: Date): FlashSaleState {
 
   return { active: true, percentOff: pct, endsAt: fs.endsAt, headline: fs.headline };
 }
+
+export type DiscountSource = "flash" | "promo" | "none";
+
+export type ResolvedDiscount = {
+  percentOff: number;
+  source: DiscountSource;
+  /** Human label for a flash-sale discount (no promo code exists). */
+  label?: string;
+};
+
+/**
+ * Pick the single larger discount between an active flash sale and a typed
+ * promo code. Never stacks. Ties go to the flash sale (no code to type is the
+ * better experience). Pass 0 for whichever isn't present.
+ */
+export function resolveDiscount(input: {
+  flashPercent: number;
+  promoPercent: number;
+}): ResolvedDiscount {
+  const flash = Math.max(0, Math.floor(input.flashPercent) || 0);
+  const promo = Math.max(0, Math.floor(input.promoPercent) || 0);
+  if (flash === 0 && promo === 0) return { percentOff: 0, source: "none" };
+  if (flash >= promo) {
+    return { percentOff: flash, source: "flash", label: `Flash Sale −${flash}%` };
+  }
+  return { percentOff: promo, source: "promo" };
+}

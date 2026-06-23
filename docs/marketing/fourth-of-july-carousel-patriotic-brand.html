@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Doughbie — Fourth of July carousel (brand + patriotic)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bone:#fefae0; --paper:#fffdf2; --ink:#283618; --ink700:#36441f; --ink500:#6c7150;
+    --acid:#a55d1f; --flame:#606c38; --sage:#ccd5ae; --ochre:#dda15e; --terracotta:#bc6c25;
+    /* patriotic accents tuned to sit beside the earthy palette */
+    --navy:#27365c; --navy-deep:#1c2742; --brick:#9e3b2e; --gold:#e7b24a;
+    --grad-dark:linear-gradient(150deg,#2f3f26 0%,#283618 42%,#1c2742 100%);
+    --shadow:0 14px 34px -8px rgba(28,29,40,.3); --shadow-sm:0 6px 18px -4px rgba(28,29,40,.24);
+    --display:"Caprasimo",serif; --sans:"Plus Jakarta Sans",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#e6dfcc;font-family:var(--sans);color:var(--ink);padding:28px 16px 64px}
+  .howto{max-width:1080px;margin:0 auto 26px;background:var(--paper);border:1px solid rgba(40,54,24,.16);
+    border-radius:18px;padding:16px 22px;font-size:14px;line-height:1.55;color:var(--ink700)}
+  .howto b{color:var(--ink)} .howto code{background:#f0e7c8;padding:1px 6px;border-radius:6px}
+  .deck{display:flex;flex-direction:column;align-items:center;gap:42px}
+  .slidewrap{width:1080px;max-width:100%}
+  @media(max-width:1120px){.slidewrap{width:min(1080px,92vw)}}
+  .slidelabel{font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:13px;color:#7c7458;margin:0 0 10px 4px}
+  .display{font-family:var(--display);line-height:.98;letter-spacing:-.012em}
+
+  .slide{position:relative;width:1080px;height:1080px;overflow:hidden;border-radius:8px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:center;padding:96px 92px;isolation:isolate}
+  .content{position:relative;z-index:2;display:flex;flex-direction:column;height:100%;justify-content:center}
+
+  .cream{background:var(--bone)} .cream .content{color:var(--ink)}
+  .dark{background-image:var(--grad-dark)} .dark .content{color:var(--bone)}
+
+  /* warm blobs on cream slides */
+  .blobs::before{content:"";position:absolute;inset:0;z-index:0;opacity:.5;
+    background:radial-gradient(58rem 58rem at -12% -10%,#dda15e60,transparent 60%),
+               radial-gradient(50rem 50rem at 112% 112%,#27365c45,transparent 60%);filter:blur(10px)}
+
+  /* ---- fireworks sky ---- */
+  .sky{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .star{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.85;
+    box-shadow:0 0 6px 1px var(--gold)}
+  .fw{position:absolute;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg, var(--fc) 0 1.3deg, transparent 1.3deg 9deg);
+    -webkit-mask:radial-gradient(closest-side,transparent 7%,#000 13%,#000 44%,transparent 60%);
+            mask:radial-gradient(closest-side,transparent 7%,#000 13%,#000 44%,transparent 60%);
+    opacity:var(--fo,.5);filter:drop-shadow(0 0 6px var(--fc))}
+  .fw::after{content:"";position:absolute;inset:32%;border-radius:50%;background:var(--fc);opacity:.5;filter:blur(5px)}
+  .cream .sky{opacity:.28}  /* keep fireworks faint behind dark text */
+
+  .kicker{font-weight:800;letter-spacing:.26em;text-transform:uppercase;font-size:24px}
+  .cream .kicker{color:var(--brick)} .dark .kicker{color:var(--gold)}
+  .chip{display:inline-flex;align-items:center;gap:.5ch;background:var(--ochre);color:var(--ink);
+    font-family:var(--display);border-radius:999px;padding:10px 30px;font-size:46px;box-shadow:var(--shadow-sm)}
+  .chip.sm{font-size:30px;padding:7px 22px}
+
+  .foot{position:absolute;left:92px;right:92px;bottom:64px;z-index:3;display:flex;align-items:center;
+    justify-content:space-between;font-size:20px;font-weight:700;letter-spacing:.04em}
+  .cream .foot{color:var(--ink500)} .dark .foot{color:rgba(254,250,224,.72)}
+  .dots{display:flex;gap:10px}.dot{width:11px;height:11px;border-radius:999px;background:currentColor;opacity:.32}.dot.on{opacity:1}
+
+  .s1 h1{font-size:188px}.s1 .num{color:var(--gold)}
+  .s1 .sub{font-family:var(--display);font-size:62px;line-height:1.02;margin-top:30px}
+  .s1 .stars{font-size:30px;letter-spacing:.42em;color:var(--gold);margin-top:28px}
+  .s2 .big{font-size:150px;margin:14px 0 30px}.s2 .big .pct{color:var(--acid)}
+  .s2 .line{font-size:34px;font-weight:600;color:var(--ink700);max-width:780px;line-height:1.35;margin-top:34px}
+  .s3 h2{font-size:90px;margin-bottom:40px}
+  .row{display:flex;gap:26px;align-items:flex-start;padding:20px 0;border-top:2px solid rgba(40,54,24,.16)}
+  .row:last-of-type{border-bottom:2px solid rgba(40,54,24,.16)}
+  .row .em{font-size:50px;width:78px;flex:none}.row .nm{font-family:var(--display);font-size:44px;line-height:1}
+  .row .ds{font-size:26px;color:var(--ink500);font-weight:600;margin-top:8px}
+  .s3 .alloff{margin-top:30px;font-weight:800;font-size:30px;color:var(--brick)}
+  .s4 .big{font-size:114px;line-height:.98}.s4 .big em{font-style:normal;color:var(--brick)}
+  .s4 ul{list-style:none;margin-top:44px;display:flex;flex-direction:column;gap:24px}
+  .s4 li{font-size:32px;font-weight:600;color:var(--ink700);display:flex;gap:18px;align-items:flex-start;line-height:1.3}
+  .s4 li b{color:var(--ink)}.s4 li .ic{font-size:36px;flex:none}
+  .s5{text-align:center}.s5 .content{align-items:center}
+  .s5 .when{font-family:var(--display);font-size:92px;margin-top:8px}
+  .s5 .noon{font-family:var(--display);font-size:226px;color:var(--gold);line-height:.9;margin:6px 0 28px}
+  .s5 .cta{font-size:44px;font-weight:800;margin-top:8px}
+  .s5 .small{font-size:30px;color:rgba(254,250,224,.8);font-weight:600;margin-top:28px;max-width:760px;line-height:1.35}
+  .s5 .foot{justify-content:center;gap:26px}
+
+  @media print{
+    @page{size:11.25in 11.25in;margin:0}
+    body{background:#fff;padding:0}.howto,.slidelabel{display:none!important}.deck{gap:0}
+    .slidewrap{width:1080px;max-width:none}
+    .slide{border-radius:0;box-shadow:none;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .slide:last-child{break-after:auto;page-break-after:avoid}
+  }
+</style>
+</head>
+<body>
+  <div class="howto"><b>Brand + patriotic.</b> Earthy palette with navy/brick accents and gold fireworks. Export each slide: right-click → Inspect → right-click the <code>&lt;div class="slide"&gt;</code> → <b>Capture node screenshot</b>. Caption is in the .md.</div>
+  <div class="deck">
+
+    <!-- 1 COVER -->
+    <div class="slidewrap"><p class="slidelabel">Slide 1 / 5 — cover</p>
+      <div class="slide dark">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--gold);--fo:.55;width:340px;height:340px;top:-70px;right:-40px"></span>
+          <span class="fw" style="--fc:var(--brick);--fo:.42;width:240px;height:240px;top:120px;left:-70px"></span>
+          <span class="fw" style="--fc:#5b7bb0;--fo:.4;width:200px;height:200px;bottom:120px;right:160px"></span>
+          <span class="star" style="top:90px;left:280px"></span><span class="star" style="top:200px;right:240px"></span>
+          <span class="star" style="bottom:300px;left:160px"></span><span class="star" style="top:340px;left:520px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">July 4, 2026 · The 250th</p>
+          <div class="stars">★ ★ ★ ★ ★</div>
+          <h1 class="display" style="margin-top:18px">AMERICA<br>TURNS <span class="num">250</span>.</h1>
+          <p class="sub">Don't show up with<br>store-bought. ⚡</p>
+        </div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 2 OFFER -->
+    <div class="slidewrap"><p class="slidelabel">Slide 2 / 5 — the offer</p>
+      <div class="slide cream blobs">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--brick);width:260px;height:260px;top:-50px;right:-30px"></span>
+          <span class="fw" style="--fc:#27365c;width:200px;height:200px;bottom:90px;left:-50px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">The Fourth of July Drop is open</p>
+          <h2 class="display big"><span class="pct">15%</span> off<br>every loaf.</h2>
+          <span class="chip">⚡ AUTO-APPLIED AT CHECKOUT</span>
+          <p class="line">Naturally leavened, baked to order in my home kitchen. No code to remember — the discount comes off at the link. 🤍</p>
+        </div>
+        <div class="foot"><span>MADE IN A HOME KITCHEN</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 3 LINEUP -->
+    <div class="slidewrap"><p class="slidelabel">Slide 3 / 5 — the lineup</p>
+      <div class="slide cream blobs">
+        <div class="sky"><span class="fw" style="--fc:var(--gold);width:220px;height:220px;top:-40px;right:90px"></span></div>
+        <div class="content">
+          <h2 class="display">Pick your<br>party loaf.</h2>
+          <div class="row"><span class="em">🧀🌶️</span><div><div class="nm">Jalapeño Cheddar</div><div class="ds">Toasts into grilled cheese on its own. Sliders, burgers, done.</div></div></div>
+          <div class="row"><span class="em">🍕</span><div><div class="nm">Pepperoni</div><div class="ds">Pizza night in loaf form. Tear it, share it, no sauce needed.</div></div></div>
+          <div class="row"><span class="em">🥖</span><div><div class="nm">Classic</div><div class="ds">The do-anything base: crostini, dips, the cheese-board centerpiece.</div></div></div>
+          <div class="row"><span class="em">🍫🍌</span><div><div class="nm">Banana Chocolate Chip</div><div class="ds">Dessert, the kids' pick, and Fourth-of-July-morning toast.</div></div></div>
+          <p class="alloff">↓ all 15% off this weekend ↓</p>
+        </div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 4 CATCH -->
+    <div class="slidewrap"><p class="slidelabel">Slide 4 / 5 — the catch</p>
+      <div class="slide cream blobs">
+        <div class="sky"><span class="fw" style="--fc:#27365c;width:240px;height:240px;bottom:-50px;right:-40px"></span></div>
+        <div class="content">
+          <p class="kicker">Small batch, real talk</p>
+          <h2 class="display big" style="margin-top:20px">A dozen loaves —<br>then I'm <em>on the road.</em></h2>
+          <ul>
+            <li><span class="ic">🥖</span><span>Just <b>2 each</b> of Classic &amp; Banana Chocolate Chip. When they're claimed, that's the batch.</span></li>
+            <li><span class="ic">🚪</span><span><b>Free hand-delivery</b> to your door (Corona area), <b>July 1–2</b>.</span></li>
+            <li><span class="ic">🔥</span><span>Day-of: <b>10 min in a 350° oven</b> and the crust crackles like it just came out of mine.</span></li>
+          </ul>
+        </div>
+        <div class="foot"><span>BEFORE I LEAVE FOR THE HOLIDAY ✈️</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 5 CTA -->
+    <div class="slidewrap"><p class="slidelabel">Slide 5 / 5 — the call to action</p>
+      <div class="slide dark s5">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--gold);--fo:.6;width:360px;height:360px;top:-80px;left:-50px"></span>
+          <span class="fw" style="--fc:var(--brick);--fo:.45;width:260px;height:260px;top:60px;right:-40px"></span>
+          <span class="fw" style="--fc:#5b7bb0;--fo:.42;width:220px;height:220px;bottom:150px;left:120px"></span>
+          <span class="star" style="top:120px;left:300px"></span><span class="star" style="top:240px;right:260px"></span><span class="star" style="bottom:320px;right:200px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">Order by</p>
+          <div class="when">MONDAY, JUNE 29</div>
+          <div class="noon display">NOON.</div>
+          <span class="chip sm">⚡ 15% OFF EVERYTHING</span>
+          <p class="cta">👉 Tap the link in my bio</p>
+          <p class="small">When they're gone, I'm already gone. Let's do the 250th right. 🎆🤍</p>
+        </div>
+        <div class="foot"><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i></span></div>
+      </div></div>
+
+  </div>
+</body>
+</html>

@@ -2,11 +2,11 @@
 
 **Campaign:** drop-wide 15% flash sale on the "Fourth of July Drop."
 **Order by:** Mon **June 29, 12:00 noon** PT · **Free local hand-delivery** (Corona area) **Jul 1–2**.
-**Batch:** just **2 of each loaf — 8 total**. **15% off auto-applies at the link** (no code).
+**Batch:** **12 loaves total** — Pepperoni ×4, Jalapeño Cheddar ×4, Classic ×2, Banana Chocolate Chip ×2. **15% off auto-applies at the link** (no code).
 **Loaves:** Jalapeño Cheddar · Pepperoni · Classic · Banana Chocolate Chip.
 **Refresh tip (use throughout):** *"Day-of, 10 min in a 350° oven and the crust crackles like it just came out of mine."*
 
-> ⚠️ Before posting: publish the drop (Status → Open/Announced), set `flashSale.endsAt` = **2026-06-29 12:00** to match orders-close, set `pickupOrShipDate` = 2026-07-02, and confirm the flash-sale **Enabled** toggle is on.
+> ✅ Drop is published, flash sale enabled, `endsAt` = 2026-06-29 12:00 (matches orders-close). **Pickup/ship date is intentionally left off (hand-delivery)** — so put the delivery details in the drop's **"Note to customers"** field (e.g. *"Free local hand-delivery in the Corona area, Jul 1–2"*), because the confirmation email pulls its pickup date from that empty field and otherwise won't show one.
 
 ---
 
@@ -29,7 +29,7 @@
 
 **Slide 4 — the catch (in a good way):**
 > I'm baking this batch, then I'm on the road for the holiday. ✈️
-> So it's **2 of each loaf. 8 total. That's it.**
+> **A dozen loaves, then that's it** — and only **2 each** of Classic & Banana Chocolate Chip.
 > Free hand-delivery to your door (Corona area), **Jul 1–2**.
 
 **Slide 5 — CTA:**
@@ -42,7 +42,7 @@
 >
 > So the **Fourth of July Drop** is open, and **every loaf is 15% off** (it comes off automatically at the link — no code to remember 🤍).
 >
-> Here's the honest part: I bake this batch and then I'm out of town for the holiday weekend. So it's a tiny one — **just 2 of each loaf, 8 in total.** When they're claimed, that's the batch.
+> Here's the honest part: I bake this batch and then I'm out of town for the holiday weekend. So it's a tiny one — **just a dozen loaves**, and only **2 each of the Classic and Banana Chocolate Chip**. When they're claimed, that's the batch.
 >
 > 🧀🌶️ Jalapeño Cheddar · 🍕 Pepperoni · 🥖 Classic · 🍫🍌 Banana Chocolate Chip
 >
@@ -65,7 +65,7 @@
 **Frame B — Jalapeño Cheddar (Thu Jun 25):**
 > 🧀🌶️ The cookout MVP
 > Grilled-cheese energy in a loaf. Sliders, burgers, snacking.
-> "2 left this batch" → [Link sticker]
+> "Only a handful this batch" → [Link sticker]
 
 **Frame C — Pepperoni (Fri Jun 26):**
 > 🍕 Pizza night in loaf form

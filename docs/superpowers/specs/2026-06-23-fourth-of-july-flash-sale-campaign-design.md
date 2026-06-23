@@ -77,9 +77,11 @@ Instagram's only job is to drive traffic to the site.
 
 ## Hero products (actual Fourth of July Drop lineup)
 
-All four loaves get 15%; here's how each is framed. **Tiny batch — 2 of each, 8
-loaves total** — so genuine scarcity ("when they're gone, I'm already on the
-road") runs through the copy.
+All four loaves get 15%; here's how each is framed. **Small batch — 12 loaves
+total** (Pepperoni ×4, Jalapeño Cheddar ×4, Classic ×2, Banana Chocolate Chip
+×2) — so genuine scarcity ("when they're gone, I'm already on the road") runs
+through the copy, with the Classic and Banana Chocolate Chip as the scarcest
+(2 each).
 
 - **Jalapeño Cheddar Sourdough** — savory cookout hero; toasts into a grilled
   cheese on its own; great for sliders/burgers.

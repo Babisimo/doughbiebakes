@@ -79,6 +79,7 @@ export default async function ProductPage({ params }: Props) {
           <SalePrice
             cents={product.priceCents}
             percentOff={flash.active ? flash.percentOff : 0}
+            prominent
           />
           {product.description ? (
             <p className="text-ink-700">{product.description}</p>

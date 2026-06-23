@@ -63,12 +63,14 @@
   .cream .foot{color:var(--ink500)} .dark .foot{color:rgba(254,250,224,.72)}
   .dots{display:flex;gap:10px}.dot{width:11px;height:11px;border-radius:999px;background:currentColor;opacity:.32}.dot.on{opacity:1}
 
-  .s1 h1{font-size:190px}
+  .s1 .content{justify-content:center;gap:44px}
+  .s1 .setup{font-family:var(--display);font-size:84px;line-height:1.05;color:var(--bone);max-width:944px}
   .s1 .strike{position:relative;display:inline-block;color:#efe6cf}
   /* hand-drawn-ish brick line crossing out CHIPS */
-  .s1 .strike::after{content:"";position:absolute;left:-3%;right:-3%;top:47%;height:16px;border-radius:9px;
+  .s1 .strike::after{content:"";position:absolute;left:-5%;right:-5%;top:46%;height:12px;border-radius:8px;
     background:var(--brick);transform:rotate(-2.5deg);box-shadow:0 2px 8px rgba(158,59,46,.5)}
-  .s1 .sub{font-family:var(--display);font-size:56px;line-height:1.06;margin-top:34px}
+  .s1 .punch{font-family:var(--display);font-size:150px;line-height:.95;color:var(--gold)}
+  .s1 .punch .arr{color:var(--bone)}
   .s2 .big{font-size:150px;margin:14px 0 30px}.s2 .big .pct{color:var(--acid)}
   .s2 .line{font-size:34px;font-weight:500;color:var(--ink700);max-width:780px;line-height:1.4;margin-top:34px}
   .s3 h2{font-size:76px}
@@ -109,7 +111,7 @@
 
     <!-- 1 COVER -->
     <div class="slidewrap"><p class="slidelabel">Slide 1 / 5 — cover</p>
-      <div class="slide dark">
+      <div class="slide dark s1">
         <div class="sky">
           <span class="fw" style="--fc:var(--gold);--fo:.55;width:340px;height:340px;top:-70px;right:-40px"></span>
           <span class="fw" style="--fc:var(--brick);--fo:.42;width:240px;height:240px;top:120px;left:-70px"></span>
@@ -118,36 +120,19 @@
           <span class="star" style="bottom:300px;left:160px"></span><span class="star" style="top:340px;left:520px"></span>
         </div>
         <div class="content">
-          <p class="kicker">July 4, 2026 · The 250th</p>
-          <h1 class="display" style="margin-top:10px">DON'T<br>BRING<br><span class="strike">CHIPS</span>.</h1>
-          <p class="sub">Here's what to bring to<br>the cookout instead&nbsp;↓ 🎆</p>
+          <p class="setup">DON'T BRING <span class="strike">CHIPS</span> TO YOUR FOURTH OF JULY PARTY.</p>
+          <p class="punch">BRING THIS<br>INSTEAD <span class="arr">→</span></p>
         </div>
         <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>
 
-    <!-- 2 OFFER -->
-    <div class="slidewrap"><p class="slidelabel">Slide 2 / 5 — the offer</p>
-      <div class="slide cream blobs">
-        <div class="sky">
-          <span class="fw" style="--fc:var(--brick);width:260px;height:260px;top:-50px;right:-30px"></span>
-          <span class="fw" style="--fc:#27365c;width:200px;height:200px;bottom:90px;left:-50px"></span>
-        </div>
-        <div class="content">
-          <p class="kicker">The Fourth of July Drop is open</p>
-          <h2 class="display big"><span class="pct">15%</span> off<br>every loaf.</h2>
-          <span class="chip">⚡ AUTO-APPLIED AT CHECKOUT</span>
-          <p class="line">Naturally leavened, baked to order in my home kitchen. No code to remember — the discount comes off at the link. 🤍</p>
-        </div>
-        <div class="foot"><span>MADE IN A HOME KITCHEN</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
-      </div></div>
-
-    <!-- 3 LINEUP — each .ph is a photo drop-zone: in Canva drop a loaf photo on it, then delete the emoji + "add photo" label -->
-    <div class="slidewrap"><p class="slidelabel">Slide 3 / 5 — the lineup (drop a loaf photo into each dashed box)</p>
-      <div class="slide cream blobs">
+    <!-- 2 LINEUP — each .ph is a photo drop-zone: in Canva drop a loaf photo on it, then delete the emoji + "add photo" label -->
+    <div class="slidewrap"><p class="slidelabel">Slide 2 / 5 — the lineup (drop a loaf photo into each dashed box)</p>
+      <div class="slide cream blobs s3">
         <div class="sky"><span class="fw" style="--fc:var(--gold);width:220px;height:220px;top:-40px;right:90px"></span></div>
         <div class="content">
-          <h2 class="display">Bring these instead.</h2>
-          <p class="sub3">4 loaves, 4 ways to win the cookout — all 15% off.</p>
+          <h2 class="display">4 loaves,<br>4 ways.</h2>
+          <p class="sub3">What to bring — and what to do with it. 👇</p>
           <div class="grid3">
             <div class="pcard"><div class="ph"><span class="pe">🧀🌶️</span><span class="pl">add photo</span></div><div class="nm">Jalapeño Cheddar</div><div class="ds">→ Grilled-cheese sliders off the grill.</div></div>
             <div class="pcard"><div class="ph"><span class="pe">🍕</span><span class="pl">add photo</span></div><div class="nm">Pepperoni</div><div class="ds">→ Tear-and-share app, zero prep.</div></div>
@@ -155,12 +140,28 @@
             <div class="pcard"><div class="ph"><span class="pe">🍫🍌</span><span class="pl">add photo</span></div><div class="nm">Banana Choc Chip</div><div class="ds">→ Dessert + 4th-of-July-morning toast.</div></div>
           </div>
         </div>
-        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 3 OFFER -->
+    <div class="slidewrap"><p class="slidelabel">Slide 3 / 5 — the offer</p>
+      <div class="slide cream blobs s2">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--brick);width:260px;height:260px;top:-50px;right:-30px"></span>
+          <span class="fw" style="--fc:#27365c;width:200px;height:200px;bottom:90px;left:-50px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">And the best part —</p>
+          <h2 class="display big"><span class="pct">15%</span> off<br>every loaf.</h2>
+          <span class="chip">⚡ AUTO-APPLIED AT CHECKOUT</span>
+          <p class="line">Naturally leavened, baked to order in my home kitchen. No code to remember — the discount comes off at the link. 🤍</p>
+        </div>
+        <div class="foot"><span>MADE IN A HOME KITCHEN</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>
 
     <!-- 4 CATCH -->
     <div class="slidewrap"><p class="slidelabel">Slide 4 / 5 — the catch</p>
-      <div class="slide cream blobs">
+      <div class="slide cream blobs s4">
         <div class="sky"><span class="fw" style="--fc:#27365c;width:240px;height:240px;bottom:-50px;right:-40px"></span></div>
         <div class="content">
           <p class="kicker">Small batch, real talk</p>

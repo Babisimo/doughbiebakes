@@ -47,6 +47,7 @@ const DROP_FIELDS = groq`
   pickupOrShipDate,
   "createdAt": _createdAt,
   note,
+  flashSale,
   "lineItems": lineItems[]{
     quantity,
     "product": product->{ ${PRODUCT_FIELDS} }

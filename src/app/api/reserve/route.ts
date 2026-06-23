@@ -151,7 +151,12 @@ export async function POST(req: Request) {
     discountLabel = winner.label;
     discounted = discountedTotalCents(result.totalCents, winner.percentOff);
     if (codeRaw && promoPercent > 0) {
+      // Valid code typed but flash won on percent — tell them the good news.
       notice = "A flash sale beat your code — reserved at the bigger discount.";
+    } else if (codeRaw) {
+      // Invalid code typed but flash sale applies — replace the invalid-code
+      // notice so we don't tell them their code failed while silently discounting them.
+      notice = "Reserved at our flash-sale price.";
     }
   } else if (winner.source === "promo") {
     promoPercentOff = winner.percentOff;
@@ -190,6 +195,7 @@ export async function POST(req: Request) {
     totalCents: discounted ?? result.totalCents,
     originalTotalCents: discounted != null ? result.totalCents : undefined,
     promoPercentOff,
+    discountLabel,
     pickupDate: drop.pickupOrShipDate,
   };
   console.info(

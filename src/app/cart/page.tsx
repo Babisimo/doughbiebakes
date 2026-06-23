@@ -38,7 +38,11 @@ export default async function CartPage() {
         Checkout
       </p>
       <h1 className="display mb-8 mt-1 text-5xl sm:text-6xl">Your order</h1>
-      <CartContents products={products} availability={availability} />
+      <CartContents
+        products={products}
+        availability={availability}
+        salePercentOff={flash.active ? flash.percentOff : 0}
+      />
     </div>
   );
 }

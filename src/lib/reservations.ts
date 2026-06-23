@@ -69,6 +69,7 @@ function emailInputFor(r: Reservation, pickupDate?: string) {
     totalCents: total,
     originalTotalCents: promoApplies ? r.totalCents : undefined,
     promoPercentOff: hasDiscount ? r.promoPercentOff : undefined,
+    discountLabel: r.discountLabel,
     pickupDate,
   };
 }

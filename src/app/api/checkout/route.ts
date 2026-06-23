@@ -180,8 +180,9 @@ export async function POST(request: Request) {
     });
   }
 
-  // Apply the founding discount to the order TOTAL via a reusable Stripe
-  // coupon — line items stay full price; Stripe takes the % off the subtotal.
+  // Apply the winning discount (founding code or flash sale) to the order TOTAL
+  // via a reusable Stripe coupon — line items stay full price; Stripe takes the
+  // % off the subtotal.
   const couponId =
     discountPercent > 0 ? await ensurePercentCoupon(stripe, discountPercent) : null;
 

@@ -75,6 +75,7 @@ export async function GET(req: Request) {
               : r.totalCents,
           originalTotalCents: promoApplies ? r.totalCents : undefined,
           promoPercentOff: hasDiscount ? r.promoPercentOff : undefined,
+          discountLabel: r.discountLabel,
           pickupDate: drop?.pickupOrShipDate,
         };
         // Customer already has the "we got your reservation" page in front of

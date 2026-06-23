@@ -2,19 +2,21 @@ import Link from "next/link";
 
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { ProductImage } from "@/components/product-image";
+import { SalePrice } from "@/components/sale-price";
 import { type Availability, unavailableLabel } from "@/lib/availability";
-import { formatPrice } from "@/lib/money";
 import type { Product } from "@/lib/types";
 
 export function ProductCard({
   product,
   availability,
   priority = false,
+  salePercentOff = 0,
 }: {
   product: Product;
   /** Buyability of this loaf, derived from the open drop. */
   availability: Availability;
   priority?: boolean;
+  salePercentOff?: number;
 }) {
   const { canOrder, remaining, reason } = availability;
   const badge = canOrder
@@ -46,9 +48,11 @@ export function ProductCard({
               {product.name}
             </Link>
           </h3>
-          <span className="shrink-0 rounded-full bg-ochre px-2.5 py-1 text-sm font-bold text-ink">
-            {formatPrice(product.priceCents)}
-          </span>
+          <SalePrice
+            cents={product.priceCents}
+            percentOff={salePercentOff}
+            className="shrink-0"
+          />
         </div>
         {product.tagline ? (
           <p className="text-sm text-ink-700">{product.tagline}</p>

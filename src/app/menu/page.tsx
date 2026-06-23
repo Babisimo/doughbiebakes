@@ -78,6 +78,7 @@ export default async function MenuPage() {
                   product={product}
                   availability={availabilityOf(availability, product.slug)}
                   priority={i < 3}
+                  salePercentOff={flash.active ? flash.percentOff : 0}
                 />
               </li>
             ))}

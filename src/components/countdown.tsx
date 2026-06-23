@@ -83,6 +83,7 @@ export function Countdown({
   doneLabel = "Time's up!",
   tone = "acid",
   prominent = false,
+  labelClassName,
 }: {
   /** Target ISO datetime, e.g. drop.ordersCloseAt. */
   to: string | undefined;
@@ -91,6 +92,9 @@ export function Countdown({
   tone?: Tone;
   /** Big, centered, urgent treatment for the headline order-window timer. */
   prominent?: boolean;
+  /** Override the label's color class (defaults suit a light background — pass
+   *  e.g. `text-ochre` when the countdown sits on a dark surface). */
+  labelClassName?: string;
 }) {
   const targetMs = to ? new Date(to).getTime() : NaN;
   const valid = Number.isFinite(targetMs);
@@ -117,8 +121,8 @@ export function Countdown({
       <p
         className={
           prominent
-            ? "display text-base uppercase tracking-[0.22em] text-acid-600 sm:text-lg"
-            : "text-xs font-semibold uppercase tracking-[0.18em] text-ink-500"
+            ? `display text-base uppercase tracking-[0.22em] sm:text-lg ${labelClassName ?? "text-acid-600"}`
+            : `text-xs font-semibold uppercase tracking-[0.18em] ${labelClassName ?? "text-ink-500"}`
         }
       >
         {label}

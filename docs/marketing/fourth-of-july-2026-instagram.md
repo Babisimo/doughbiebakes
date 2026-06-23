@@ -1,12 +1,12 @@
 # Fourth of July 2026 — Instagram Content (copy-paste ready)
 
 **Campaign:** drop-wide 15% flash sale on the "Fourth of July Drop."
-**Order by:** Mon **June 29, 12:00 noon** PT · **Free local hand-delivery** (Corona area) **Jul 1–2**.
+**Order by:** Sun **June 28, 12:00 noon** PT · **Free local hand-delivery** (Corona area) **Jun 30 – Jul 1**.
 **Batch:** **12 loaves total** — Pepperoni ×4, Jalapeño Cheddar ×4, Classic ×2, Banana Chocolate Chip ×2. **15% off auto-applies at the link** (no code).
 **Loaves:** Jalapeño Cheddar · Pepperoni · Classic · Banana Chocolate Chip.
 **Refresh tip (use throughout):** *"Day-of, 10 min in a 350° oven and the crust crackles like it just came out of mine."*
 
-> ✅ Drop is published, flash sale enabled, `endsAt` = 2026-06-29 12:00 (matches orders-close). **Pickup/ship date is intentionally left off (hand-delivery)** — so put the delivery details in the drop's **"Note to customers"** field (e.g. *"Free local hand-delivery in the Corona area, Jul 1–2"*), because the confirmation email pulls its pickup date from that empty field and otherwise won't show one.
+> ✅ Drop is published, flash sale enabled, `endsAt` = 2026-06-28 12:00 (matches orders-close). **Pickup/ship date is intentionally left off (hand-delivery)** — so put the delivery details in the drop's **"Note to customers"** field (e.g. *"Free local hand-delivery in the Corona area, Jun 30 – Jul 1"*), because the confirmation email pulls its pickup date from that empty field and otherwise won't show one.
 
 ---
 
@@ -21,7 +21,7 @@
 3. New IG post → add the 5 images **in order 1→5** → paste the **caption below** →
    set **location: Corona, California** → share.
 4. Paste the **hashtags as the FIRST COMMENT** (keeps the caption clean; same reach).
-5. Post **Story Frame A** (§2) with the **countdown sticker → Mon Jun 29, 12:00 PM** and a **link sticker** to the site.
+5. Post **Story Frame A** (§2) with the **countdown sticker → Sun Jun 28, 12:00 PM** and a **link sticker** to the site.
 6. Make sure your **bio link** points at the storefront (where the 15% auto-applies).
 
 **FINAL CAPTION (copy-paste):**
@@ -33,9 +33,9 @@
 >
 > 🧀🌶️ Jalapeño Cheddar · 🍕 Pepperoni · 🥖 Classic · 🍫🍌 Banana Chocolate Chip
 >
-> I'll **hand-deliver to your door** (Corona area) on **July 1–2** — stocked and ready for your party. Day-of, give it **10 minutes in a 350° oven** and the crust crackles like it just came out of mine.
+> I'll **hand-deliver to your door** (Corona area) on **June 30 – July 1** — stocked and ready for your party. Day-of, give it **10 minutes in a 350° oven** and the crust crackles like it just came out of mine.
 >
-> 🗓️ **Order by Monday, June 29 at noon.** Link in bio. Let's do this Fourth right. 🎆
+> 🗓️ **Order by Sunday, June 28 at noon.** Link in bio. Let's do this Fourth right. 🎆
 
 **FIRST COMMENT (hashtags):**
 > #CoronaCA #InlandEmpire #InlandEmpireEats #SoCalEats #sourdough #sourdoughbread #cottagefood #cottagebakery #homebaker #breadstagram #realbread #fourthofjuly #4thofjuly #july4th #america250 #shoplocalcorona #riversidecounty #freshbread #artisanbread #supportlocal
@@ -47,8 +47,8 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 1. **Cover (dark):** kicker "JULY 4, 2026 · THE 250TH", giant "AMERICA TURNS **250**" (250 in ochre), sub "Don't show up with store-bought ⚡", a row of 5 ochre stars. Job: stop the scroll.
 2. **Offer (cream):** "**15%** off every loaf", the ochre AUTO-APPLIED chip, one warm line about home-kitchen + no code.
 3. **Lineup (cream):** "Pick your party loaf" + the 4 loaves as emoji rows with one-line serving cues; "all 15% off" footer line.
-4. **The catch (cream):** "A dozen loaves — then I'm **on the road**", three icon bullets (2-each scarcity · free hand-delivery Jul 1–2 · the 350° refresh tip).
-5. **CTA (dark, bookend):** "Order by MONDAY, JUNE 29 / **NOON**", the 15% chip, "👉 link in bio", "when they're gone, I'm already gone 🎆".
+4. **The catch (cream):** "A dozen loaves — then I'm **on the road**", three icon bullets (2-each scarcity · free hand-delivery Jun 30 – Jul 1 · the 350° refresh tip).
+5. **CTA (dark, bookend):** "Order by SUNDAY, JUNE 28 / **NOON**", the 15% chip, "👉 link in bio", "when they're gone, I'm already gone 🎆".
 
 ---
 
@@ -72,10 +72,10 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 **Slide 4 — the catch (in a good way):**
 > I'm baking this batch, then I'm on the road for the holiday. ✈️
 > **A dozen loaves, then that's it** — and only **2 each** of Classic & Banana Chocolate Chip.
-> Free hand-delivery to your door (Corona area), **Jul 1–2**.
+> Free hand-delivery to your door (Corona area), **June 30 – July 1**.
 
 **Slide 5 — CTA:**
-> 🗓️ **Order by MONDAY, JUNE 29 — NOON.**
+> 🗓️ **Order by SUNDAY, JUNE 28 — NOON.**
 > Tap the link in my bio. 15% comes off automatically.
 > When they're gone, I'm already gone. 🤍
 
@@ -88,20 +88,20 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 >
 > 🧀🌶️ Jalapeño Cheddar · 🍕 Pepperoni · 🥖 Classic · 🍫🍌 Banana Chocolate Chip
 >
-> I'll **hand-deliver to your door** (Corona area) on **July 1–2** — so it's stocked and ready for your party. Day-of, give it **10 minutes in a 350° oven** and the crust crackles like it just came out of mine.
+> I'll **hand-deliver to your door** (Corona area) on **June 30 – July 1** — so it's stocked and ready for your party. Day-of, give it **10 minutes in a 350° oven** and the crust crackles like it just came out of mine.
 >
-> 🗓️ **Order by Monday, June 29 at noon.** Link in bio. Let's do this Fourth right. 🎆
+> 🗓️ **Order by Sunday, June 28 at noon.** Link in bio. Let's do this Fourth right. 🎆
 >
 > #CoronaCA #InlandEmpire #InlandEmpireEats #SoCalEats #sourdough #sourdoughbread #cottagefood #cottagebakery #homebaker #breadstagram #realbread #fourthofjuly #4thofjuly #july4th #america250 #shoplocalcorona #riversidecounty #freshbread #artisanbread #supportlocal
 
 ---
 
-## 2) STORY FRAMES — rotate Wed Jun 24 → Mon Jun 29
+## 2) STORY FRAMES — rotate Wed Jun 24 → Sun Jun 28
 
 **Frame A — Launch + countdown (Wed Jun 24):**
 > 🎆 Fourth of July Drop is LIVE
 > 15% off everything
-> [Countdown sticker → Mon Jun 29, 12:00 PM]
+> [Countdown sticker → Sun Jun 28, 12:00 PM]
 > [Link sticker → "ORDER HERE"]
 
 **Frame B — Jalapeño Cheddar (Thu Jun 25):**
@@ -120,31 +120,31 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 > 🔥 TIP: 10 min in a 350° oven day-of = bakery-fresh crust.
 > [Link sticker]
 
-**Frame E — Banana Chocolate Chip (Sun Jun 28):**
+**Frame E — Banana Chocolate Chip (Sat Jun 27):**
 > 🍫🍌 For the sweet tooth (and the kids)
 > Toast it for July 4th breakfast. Thank me later.
 > [Link sticker]
 
-**Frame F — 24 hours left (Sun Jun 28 evening):**
+**Frame F — 24 hours left (Sat Jun 27 evening):**
 > ⏰ 24 HOURS
-> Orders close **tomorrow (Mon) at NOON.**
+> Orders close **tomorrow (Sun) at NOON.**
 > Then I'm baking + hitting the road.
 > [Countdown sticker] [Link sticker → "LAST CHANCE"]
 
 ---
 
-## 3) LAST-CALL POST — Mon Jun 29 (morning)
+## 3) LAST-CALL POST — Sun Jun 28 (morning)
 
 **Single image or short reel. CAPTION:**
 > ⏰ **LAST CALL — orders close at NOON today.** 🇺🇸
 >
-> This is the final batch before I leave for the holiday weekend. **15% off**, hand-delivered to your door Jul 1–2, and then that's it until I'm back.
+> This is the final batch before I leave for the holiday weekend. **15% off**, hand-delivered to your door Jun 30 – Jul 1, and then that's it until I'm back.
 >
 > A few loaves left. If you want something worthy of the 250th on your table Saturday — now's the moment. Link in bio. 🎆🤍
 >
 > #CoronaCA #InlandEmpire #fourthofjuly #america250 #sourdough #cottagebakery #shoplocalcorona #lastcall
 
-**Matching story (Mon AM):**
+**Matching story (Sun AM):**
 > 🚨 CLOSES AT NOON
 > [Countdown sticker → 12:00 PM] [Link sticker → "ORDER NOW"]
 
@@ -165,9 +165,8 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 - [ ] Wed Jun 24 AM — publish drop + enable sale; post **launch carousel**; Story Frame A
 - [ ] Thu Jun 25 — Story Frame B
 - [ ] Fri Jun 26 — Story Frame C
-- [ ] Sat Jun 27 — Story Frame D
-- [ ] Sun Jun 28 — Story Frame E (day) + Frame F (evening)
-- [ ] Mon Jun 29 AM — **last-call post** + closing story; **close orders at noon**
+- [ ] Sat Jun 27 — Story Frame D + Frame E (day) + Frame F "24 hours left" (evening)
+- [ ] Sun Jun 28 AM — **last-call post** + closing story; **close orders at noon**
 - [ ] Reply to every comment/DM fast — IG rewards it and these are your buyers
 
 ---

@@ -21,8 +21,8 @@ Saturday and the once-in-a-lifetime "America 250" Fourth.
 - **Lead:** "The biggest Fourth of our lifetime deserves better than
   store-bought."
 - **Scarcity close (authentic):** "This is my last batch before I'm out of town
-  for the holiday weekend — order by Monday."
-- **Make-ahead reassurance:** bread is delivered Jul 1–2 for a Jul 4 party, so
+  for the holiday weekend — order by Sunday."
+- **Make-ahead reassurance:** bread is delivered Jun 30 – Jul 1 for a Jul 4 party, so
   every piece of copy carries a one-line serving tip: "refresh 10 min in a 350°
   oven and the crust comes right back." Turns the only objection (2–3 days
   ahead) into a useful tip.
@@ -39,9 +39,9 @@ discounting.
 |---|---|
 | Status | **Open for orders** (publish the draft) — or "Announced" to auto-open at `ordersOpenAt` |
 | `ordersOpenAt` | `2026-06-24 08:00` |
-| `ordersCloseAt` | `2026-06-29 12:00` (Mon noon) |
+| `ordersCloseAt` | `2026-06-28 12:00` (Sun noon) |
 | `pickupOrShipDate` | **`2026-07-02`** (was empty — hand-delivery day) |
-| Note to customers | "Free local hand-delivery in the Corona area, Jul 1–2. Last batch before the holiday." |
+| Note to customers | "Free local hand-delivery in the Corona area, Jun 30 – Jul 1. Last batch before the holiday." |
 
 **Flash sale sub-fields:**
 
@@ -50,8 +50,8 @@ discounting.
 | `enabled` | **`true`** (confirm the toggle is on) |
 | `percentOff` | `15` |
 | `startsAt` | *(blank — live the moment enabled)* |
-| `endsAt` | **`2026-06-29 12:00`** — MUST equal `ordersCloseAt` so the countdown banner matches the real deadline (draft had Jun 30 13:00, which would mislead) |
-| `headline` | `America's 250th — order by Mon 6/29` |
+| `endsAt` | **`2026-06-28 12:00`** — MUST equal `ordersCloseAt` so the countdown banner matches the real deadline |
+| `headline` | `America's 250th — order by Sun 6/28` |
 
 **Why `endsAt` must equal `ordersCloseAt`:** `flashSaleStatus` returns active
 only while `effectiveDropStatus === "open"`. Once `ordersCloseAt` passes (Mon
@@ -68,10 +68,10 @@ Instagram's only job is to drive traffic to the site.
 |---|---|---|
 | Jun 23 | Tue | Today (planning) |
 | Jun 24 | Wed | Sale enabled in Studio + **launch carousel** posted |
-| Jun 25–28 | Thu–Sun | Story rotation (countdown + one hero loaf/day + serving tip) |
-| Jun 28 | Sun | "24 hours left" story |
-| **Jun 29** | **Mon** | **Orders close EOD** + "LAST CALL" feed post & story |
-| Jul 1–2 | Wed–Thu | Bake + deliver/pickup |
+| Jun 25–27 | Thu–Sat | Story rotation (countdown + one hero loaf/day + serving tip) |
+| Jun 27 | Sat | "24 hours left" story (evening) |
+| **Jun 28** | **Sun** | **Orders close noon** + "LAST CALL" feed post & story |
+| Jun 30 – Jul 1 | Tue–Wed | Bake + hand-deliver |
 | Jul 3 | Fri | Baker leaves for Arizona |
 | Jul 4 | Sat | The 250th Fourth |
 
@@ -112,8 +112,8 @@ red-white-&-blue framing stays at the table/spread level, not a single loaf.)
    so captions stay consistent.
 
 All copy must:
-- Carry the **order-by Mon Jun 29 (noon)** deadline and the **"I'll hand-deliver
-  Jul 1–2, before I leave town"** framing consistently (no contradictory dates).
+- Carry the **order-by Sun Jun 28 (noon)** deadline and the **"I'll hand-deliver
+  Jun 30 – Jul 1, before I leave town"** framing consistently (no contradictory dates).
 - Use **free local hand-delivery** wording ("I'll drop it to your door in the
   Corona area"), **not** "pickup" — the baker delivers this round.
 - Lean on the **real scarcity**: just 2 of each loaf, 8 total.

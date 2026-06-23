@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CartContents } from "@/components/cart-contents";
+import { FlashSaleBanner } from "@/components/flash-sale-banner";
 import { buildAvailability } from "@/lib/availability";
 import {
   getActiveDrop,
@@ -8,6 +9,7 @@ import {
   getProducts,
   getReservationHoldsForDrop,
 } from "@/lib/catalog";
+import { flashSaleStatus } from "@/lib/flash-sale";
 
 export const metadata: Metadata = {
   title: "Your order",
@@ -23,8 +25,15 @@ export default async function CartPage() {
     buildAvailability(drop, memberSelections, new Date(), holds),
   );
 
+  const flash = flashSaleStatus(drop, new Date());
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      {flash.active ? (
+        <div className="mb-8">
+          <FlashSaleBanner state={flash} />
+        </div>
+      ) : null}
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
         Checkout
       </p>

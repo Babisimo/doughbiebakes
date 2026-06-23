@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { Countdown } from "@/components/countdown";
+import { FlashSaleBanner } from "@/components/flash-sale-banner";
 import { HashScroller } from "@/components/hash-scroller";
 import { PreviousDrops } from "@/components/previous-drops";
 import { ProductImage } from "@/components/product-image";
@@ -16,6 +17,7 @@ import {
   getReservationHoldsForDrop,
 } from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
+import { flashSaleStatus } from "@/lib/flash-sale";
 import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
@@ -143,6 +145,13 @@ export default async function HomePage() {
           </span>
         </div>
       </section>
+
+      {/* ========================= FLASH SALE BANNER ======================== */}
+      {drop ? (
+        <div className="mx-auto max-w-5xl px-4 pb-2 pt-8 sm:px-6">
+          <FlashSaleBanner state={flashSaleStatus(drop, now)} />
+        </div>
+      ) : null}
 
       {/* ========================== CURRENT DROP ========================== */}
       <section id="current-drop" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16 sm:px-6">

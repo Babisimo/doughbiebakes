@@ -25,9 +25,9 @@
 6. Make sure your **bio link** points at the storefront (where the 15% auto-applies).
 
 **FINAL CAPTION (copy-paste):**
-> America turns **250** this Saturday — the biggest Fourth of our lifetime. That deserves better than a grocery-store loaf. 🇺🇸
+> Don't be the one who brings chips. 😅 America turns **250** this Saturday — the biggest Fourth of our lifetime — and it deserves better than a grocery-store snack. 🇺🇸
 >
-> So the **Fourth of July Drop** is open, and **every loaf is 15% off** (it comes off automatically at the link — no code to remember 🤍).
+> Here's what to bring instead: the **Fourth of July Drop** is open, and **every loaf is 15% off** (it comes off automatically at the link — no code to remember 🤍).
 >
 > Here's the honest part: I bake this batch and then I'm out of town for the holiday weekend. So it's a tiny one — **just a dozen loaves**, and only **2 each of the Classic and Banana Chocolate Chip**. When they're claimed, that's the batch.
 >
@@ -80,9 +80,9 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 > When they're gone, I'm already gone. 🤍
 
 **CAPTION:**
-> America turns **250** this Saturday — the biggest Fourth of our lifetime. That deserves better than a grocery-store loaf. 🇺🇸
+> Don't be the one who brings chips. 😅 America turns **250** this Saturday — the biggest Fourth of our lifetime — and it deserves better than a grocery-store snack. 🇺🇸
 >
-> So the **Fourth of July Drop** is open, and **every loaf is 15% off** (it comes off automatically at the link — no code to remember 🤍).
+> Here's what to bring instead: the **Fourth of July Drop** is open, and **every loaf is 15% off** (it comes off automatically at the link — no code to remember 🤍).
 >
 > Here's the honest part: I bake this batch and then I'm out of town for the holiday weekend. So it's a tiny one — **just a dozen loaves**, and only **2 each of the Classic and Banana Chocolate Chip**. When they're claimed, that's the batch.
 >

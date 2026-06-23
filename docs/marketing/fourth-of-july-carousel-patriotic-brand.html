@@ -63,9 +63,12 @@
   .cream .foot{color:var(--ink500)} .dark .foot{color:rgba(254,250,224,.72)}
   .dots{display:flex;gap:10px}.dot{width:11px;height:11px;border-radius:999px;background:currentColor;opacity:.32}.dot.on{opacity:1}
 
-  .s1 h1{font-size:188px}.s1 .num{color:var(--gold)}
-  .s1 .sub{font-family:var(--display);font-size:62px;line-height:1.02;margin-top:30px}
-  .s1 .stars{font-size:30px;letter-spacing:.42em;color:var(--gold);margin-top:28px}
+  .s1 h1{font-size:190px}
+  .s1 .strike{position:relative;display:inline-block;color:#efe6cf}
+  /* hand-drawn-ish brick line crossing out CHIPS */
+  .s1 .strike::after{content:"";position:absolute;left:-3%;right:-3%;top:47%;height:16px;border-radius:9px;
+    background:var(--brick);transform:rotate(-2.5deg);box-shadow:0 2px 8px rgba(158,59,46,.5)}
+  .s1 .sub{font-family:var(--display);font-size:56px;line-height:1.06;margin-top:34px}
   .s2 .big{font-size:150px;margin:14px 0 30px}.s2 .big .pct{color:var(--acid)}
   .s2 .line{font-size:34px;font-weight:500;color:var(--ink700);max-width:780px;line-height:1.4;margin-top:34px}
   .s3 h2{font-size:76px}
@@ -116,9 +119,8 @@
         </div>
         <div class="content">
           <p class="kicker">July 4, 2026 · The 250th</p>
-          <div class="stars">★ ★ ★ ★ ★</div>
-          <h1 class="display" style="margin-top:18px">AMERICA<br>TURNS <span class="num">250</span>.</h1>
-          <p class="sub">Don't show up with<br>store-bought. ⚡</p>
+          <h1 class="display" style="margin-top:10px">DON'T<br>BRING<br><span class="strike">CHIPS</span>.</h1>
+          <p class="sub">Here's what to bring to<br>the cookout instead&nbsp;↓ 🎆</p>
         </div>
         <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
       </div></div>
@@ -144,13 +146,13 @@
       <div class="slide cream blobs">
         <div class="sky"><span class="fw" style="--fc:var(--gold);width:220px;height:220px;top:-40px;right:90px"></span></div>
         <div class="content">
-          <h2 class="display">Pick your party loaf.</h2>
-          <p class="sub3">All four — 15% off this weekend.</p>
+          <h2 class="display">Bring these instead.</h2>
+          <p class="sub3">4 loaves, 4 ways to win the cookout — all 15% off.</p>
           <div class="grid3">
-            <div class="pcard"><div class="ph"><span class="pe">🧀🌶️</span><span class="pl">add photo</span></div><div class="nm">Jalapeño Cheddar</div><div class="ds">Grilled cheese on its own.</div></div>
-            <div class="pcard"><div class="ph"><span class="pe">🍕</span><span class="pl">add photo</span></div><div class="nm">Pepperoni</div><div class="ds">Pizza night, in a loaf.</div></div>
-            <div class="pcard"><div class="ph"><span class="pe">🥖</span><span class="pl">add photo</span></div><div class="nm">Classic</div><div class="ds">The do-anything base.</div></div>
-            <div class="pcard"><div class="ph"><span class="pe">🍫🍌</span><span class="pl">add photo</span></div><div class="nm">Banana Choc Chip</div><div class="ds">Dessert + the kids' pick.</div></div>
+            <div class="pcard"><div class="ph"><span class="pe">🧀🌶️</span><span class="pl">add photo</span></div><div class="nm">Jalapeño Cheddar</div><div class="ds">→ Grilled-cheese sliders off the grill.</div></div>
+            <div class="pcard"><div class="ph"><span class="pe">🍕</span><span class="pl">add photo</span></div><div class="nm">Pepperoni</div><div class="ds">→ Tear-and-share app, zero prep.</div></div>
+            <div class="pcard"><div class="ph"><span class="pe">🥖</span><span class="pl">add photo</span></div><div class="nm">Classic</div><div class="ds">→ Crostini + dips, the cheese board.</div></div>
+            <div class="pcard"><div class="ph"><span class="pe">🍫🍌</span><span class="pl">add photo</span></div><div class="nm">Banana Choc Chip</div><div class="ds">→ Dessert + 4th-of-July-morning toast.</div></div>
           </div>
         </div>
         <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>

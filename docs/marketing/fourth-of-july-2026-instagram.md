@@ -14,10 +14,7 @@
 
 **At a glance, do this in order:**
 1. ~8 AM PT, when the drop opens, confirm the **site shows the ⚡ banner + struck prices** (proves the sale is live).
-2. Export the **6 carousel slides** (open the HTML → DevTools → right-click the `.slide` → *Capture node screenshot* for full-res; or screenshot on a high-res display). **Three versions to choose from** (each also has a matching `.pdf` for Canva import):
-   - `fourth-of-july-launch-carousel.html` — the on-brand earthy version.
-   - `fourth-of-july-carousel-patriotic-brand.html` — brand palette + navy/brick accents + gold fireworks.
-   - `fourth-of-july-carousel-patriotic-bold.html` — full red/white/blue/gold Americana with fireworks (ignores brand colors; keeps the font).
+2. The 6 final slides are pre-rendered as PNGs in this folder: **`slide-1.png` … `slide-6.png`** (1080×1080, exported from `fourth-of-july-carousel-patriotic-brand.html` with the loaf photos baked in). Just grab those — no Canva needed. Captions are in `fourth-of-july-captions.txt`.
 3. New IG post → add the 6 images **in order 1→6** → paste the **caption below** →
    set **location: Corona, California** → share.
 4. Paste the **hashtags as the FIRST COMMENT** (keeps the caption clean; same reach).

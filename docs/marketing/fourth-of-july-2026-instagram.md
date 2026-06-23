@@ -167,3 +167,27 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 - [ ] Sun Jun 28 — Story Frame E (day) + Frame F (evening)
 - [ ] Mon Jun 29 AM — **last-call post** + closing story; **close orders at noon**
 - [ ] Reply to every comment/DM fast — IG rewards it and these are your buyers
+
+---
+
+## 6) Doing it in Canva
+
+I can't build in your Canva account directly, but here are two ways to get there.
+
+### Fastest — import the ready-made PDF (text stays editable)
+`fourth-of-july-launch-carousel.pdf` (in this folder) is the 5 slides, one square page each.
+1. Canva → **Create a design** → search **"Instagram Post (Square)"** (1080×1080).
+2. Or simplest: Canva home → **Uploads** (or **Import**) → upload the **PDF** → Canva turns each page into an editable slide.
+3. Tweak text/colors right in Canva, then **Share → Download → PNG** (one per page) and post as a carousel.
+
+*Caveats:* Canva may swap the display font (see below) and the soft background "blobs" may import as a flattened background image rather than separate editable shapes. Text boxes stay editable.
+
+### Full control — rebuild from scratch (recipe)
+- **Canvas:** 1080×1080 (Instagram Post, Square), one per slide; duplicate pages.
+- **Colors (add these as Brand/most-used hexes):** cream `#FEFAE0` · deep forest `#283618` · terracotta `#A55D1F` · ochre `#DDA15E` · olive `#606C38` · sage `#CCD5AE`.
+- **Fonts:** Display headline → **Caprasimo** if your Canva has it; if not, a close chunky-rounded match: **Baloo 2**, **Bowlby One SC**, or **Sniglet**. Body → **Plus Jakarta Sans** (or **Poppins** / **Mulish**).
+- **The "15% OFF" chip:** a pill (rounded rectangle) filled ochre `#DDA15E`, forest `#283618` text, in the display font.
+- **Backgrounds:** slides 1 & 5 = a dark olive→forest gradient (`#606C38` → `#283618`), cream text. Slides 2–4 = cream `#FEFAE0`, forest text.
+- **Text per slide:** use §0's per-slide direction and the slide copy in §1 verbatim.
+
+Either way, the caption + first-comment hashtags in §0 don't change.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { FlashSaleBanner } from "@/components/flash-sale-banner";
 import { ProductCard } from "@/components/product-card";
 import { availabilityOf, buildAvailability } from "@/lib/availability";
 import {
@@ -9,6 +10,7 @@ import {
   getProducts,
   getReservationHoldsForDrop,
 } from "@/lib/catalog";
+import { flashSaleStatus } from "@/lib/flash-sale";
 import type { Product } from "@/lib/types";
 
 // Render per-request so "loaves left" reflects inventory immediately.
@@ -33,8 +35,15 @@ export default async function MenuPage() {
     groups.get(key)!.push(product);
   }
 
+  const flash = flashSaleStatus(drop, new Date());
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      {flash.active ? (
+        <div className="mb-8">
+          <FlashSaleBanner state={flash} />
+        </div>
+      ) : null}
       <header className="max-w-prose space-y-3">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
           The menu
@@ -69,6 +78,7 @@ export default async function MenuPage() {
                   product={product}
                   availability={availabilityOf(availability, product.slug)}
                   priority={i < 3}
+                  salePercentOff={flash.active ? flash.percentOff : 0}
                 />
               </li>
             ))}

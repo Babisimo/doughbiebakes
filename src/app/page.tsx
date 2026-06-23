@@ -5,9 +5,11 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { Countdown } from "@/components/countdown";
+import { FlashSaleBanner } from "@/components/flash-sale-banner";
 import { HashScroller } from "@/components/hash-scroller";
 import { PreviousDrops } from "@/components/previous-drops";
 import { ProductImage } from "@/components/product-image";
+import { SalePrice } from "@/components/sale-price";
 import { availabilityOf, buildAvailability, unavailableLabel } from "@/lib/availability";
 import {
   getDropsView,
@@ -16,8 +18,8 @@ import {
   getReservationHoldsForDrop,
 } from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
+import { flashSaleStatus } from "@/lib/flash-sale";
 import { IS_PRELAUNCH } from "@/lib/launch-mode";
-import { formatPrice } from "@/lib/money";
 import { site } from "@/lib/site";
 import type { DropStatus } from "@/lib/types";
 import { pickWeeklyFeatured } from "@/lib/weekly-feature";
@@ -55,6 +57,7 @@ export default async function HomePage() {
   const featured = products.slice(0, 3);
   // Hero "loaf of the week" — rotates weekly, favors loaves with a photo.
   const heroProduct = pickWeeklyFeatured(products, now);
+  const flash = flashSaleStatus(drop, now);
 
   return (
     <>
@@ -121,9 +124,10 @@ export default async function HomePage() {
                   {heroProduct?.name ?? "Classic"}
                 </span>
                 {heroProduct ? (
-                  <span className="rounded-full bg-ochre px-2.5 py-1 text-sm font-bold text-ink">
-                    {formatPrice(heroProduct.priceCents)}
-                  </span>
+                  <SalePrice
+                    cents={heroProduct.priceCents}
+                    percentOff={flash.active ? flash.percentOff : 0}
+                  />
                 ) : null}
               </div>
             </Link>
@@ -143,6 +147,13 @@ export default async function HomePage() {
           </span>
         </div>
       </section>
+
+      {/* ========================= FLASH SALE BANNER ======================== */}
+      {drop ? (
+        <div className="mx-auto max-w-5xl px-4 pb-2 pt-8 sm:px-6">
+          <FlashSaleBanner state={flash} />
+        </div>
+      ) : null}
 
       {/* ========================== CURRENT DROP ========================== */}
       <section id="current-drop" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16 sm:px-6">
@@ -257,9 +268,11 @@ export default async function HomePage() {
                         >
                           {product.name}
                         </Link>
-                        <span className="shrink-0 rounded-full bg-ochre px-2.5 py-1 text-sm font-bold text-ink">
-                          {formatPrice(product.priceCents)}
-                        </span>
+                        <SalePrice
+                          cents={product.priceCents}
+                          percentOff={flash.active ? flash.percentOff : 0}
+                          className="shrink-0"
+                        />
                       </div>
                       {product.tagline ? (
                         <p className="text-sm text-ink-700">{product.tagline}</p>
@@ -365,9 +378,11 @@ export default async function HomePage() {
                     >
                       {product.name}
                     </Link>
-                    <span className="shrink-0 rounded-full bg-ochre px-2.5 py-1 text-sm font-bold text-ink">
-                      {formatPrice(product.priceCents)}
-                    </span>
+                    <SalePrice
+                      cents={product.priceCents}
+                      percentOff={flash.active ? flash.percentOff : 0}
+                      className="shrink-0"
+                    />
                   </div>
                   {product.tagline ? (
                     <p className="text-sm text-ink-700">{product.tagline}</p>

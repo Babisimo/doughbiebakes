@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/components/cart-provider";
 import { ProductImage } from "@/components/product-image";
 import { type Availability, unavailableLabel } from "@/lib/availability";
+import { resolveDiscount } from "@/lib/flash-sale";
 import { IS_PRELAUNCH } from "@/lib/launch-mode";
 import { formatPrice } from "@/lib/money";
 import { discountCents, discountedTotalCents } from "@/lib/promo-math";
@@ -26,10 +27,13 @@ const UNAVAILABLE_NOTE: Record<NonNullable<Availability["reason"]>, string> = {
 export function CartContents({
   products,
   availability,
+  salePercentOff = 0,
 }: {
   products: Product[];
   /** `slug -> Availability` for everything in the open drop. */
   availability: Record<string, Availability>;
+  /** Active flash-sale percent (0 when no sale). Passed from the server component. */
+  salePercentOff?: number;
 }) {
   const {
     lines,
@@ -43,6 +47,15 @@ export function CartContents({
   } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Larger of the active flash sale and the typed promo code wins — consistent
+  // with the backend (resolveDiscount). When both are 0, effectivePercent is 0
+  // and the cart renders exactly as before (no discount line).
+  const resolved = resolveDiscount({
+    flashPercent: salePercentOff,
+    promoPercent: promoPercentOff ?? 0,
+  });
+  const effectivePercent = resolved.percentOff;
 
   const catalog = useMemo(
     () => new Map(products.map((p) => [p.slug, p])),
@@ -223,20 +236,22 @@ export function CartContents({
           <span className="font-semibold uppercase">Subtotal</span>
           <span className="font-bold">{formatPrice(subtotal)}</span>
         </div>
-        {promoPercentOff > 0 ? (
+        {effectivePercent > 0 ? (
           <div className="space-y-1">
             <div className="flex justify-between text-sm text-acid-600">
               <span className="font-semibold">
-                Founding discount ({promoPercentOff}% off)
+                {resolved.source === "flash"
+                  ? `Flash sale (${effectivePercent}% off)`
+                  : `Founding discount (${effectivePercent}% off)`}
               </span>
               <span className="font-bold">
-                −{formatPrice(discountCents(subtotal, promoPercentOff))}
+                −{formatPrice(discountCents(subtotal, effectivePercent))}
               </span>
             </div>
             <div className="flex justify-between border-b border-ink/15 pb-2 text-sm">
               <span className="font-semibold uppercase">Discounted total</span>
               <span className="font-bold">
-                {formatPrice(discountedTotalCents(subtotal, promoPercentOff))}
+                {formatPrice(discountedTotalCents(subtotal, effectivePercent))}
               </span>
             </div>
           </div>

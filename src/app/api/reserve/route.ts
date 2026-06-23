@@ -9,6 +9,7 @@ import { sanityClient } from "@/sanity/client";
 import { OPEN_RESERVATION_FOR_EMAIL_DROP_QUERY } from "@/sanity/lib/queries";
 import { getPromoByCode, isRedeemable, normalizeCode } from "@/lib/promo";
 import { discountedTotalCents } from "@/lib/promo-math";
+import { flashSaleStatus, resolveDiscount } from "@/lib/flash-sale";
 
 export const runtime = "nodejs";
 
@@ -124,17 +125,42 @@ export async function POST(req: Request) {
   let promoCode: string | undefined;
   let promoPercentOff: number | undefined;
   let discounted: number | undefined;
+  let discountLabel: string | undefined;
   let notice: string | undefined;
+
   const codeRaw = typeof body.code === "string" ? body.code.trim() : "";
+  let promoPercent = 0;
   if (codeRaw) {
     const promo = await getPromoByCode(codeRaw);
     if (isRedeemable(promo)) {
+      promoPercent = promo.percentOff;
       promoCode = normalizeCode(promo.code);
-      promoPercentOff = promo.percentOff;
-      discounted = discountedTotalCents(result.totalCents, promo.percentOff);
     } else {
       notice = "That code isn't valid or is fully claimed — reserved at full price.";
     }
+  }
+
+  const flash = flashSaleStatus(drop, new Date());
+  const winner = resolveDiscount({ flashPercent: flash.percentOff, promoPercent });
+
+  if (winner.source === "flash") {
+    // Flash sale beats (or ties) the code: drop the code so the redemption
+    // counter is untouched, and record the sale via discountLabel instead.
+    promoCode = undefined;
+    promoPercentOff = winner.percentOff;
+    discountLabel = winner.label;
+    discounted = discountedTotalCents(result.totalCents, winner.percentOff);
+    if (codeRaw && promoPercent > 0) {
+      // Valid code typed but flash won on percent — tell them the good news.
+      notice = "A flash sale beat your code — reserved at the bigger discount.";
+    } else if (codeRaw) {
+      // Invalid code typed but flash sale applies — replace the invalid-code
+      // notice so we don't tell them their code failed while silently discounting them.
+      notice = "Reserved at our flash-sale price.";
+    }
+  } else if (winner.source === "promo") {
+    promoPercentOff = winner.percentOff;
+    discounted = discountedTotalCents(result.totalCents, winner.percentOff);
   }
 
   const id = await createReservation({
@@ -147,6 +173,7 @@ export async function POST(req: Request) {
     promoCode,
     promoPercentOff,
     discountedTotalCents: discounted,
+    discountLabel,
   });
   if (!id) {
     return Response.json(
@@ -168,12 +195,13 @@ export async function POST(req: Request) {
     totalCents: discounted ?? result.totalCents,
     originalTotalCents: discounted != null ? result.totalCents : undefined,
     promoPercentOff,
+    discountLabel,
     pickupDate: drop.pickupOrShipDate,
   };
   console.info(
     `[reserve] unverified reservation ${id} — ${name} <${email}> — ` +
       `$${((discounted ?? result.totalCents) / 100).toFixed(2)}` +
-      (promoCode ? ` [promo ${promoCode} −${promoPercentOff}%]` : "") +
+      (promoCode ? ` [promo ${promoCode} −${promoPercentOff}%]` : discountLabel ? ` [${discountLabel}]` : "") +
       ` — ` +
       result.items.map((i) => `${i.quantity}× ${i.productSlug}`).join(", "),
   );

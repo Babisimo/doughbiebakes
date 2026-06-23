@@ -63,6 +63,64 @@ export const dropType = defineType({
       rows: 2,
     }),
     defineField({
+      name: "flashSale",
+      title: "Flash sale",
+      type: "object",
+      description:
+        "A time-boxed automatic discount. Applies only while this drop is OPEN and now is before 'Ends at'. Leave 'Starts at' blank to go live immediately when enabled.",
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: "enabled",
+          title: "Enabled",
+          type: "boolean",
+          initialValue: false,
+        }),
+        defineField({
+          name: "percentOff",
+          title: "Percent off",
+          type: "number",
+          description: "Whole number percent, e.g. 20 for 20% off.",
+          validation: (rule) =>
+            rule.custom((value, context) => {
+              const enabled = (context.parent as { enabled?: boolean })?.enabled;
+              if (!enabled) return true;
+              if (typeof value !== "number") return "Required when the sale is enabled.";
+              if (!Number.isInteger(value) || value < 1 || value > 100)
+                return "Must be a whole number between 1 and 100.";
+              return true;
+            }),
+        }),
+        defineField({
+          name: "startsAt",
+          title: "Starts at",
+          type: "datetime",
+          description: "Optional — blank means the sale is live the moment it's enabled.",
+        }),
+        defineField({
+          name: "endsAt",
+          title: "Ends at",
+          type: "datetime",
+          description: "The urgency deadline. Required when the sale is enabled.",
+          validation: (rule) =>
+            rule.custom((value, context) => {
+              const parent = context.parent as { enabled?: boolean; startsAt?: string };
+              if (!parent?.enabled) return true;
+              if (!value) return "Required when the sale is enabled.";
+              if (parent.startsAt && new Date(value) <= new Date(parent.startsAt))
+                return "Must be after 'Starts at'.";
+              return true;
+            }),
+        }),
+        defineField({
+          name: "headline",
+          title: "Headline",
+          type: "string",
+          description: 'Shown in the banner, e.g. "Surprise Saturday — 20% off everything".',
+        }),
+      ],
+    }),
+    defineField({
       name: "lineItems",
       title: "Loaves in this drop",
       type: "array",

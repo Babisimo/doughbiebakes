@@ -7,6 +7,7 @@ import {
 } from "@/lib/catalog";
 import { effectiveDropStatus } from "@/lib/drop-status";
 import { IS_PRELAUNCH } from "@/lib/launch-mode";
+import { flashSaleStatus, resolveDiscount } from "@/lib/flash-sale";
 import { getPromoByCode, isRedeemable, normalizeCode } from "@/lib/promo";
 import { shippingOptions } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
@@ -34,24 +35,23 @@ function parseCart(body: unknown): IncomingItem[] {
 }
 
 /**
- * A reusable Stripe coupon for the founding discount, keyed by percent so it's
- * created once and shared. Applied as a session-level discount so it comes off
- * the order TOTAL, not each loaf's unit price.
+ * A reusable Stripe coupon keyed by percent, so it's created once and shared
+ * across orders (founding code, flash sale, or any percent discount). Applied
+ * as a session-level discount so it comes off the order TOTAL.
  */
-async function ensureFoundingCoupon(
+async function ensurePercentCoupon(
   stripe: Stripe,
   percentOff: number,
 ): Promise<string> {
-  const id = `founding-${percentOff}pct`;
+  const id = `pct-${percentOff}pct`;
   try {
     await stripe.coupons.create({
       id,
       percent_off: percentOff,
       duration: "once",
-      name: `Founding ${percentOff}% off`,
+      name: `${percentOff}% off`,
     });
   } catch (err) {
-    // Already created by an earlier checkout — reuse it. Re-throw anything else.
     if ((err as { code?: string })?.code !== "resource_already_exists") throw err;
   }
   return id;
@@ -122,15 +122,19 @@ export async function POST(request: Request) {
     body && typeof body === "object" && typeof (body as { code?: unknown }).code === "string"
       ? ((body as { code?: string }).code as string).trim()
       : "";
-  let promoPercentOff = 0;
+  let promoPercent = 0;
   let promoMeta: string | undefined;
   if (codeRaw) {
     const promo = await getPromoByCode(codeRaw);
     if (isRedeemable(promo)) {
-      promoPercentOff = promo.percentOff;
+      promoPercent = promo.percentOff;
       promoMeta = normalizeCode(promo.code);
     }
   }
+
+  const flash = flashSaleStatus(drop, new Date());
+  const winner = resolveDiscount({ flashPercent: flash.percentOff, promoPercent });
+  const discountPercent = winner.percentOff;
 
   const lineItems: NonNullable<
     Stripe.Checkout.SessionCreateParams["line_items"]
@@ -176,10 +180,11 @@ export async function POST(request: Request) {
     });
   }
 
-  // Apply the founding discount to the order TOTAL via a reusable Stripe
-  // coupon — line items stay full price; Stripe takes the % off the subtotal.
+  // Apply the winning discount (founding code or flash sale) to the order TOTAL
+  // via a reusable Stripe coupon — line items stay full price; Stripe takes the
+  // % off the subtotal.
   const couponId =
-    promoPercentOff > 0 ? await ensureFoundingCoupon(stripe, promoPercentOff) : null;
+    discountPercent > 0 ? await ensurePercentCoupon(stripe, discountPercent) : null;
 
   const base = siteUrl();
   const cartSummary = JSON.stringify(
@@ -223,7 +228,8 @@ export async function POST(request: Request) {
         // The exact drop this order is for — the webhook decrements THIS drop,
         // rather than guessing "the open drop" from a stored-status query.
         dropId: drop.id,
-        ...(promoMeta ? { promo: promoMeta } : {}),
+        ...(winner.source === "promo" && promoMeta ? { promo: promoMeta } : {}),
+        ...(winner.source === "flash" ? { flashSale: `${discountPercent}` } : {}),
       },
       success_url: `${base}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/order/canceled`,

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CottageFoodNotice } from "@/components/cottage-food-notice";
 import { ProductImage } from "@/components/product-image";
+import { SalePrice } from "@/components/sale-price";
 import { availabilityOf, buildAvailability, unavailableLabel } from "@/lib/availability";
 import {
   getActiveDrop,
@@ -12,7 +13,7 @@ import {
   getProduct,
   getReservationHoldsForDrop,
 } from "@/lib/catalog";
-import { formatPrice } from "@/lib/money";
+import { flashSaleStatus } from "@/lib/flash-sale";
 import { site } from "@/lib/site";
 import { seedProducts } from "@/lib/seed-products";
 
@@ -46,6 +47,7 @@ export default async function ProductPage({ params }: Props) {
     buildAvailability(drop, memberSelections, new Date(), holds),
     slug,
   );
+  const flash = flashSaleStatus(drop, new Date());
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -74,9 +76,11 @@ export default async function ProductPage({ params }: Props) {
           {product.tagline ? (
             <p className="text-lg text-ink-700">{product.tagline}</p>
           ) : null}
-          <p className="inline-block rounded-full panel-acid px-4 py-1.5 text-2xl font-bold text-ink shadow-[var(--shadow-hard-acid)]">
-            {formatPrice(product.priceCents)}
-          </p>
+          <SalePrice
+            cents={product.priceCents}
+            percentOff={flash.active ? flash.percentOff : 0}
+            prominent
+          />
           {product.description ? (
             <p className="text-ink-700">{product.description}</p>
           ) : null}

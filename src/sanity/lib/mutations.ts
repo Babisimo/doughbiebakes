@@ -207,6 +207,7 @@ export async function createReservation(input: {
   promoCode?: string;
   promoPercentOff?: number;
   discountedTotalCents?: number;
+  discountLabel?: string;
 }): Promise<string | null> {
   if (!writeClient) return null;
   const now = new Date().toISOString();
@@ -225,6 +226,7 @@ export async function createReservation(input: {
     ...(typeof input.discountedTotalCents === "number"
       ? { discountedTotalCents: input.discountedTotalCents }
       : {}),
+    ...(input.discountLabel ? { discountLabel: input.discountLabel } : {}),
     status: "unverified",
     createdAt: now,
   });

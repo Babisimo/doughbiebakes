@@ -40,6 +40,7 @@ type Reservation = {
   promoCode?: string;
   promoPercentOff?: number;
   discountedTotalCents?: number;
+  discountLabel?: string;
   items: { productSlug: string; productName: string; quantity: number; priceCents: number }[];
 };
 
@@ -48,12 +49,13 @@ export type DecideResult =
   | { ok: false; error: string };
 
 function emailInputFor(r: Reservation, pickupDate?: string) {
+  const hasDiscount = !!r.promoCode || !!r.discountLabel;
   const total =
-    typeof r.discountedTotalCents === "number" && r.promoCode
+    typeof r.discountedTotalCents === "number" && hasDiscount
       ? r.discountedTotalCents
       : r.totalCents;
   const promoApplies =
-    typeof r.discountedTotalCents === "number" && !!r.promoCode;
+    typeof r.discountedTotalCents === "number" && hasDiscount;
   return {
     id: r.id,
     customerName: r.customerName,
@@ -66,7 +68,8 @@ function emailInputFor(r: Reservation, pickupDate?: string) {
     })),
     totalCents: total,
     originalTotalCents: promoApplies ? r.totalCents : undefined,
-    promoPercentOff: r.promoCode ? r.promoPercentOff : undefined,
+    promoPercentOff: hasDiscount ? r.promoPercentOff : undefined,
+    discountLabel: r.discountLabel,
     pickupDate,
   };
 }

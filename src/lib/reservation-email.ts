@@ -28,6 +28,9 @@ export type ReservationEmailInput = {
   /** Pre-discount subtotal — present only when a promo applies, so emails can
    * show a subtotal → discount → total breakdown. */
   originalTotalCents?: number;
+  /** Human-readable discount label from the reservation record (e.g. "Flash Sale −20%").
+   * When present, used instead of the generic "Founding discount" wording. */
+  discountLabel?: string;
 };
 
 function lines(ls: ReservationLine[]): string {
@@ -65,8 +68,9 @@ function breakdownRows(input: ReservationEmailInput): { label: string; amount: s
   const pct = input.promoPercentOff;
   if (typeof orig === "number" && typeof pct === "number" && pct > 0) {
     rows.push({ label: "Subtotal", amount: formatPrice(orig) });
+    const discountLabel = input.discountLabel ?? `Founding discount (${pct}% off)`;
     rows.push({
-      label: `Founding discount (${pct}% off)`,
+      label: discountLabel,
       amount: `−${formatPrice(orig - input.totalCents)}`,
     });
   }
@@ -79,28 +83,31 @@ function breakdownText(input: ReservationEmailInput): string {
   const orig = input.originalTotalCents;
   const pct = input.promoPercentOff;
   if (typeof orig === "number" && typeof pct === "number" && pct > 0) {
+    const discountLabel = input.discountLabel ?? `Founding discount (${pct}% off)`;
     return [
       itemLines,
       `  Subtotal: ${formatPrice(orig)}`,
-      `  Founding discount (${pct}% off): −${formatPrice(orig - input.totalCents)}`,
+      `  ${discountLabel}: −${formatPrice(orig - input.totalCents)}`,
     ].join("\n");
   }
   return itemLines;
 }
 
-/** Submit-stage note: the founding discount isn't locked in until the baker
- * approves the reservation. Empty when no promo applies. */
+/** Submit-stage note: the discount isn't locked in until the baker approves
+ * the reservation. Empty when no promo applies. */
 function pendingDiscountText(input: ReservationEmailInput): string {
-  return hasPromo(input)
-    ? `\n\nYour ${input.promoPercentOff}% founding discount is applied when we approve your reservation.`
-    : "";
+  if (!hasPromo(input)) return "";
+  const label = input.discountLabel ? `${input.promoPercentOff}% flash-sale discount` : `${input.promoPercentOff}% founding discount`;
+  return `\n\nYour ${label} is applied when we approve your reservation.`;
 }
 function pendingDiscountHtml(input: ReservationEmailInput): string {
-  return hasPromo(input)
-    ? `<p style="margin:12px 0 0;font-size:13px;color:#6b705c;">Your ` +
-        `<strong>${input.promoPercentOff}% founding discount</strong> ` +
-        `is applied when we approve your reservation.</p>`
-    : "";
+  if (!hasPromo(input)) return "";
+  const label = input.discountLabel ? `${input.promoPercentOff}% flash-sale discount` : `${input.promoPercentOff}% founding discount`;
+  return (
+    `<p style="margin:12px 0 0;font-size:13px;color:#6b705c;">Your ` +
+    `<strong>${label}</strong> ` +
+    `is applied when we approve your reservation.</p>`
+  );
 }
 
 /** (a) Customer: request received, not yet confirmed. */

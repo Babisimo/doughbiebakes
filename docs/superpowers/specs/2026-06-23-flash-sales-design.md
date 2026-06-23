@@ -216,3 +216,11 @@ reservation/checkout result — no surprise at the final step.
 - Loyalty / rewards (next roadmap item).
 - Corporate / B2B orders (third roadmap item).
 - Email broadcast of a live sale (the Email-list build, not selected for now).
+
+## Parked ideas (unrelated to flash sales — work on later)
+
+- **Sourdough chocolate chip cookies** — add as a new product line / menu item
+  (own product doc, photo, recipe + ingredient costing for the ROI calculator,
+  and a slot in a drop's `lineItems`). A natural candidate for a flash sale or a
+  loyalty reward once those ship. Revisit after the marketing roadmap
+  (flash sales → loyalty → corporate) is done.

@@ -34,9 +34,9 @@ export function SalePrice({
     return (
       <span className={`flex items-center gap-3 ${className}`}>
         <span className="text-lg font-semibold text-ink-500 line-through">{formatPrice(cents)}</span>
-        <p className="inline-block rounded-full panel-acid px-4 py-1.5 text-2xl font-bold text-ink shadow-[var(--shadow-hard-acid)]">
+        <span className="inline-block rounded-full panel-acid px-4 py-1.5 text-2xl font-bold text-ink shadow-[var(--shadow-hard-acid)]">
           {formatPrice(sale)}
-        </p>
+        </span>
       </span>
     );
   }

@@ -97,12 +97,12 @@ function breakdownText(input: ReservationEmailInput): string {
  * the reservation. Empty when no promo applies. */
 function pendingDiscountText(input: ReservationEmailInput): string {
   if (!hasPromo(input)) return "";
-  const label = input.discountLabel ?? `${input.promoPercentOff}% founding discount`;
+  const label = input.discountLabel ? `${input.promoPercentOff}% flash-sale discount` : `${input.promoPercentOff}% founding discount`;
   return `\n\nYour ${label} is applied when we approve your reservation.`;
 }
 function pendingDiscountHtml(input: ReservationEmailInput): string {
   if (!hasPromo(input)) return "";
-  const label = input.discountLabel ?? `${input.promoPercentOff}% founding discount`;
+  const label = input.discountLabel ? `${input.promoPercentOff}% flash-sale discount` : `${input.promoPercentOff}% founding discount`;
   return (
     `<p style="margin:12px 0 0;font-size:13px;color:#6b705c;">Your ` +
     `<strong>${label}</strong> ` +

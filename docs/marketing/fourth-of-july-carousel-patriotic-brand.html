@@ -78,11 +78,9 @@
   .grid3{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:30px}
   .pcard{background:rgba(255,253,242,.5);border:1.5px solid rgba(40,54,24,.14);border-radius:22px;
     padding:16px 16px 18px;display:flex;flex-direction:column;gap:12px}
-  /* dashed drop-zone: replace with a loaf photo in Canva, then delete the emoji + label */
-  .ph{position:relative;height:182px;border-radius:14px;border:2px dashed rgba(40,54,24,.32);
-    background:rgba(221,161,94,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink500)}
-  .ph .pe{font-size:46px;line-height:1}
-  .ph .pl{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.78}
+  /* loaf photo box — <img> so EXIF orientation is honored (object-fit cover) */
+  .ph{position:relative;height:220px;border-radius:14px;overflow:hidden;background:#efe3cf}
+  .ph img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
   .pcard .nm{font-family:var(--display);font-size:34px;line-height:1}
   .pcard .ds{font-size:21px;color:var(--ink500);font-weight:500;line-height:1.25}
   .s4 .big{font-size:114px;line-height:.98}.s4 .big em{font-style:normal;color:var(--brick)}
@@ -108,6 +106,13 @@
     .slide{border-radius:0;box-shadow:none;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .slide:last-child{break-after:auto;page-break-after:avoid}
   }
+
+  /* export mode: ?only=N isolates one slide at 1080×1080 for PNG screenshots */
+  body.export{padding:0;background:#fff}
+  body.export .howto,body.export .slidelabel{display:none}
+  body.export .deck{gap:0}
+  body.export .slidewrap{width:1080px;max-width:none}
+  body.export .slide{border-radius:0;box-shadow:none}
 </style>
 </head>
 <body>
@@ -139,10 +144,10 @@
           <h2 class="display">4 loaves, 4 ways.</h2>
           <p class="sub3">What to bring — and what to do with it. 👇</p>
           <div class="grid3">
-            <div class="pcard"><div class="ph"><span class="pe">🧀🌶️</span><span class="pl">add photo</span></div><div class="nm">Jalapeño Cheddar</div><div class="ds">→ Grilled-cheese sliders off the grill.</div></div>
-            <div class="pcard"><div class="ph"><span class="pe">🍕</span><span class="pl">add photo</span></div><div class="nm">Pepperoni</div><div class="ds">→ Tear-and-share app, zero prep.</div></div>
-            <div class="pcard"><div class="ph"><span class="pe">🥖</span><span class="pl">add photo</span></div><div class="nm">Classic</div><div class="ds">→ Crostini + dips, the cheese board.</div></div>
-            <div class="pcard"><div class="ph"><span class="pe">🍫🍌</span><span class="pl">add photo</span></div><div class="nm">Banana Choc Chip</div><div class="ds">→ Dessert + 4th-of-July-morning toast.</div></div>
+            <div class="pcard"><div class="ph"><img src="photos/jalapeno-cheddar.jpeg" alt="Jalapeño Cheddar sourdough"></div><div class="nm">Jalapeño Cheddar</div><div class="ds">→ Grilled-cheese sliders off the grill.</div></div>
+            <div class="pcard"><div class="ph"><img src="photos/pepperoni.jpeg" alt="Pepperoni sourdough"></div><div class="nm">Pepperoni</div><div class="ds">→ Tear-and-share app, zero prep.</div></div>
+            <div class="pcard"><div class="ph"><img src="photos/classic.jpg" alt="Classic sourdough"></div><div class="nm">Classic</div><div class="ds">→ Crostini + dips, the cheese board.</div></div>
+            <div class="pcard"><div class="ph"><img src="photos/banana-choc-chip.jpeg" alt="Banana Chocolate Chip sourdough"></div><div class="nm">Banana Choc Chip</div><div class="ds">→ Dessert + 4th-of-July-morning toast.</div></div>
           </div>
         </div>
         <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
@@ -218,5 +223,14 @@
       </div></div>
 
   </div>
+  <script>
+    (function(){
+      var p = new URLSearchParams(location.search).get('only');
+      if(!p) return;
+      document.body.classList.add('export');
+      var n = parseInt(p,10) - 1;
+      document.querySelectorAll('.slidewrap').forEach(function(w,i){ if(i!==n) w.remove(); });
+    })();
+  </script>
 </body>
 </html>

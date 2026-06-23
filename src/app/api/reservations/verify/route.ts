@@ -48,6 +48,7 @@ export async function GET(req: Request) {
         promoCode?: string;
         promoPercentOff?: number;
         discountedTotalCents?: number;
+        discountLabel?: string;
         items: { productSlug: string; productName: string; quantity: number; priceCents: number }[];
       } | null>(RESERVATION_BY_ID_QUERY, { id });
       if (r) {
@@ -55,8 +56,9 @@ export async function GET(req: Request) {
           DROP_BY_ID_QUERY,
           { id: r.dropId },
         );
+        const hasDiscount = !!r.promoCode || !!r.discountLabel;
         const promoApplies =
-          !!r.promoCode && typeof r.discountedTotalCents === "number";
+          hasDiscount && typeof r.discountedTotalCents === "number";
         const emailInput = {
           id: r.id,
           customerName: r.customerName,
@@ -68,11 +70,11 @@ export async function GET(req: Request) {
             priceCents: i.priceCents,
           })),
           totalCents:
-            typeof r.discountedTotalCents === "number" && r.promoCode
+            typeof r.discountedTotalCents === "number" && hasDiscount
               ? r.discountedTotalCents
               : r.totalCents,
           originalTotalCents: promoApplies ? r.totalCents : undefined,
-          promoPercentOff: r.promoCode ? r.promoPercentOff : undefined,
+          promoPercentOff: hasDiscount ? r.promoPercentOff : undefined,
           pickupDate: drop?.pickupOrShipDate,
         };
         // Customer already has the "we got your reservation" page in front of

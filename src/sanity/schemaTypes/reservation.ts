@@ -80,6 +80,7 @@ export const reservationType = defineType({
     defineField({ name: "promoCode", title: "Promo code", type: "string", readOnly: true }),
     defineField({ name: "promoPercentOff", title: "Promo % off", type: "number", readOnly: true }),
     defineField({ name: "discountedTotalCents", title: "Discounted total (cents)", type: "number", readOnly: true }),
+    defineField({ name: "discountLabel", title: "Discount label", type: "string", readOnly: true, description: "Set for non-code discounts (e.g. a flash sale)." }),
     defineField({
       name: "status",
       title: "Status",

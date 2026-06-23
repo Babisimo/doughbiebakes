@@ -313,6 +313,39 @@ a,
     color: var(--color-bone);
   }
 
+  /* flash-sale banner — a dark "grove" bar that pops off the warm page, lifted
+     by a warm terracotta glow that gently breathes plus a slow diagonal shine
+     sweep. Color theory: maximum value-contrast (dark cool ground vs cream
+     canvas) carries the attention; the warm glow + ochre accents carry the
+     urgency. All motion is dropped under prefers-reduced-motion (below). */
+  .flash-banner {
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      var(--shadow-hard),
+      0 8px 26px -8px rgba(165, 93, 31, 0.45);
+    animation: flash-glow 2.6s ease-in-out infinite;
+  }
+  .flash-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 32%,
+      rgba(254, 250, 224, 0.16) 48%,
+      transparent 64%
+    );
+    transform: translateX(-110%);
+    animation: flash-shine 4.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  /* the lightning spark gives a tiny heartbeat so the eye catches the bar */
+  .flash-spark {
+    display: inline-block;
+    animation: flash-spark 2.6s ease-in-out infinite;
+  }
+
   /* marquee ticker.
      The track is rendered with 6 identical copies of the message; scrolling it
      to -50% leaves copies 4–6 in view (== copies 1–3), so the loop is seamless
@@ -347,6 +380,14 @@ a,
     .btn-outline {
       transition: none;
     }
+    /* keep the banner's contrast + glow, but stop the breathing/shine/spark */
+    .flash-banner,
+    .flash-spark {
+      animation: none;
+    }
+    .flash-banner::after {
+      display: none;
+    }
   }
 }
 
@@ -370,6 +411,42 @@ a,
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* flash-sale banner motion: a warm glow that breathes, a shine that sweeps
+   across, and a spark that pulses — tuned to attract without distracting. */
+@keyframes flash-glow {
+  0%,
+  100% {
+    box-shadow:
+      var(--shadow-hard),
+      0 8px 26px -8px rgba(165, 93, 31, 0.42);
+  }
+  50% {
+    box-shadow:
+      var(--shadow-hard),
+      0 16px 44px -6px rgba(165, 93, 31, 0.78);
+  }
+}
+@keyframes flash-shine {
+  0% {
+    transform: translateX(-110%);
+  }
+  60%,
+  100% {
+    transform: translateX(110%);
+  }
+}
+@keyframes flash-spark {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.18) rotate(-6deg);
+    opacity: 0.85;
   }
 }
 

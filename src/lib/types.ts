@@ -60,6 +60,13 @@ export type Drop = {
   createdAt?: string;
   note?: string;
   lineItems: DropLineItem[];
+  flashSale?: {
+    enabled: boolean;
+    percentOff: number;
+    startsAt?: string;
+    endsAt?: string;
+    headline?: string;
+  };
 };
 
 /** A saved per-drop financial snapshot (one per drop), rolled up by the

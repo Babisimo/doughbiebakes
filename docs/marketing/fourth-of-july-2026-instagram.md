@@ -25,17 +25,17 @@
 6. Make sure your **bio link** points at the storefront (where the 15% auto-applies).
 
 **FINAL CAPTION (copy-paste):**
-> Don't be the one who brings chips. 😅 America turns **250** this Saturday — the biggest Fourth of our lifetime — and it deserves better than a grocery-store snack. 🇺🇸
+> Nobody remembers who brought the chips. 🇺🇸
 >
-> Here's what to bring instead: the **Fourth of July Drop** is open, and **every loaf is 15% off** (it comes off automatically at the link — no code to remember 🤍).
+> Saturday's the 250th — the biggest Fourth most of us will ever see — so I'm baking one small drop for it, and the whole menu's **15% off** (no code, it's already in the price at the link).
 >
-> Here's the honest part: I bake this batch and then I'm out of town for the holiday weekend. So it's a tiny one — **just a dozen loaves**, and only **2 each of the Classic and Banana Chocolate Chip**. When they're claimed, that's the batch.
+> Heads up: **twelve loaves total.** Only 2 each of the Classic and Banana Chocolate Chip. When they're gone, they're gone.
 >
-> 🧀🌶️ Jalapeño Cheddar · 🍕 Pepperoni · 🥖 Classic · 🍫🍌 Banana Chocolate Chip
+> 🧀🌶️ Jalapeño Cheddar for the sliders · 🍕 Pepperoni to tear and share · 🥖 Classic for the board · 🍫🍌 Banana Chocolate Chip for the kids (and you at 7am, don't lie 🤤)
 >
-> I'll **hand-deliver to your door** (Corona area) on **June 30 – July 1** — stocked and ready for your party. Day-of, give it **10 minutes in a 350° oven** and the crust crackles like it just came out of mine.
+> Free hand-delivery to your door in Corona, **June 30–July 1**. Ten minutes in a 350° oven the morning of and the crust crackles like it just left mine.
 >
-> 🗓️ **Order by Sunday, June 28 at noon.** Link in bio. Let's do this Fourth right. 🎆
+> Orders close **Sunday at noon.** Link in bio. 🎆
 
 **FIRST COMMENT (hashtags):**
 > #CoronaCA #InlandEmpire #InlandEmpireEats #SoCalEats #sourdough #sourdoughbread #cottagefood #cottagebakery #homebaker #breadstagram #realbread #fourthofjuly #4thofjuly #july4th #america250 #shoplocalcorona #riversidecounty #freshbread #artisanbread #supportlocal
@@ -47,7 +47,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 1. **Cover (dark):** kicker "JULY 4, 2026 · THE 250TH", giant "AMERICA TURNS **250**" (250 in ochre), sub "Don't show up with store-bought ⚡", a row of 5 ochre stars. Job: stop the scroll.
 2. **Offer (cream):** "**15%** off every loaf", the ochre AUTO-APPLIED chip, one warm line about home-kitchen + no code.
 3. **Lineup (cream):** "Pick your party loaf" + the 4 loaves as emoji rows with one-line serving cues; "all 15% off" footer line.
-4. **The catch (cream):** "A dozen loaves — then I'm **on the road**", three icon bullets (2-each scarcity · free hand-delivery Jun 30 – Jul 1 · the 350° refresh tip).
+4. **The catch (cream):** "A dozen loaves — **that's the batch**", three icon bullets (2-each scarcity · free hand-delivery Jun 30 – Jul 1 · the 350° refresh tip).
 5. **CTA (dark, bookend):** "Order by SUNDAY, JUNE 28 / **NOON**", the 15% chip, "👉 link in bio", "when they're gone, I'm already gone 🎆".
 
 ---
@@ -70,8 +70,8 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 > 🍫🍌 **Banana Chocolate Chip** — dessert + the kid-pleaser + Fourth-of-July-morning toast.
 
 **Slide 4 — the catch (in a good way):**
-> I'm baking this batch, then I'm on the road for the holiday. ✈️
-> **A dozen loaves, then that's it** — and only **2 each** of Classic & Banana Chocolate Chip.
+> Small-batch, baked to order. 🥖
+> **A dozen loaves, that's the batch** — and only **2 each** of Classic & Banana Chocolate Chip.
 > Free hand-delivery to your door (Corona area), **June 30 – July 1**.
 
 **Slide 5 — CTA:**
@@ -84,7 +84,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 >
 > Here's what to bring instead: the **Fourth of July Drop** is open, and **every loaf is 15% off** (it comes off automatically at the link — no code to remember 🤍).
 >
-> Here's the honest part: I bake this batch and then I'm out of town for the holiday weekend. So it's a tiny one — **just a dozen loaves**, and only **2 each of the Classic and Banana Chocolate Chip**. When they're claimed, that's the batch.
+> The catch: it's a tiny batch — **just a dozen loaves**, only **2 each of the Classic and Banana Chocolate Chip**. When they're gone, they're gone.
 >
 > 🧀🌶️ Jalapeño Cheddar · 🍕 Pepperoni · 🥖 Classic · 🍫🍌 Banana Chocolate Chip
 >
@@ -128,7 +128,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 **Frame F — 24 hours left (Sat Jun 27 evening):**
 > ⏰ 24 HOURS
 > Orders close **tomorrow (Sun) at NOON.**
-> Then I'm baking + hitting the road.
+> Last call before the Fourth. 🎆
 > [Countdown sticker] [Link sticker → "LAST CHANCE"]
 
 ---
@@ -138,7 +138,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 **Single image or short reel. CAPTION:**
 > ⏰ **LAST CALL — orders close at NOON today.** 🇺🇸
 >
-> This is the final batch before I leave for the holiday weekend. **15% off**, hand-delivered to your door Jun 30 – Jul 1, and then that's it until I'm back.
+> The last batch before the Fourth. **15% off**, hand-delivered to your door Jun 30 – Jul 1 — then that's the drop.
 >
 > A few loaves left. If you want something worthy of the 250th on your table Saturday — now's the moment. Link in bio. 🎆🤍
 >

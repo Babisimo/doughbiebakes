@@ -29,28 +29,35 @@ Saturday and the once-in-a-lifetime "America 250" Fourth.
 
 ## Offer & mechanics
 
-A **drop-wide 15% flash sale** on the Fourth of July drop, run entirely through
-the existing engine — no manual discounting.
+A **drop-wide 15% flash sale** on the "Fourth of July Drop" (slug
+`fourth-of-july-drop`), run entirely through the existing engine — no manual
+discounting.
 
-**Exact Sanity `flashSale` values** (set on the open Fourth of July drop in
-Studio → drop → "Flash sale"):
+**Exact drop values to set in Studio (the drop is currently a Draft):**
 
 | Field | Value |
 |---|---|
-| `enabled` | `true` |
+| Status | **Open for orders** (publish the draft) — or "Announced" to auto-open at `ordersOpenAt` |
+| `ordersOpenAt` | `2026-06-24 08:00` |
+| `ordersCloseAt` | `2026-06-29 12:00` (Mon noon) |
+| `pickupOrShipDate` | **`2026-07-02`** (was empty — hand-delivery day) |
+| Note to customers | "Free local hand-delivery in the Corona area, Jul 1–2. Last batch before the holiday." |
+
+**Flash sale sub-fields:**
+
+| Field | Value |
+|---|---|
+| `enabled` | **`true`** (confirm the toggle is on) |
 | `percentOff` | `15` |
 | `startsAt` | *(blank — live the moment enabled)* |
-| `endsAt` | **Mon Jun 29, 2026, 23:59 America/Los_Angeles** |
-| `headline` | `America's 250th — order by Monday` |
+| `endsAt` | **`2026-06-29 12:00`** — MUST equal `ordersCloseAt` so the countdown banner matches the real deadline (draft had Jun 30 13:00, which would mislead) |
+| `headline` | `America's 250th — order by Mon 6/29` |
 
-**Drop settings the campaign assumes:**
-- A drop is **open** for the window (≈ Jun 24 → Jun 29). The flash sale only
-  applies while the drop's effective status is `open` (per `flashSaleStatus`).
-- `ordersCloseAt` = Mon Jun 29 EOD (so the storefront closes ordering in lockstep
-  with the sale ending).
-- `pickupOrShipDate` = Jul 1–2 (delivery/pickup before the Fri Jul 3 departure).
-- `lineItems` include the hero loaves below, in whatever quantities the baker can
-  produce in the Wed Jul 1 / Thu Jul 2 bake.
+**Why `endsAt` must equal `ordersCloseAt`:** `flashSaleStatus` returns active
+only while `effectiveDropStatus === "open"`. Once `ordersCloseAt` passes (Mon
+noon) the drop is closed and the discount stops — but the banner's countdown
+reads `flashSale.endsAt`. If `endsAt` is later than the close, the banner ticks
+toward a time when ordering is already shut. Align them.
 
 On-site, the countdown banner + struck-through prices sell automatically;
 Instagram's only job is to drive traffic to the site.
@@ -68,17 +75,23 @@ Instagram's only job is to drive traffic to the site.
 | Jul 3 | Fri | Baker leaves for Arizona |
 | Jul 4 | Sat | The 250th Fourth |
 
-## Hero products
+## Hero products (actual Fourth of July Drop lineup)
 
-All loaves get 15%; these get the screen time. (From the canonical lineup in
-`src/lib/seed-products.ts`.)
+All four loaves get 15%; here's how each is framed. **Tiny batch — 2 of each, 8
+loaves total** — so genuine scarcity ("when they're gone, I'm already on the
+road") runs through the copy.
 
-- **Cheddar & Jalapeño** ($13) — savory cookout hero; "toasts into a grilled
-  cheese on its own."
-- **Pepperoni & Garlic** ($13) — "pizza night in loaf form," tear-and-share.
-- **Strawberry** ($13) — literally red; the red-white-&-blue brunch/dessert loaf.
-- **Classic** ($11) — the do-anything base: crostini, sliders, burger night.
-- (Banana, Brown Sugar & Cinnamon — optional brunch mention.)
+- **Jalapeño Cheddar Sourdough** — savory cookout hero; toasts into a grilled
+  cheese on its own; great for sliders/burgers.
+- **Pepperoni Sourdough** — "pizza night in loaf form," tear-and-share crowd
+  snack, no sauce needed.
+- **Classic Sourdough** — the do-anything base: crostini, dips, burger buns,
+  the cheese-board centerpiece.
+- **Banana Chocolate Chip** — the sweet one: dessert + the kid-pleaser + Fourth-
+  of-July-morning toast.
+
+(No Strawberry in this drop — the literal red-loaf angle is dropped; the
+red-white-&-blue framing stays at the table/spread level, not a single loaf.)
 
 ## Channels
 
@@ -97,14 +110,17 @@ All loaves get 15%; these get the screen time. (From the canonical lineup in
    so captions stay consistent.
 
 All copy must:
-- Carry the **order-by Mon Jun 29** deadline and the **deliver-by Jul 2 / "before
-  I leave town"** framing consistently (no contradictory dates).
+- Carry the **order-by Mon Jun 29 (noon)** deadline and the **"I'll hand-deliver
+  Jul 1–2, before I leave town"** framing consistently (no contradictory dates).
+- Use **free local hand-delivery** wording ("I'll drop it to your door in the
+  Corona area"), **not** "pickup" — the baker delivers this round.
+- Lean on the **real scarcity**: just 2 of each loaf, 8 total.
 - Include the **350° refresh tip** wherever a "fresh for your party" expectation
   could otherwise be set.
-- Drive to the **site** (where the auto-discount + countdown live) — the link in
-  bio / "order at the link."
+- Drive to the **site** (where the auto-discount + countdown live) — "order at
+  the link in bio."
 - Stay true to the **Cottage Food** voice (home kitchen, made to order, local
-  pickup/delivery in the Corona area).
+  to the Corona area).
 
 ## Out of scope
 

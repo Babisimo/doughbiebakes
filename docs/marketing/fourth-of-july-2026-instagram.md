@@ -43,7 +43,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 1. **Cover (dark):** kicker "JULY 4, 2026 · THE 250TH", giant "AMERICA TURNS **250**" (250 in ochre), sub "Don't show up with store-bought ⚡", a row of 5 ochre stars. Job: stop the scroll.
 2. **Offer (cream):** "**15%** off every loaf", the ochre AUTO-APPLIED chip, one warm line about home-kitchen + no code.
 3. **Lineup (cream):** "Pick your party loaf" + the 4 loaves as emoji rows with one-line serving cues; "all 15% off" footer line.
-4. **The catch (cream):** "A dozen loaves — **that's the batch**", three icon bullets (free hand-delivery Jun 30 – Jul 1 · made & delivered by me · centerpiece for the 250th).
+4. **The catch (cream):** "A dozen loaves — **that's the batch**", three icon bullets (free hand-delivery Jun 30 – Jul 1 · small-batch & hand-delivered · centerpiece for the 250th).
 5. **CTA (dark, bookend):** "Order by SUNDAY, JUNE 28 / **NOON**", the 15% chip, "👉 link in bio", "when they're gone, I'm already gone 🎆".
 
 ---
@@ -68,7 +68,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 **Slide 4 — the catch (in a good way):**
 > **A dozen loaves. That's the batch.**
 > Free hand-delivery right to your door (Corona area), **June 30 – July 1**.
-> Made & hand-delivered by me — your centerpiece for the 250th.
+> Made & hand-delivered — your centerpiece for the 250th.
 
 **Slide 5 — CTA:**
 > 🗓️ **Order by SUNDAY, JUNE 28 — NOON.**

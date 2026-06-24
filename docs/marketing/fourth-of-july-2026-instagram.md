@@ -4,7 +4,6 @@
 **Order by:** Sun **June 28, 12:00 noon** PT · **Free local hand-delivery** (Corona area) **Jun 30 – Jul 1**.
 **Batch:** **12 loaves total** — Pepperoni ×4, Jalapeño Cheddar ×4, Classic ×2, Banana Chocolate Chip ×2. **15% off auto-applies at the link** (no code).
 **Loaves:** Jalapeño Cheddar · Pepperoni · Classic · Banana Chocolate Chip.
-**Refresh tip (use throughout):** *"Day-of, 10 min in a 350° oven and the crust crackles like it just came out of mine."*
 
 > ✅ Drop is published, flash sale enabled, `endsAt` = 2026-06-28 12:00 (matches orders-close). **Pickup/ship date is intentionally left off (hand-delivery)** — so put the delivery details in the drop's **"Note to customers"** field (e.g. *"Free local hand-delivery in the Corona area, Jun 30 – Jul 1"*), because the confirmation email pulls its pickup date from that empty field and otherwise won't show one.
 
@@ -30,7 +29,7 @@
 >
 > 🧀🌶️ Jalapeño Cheddar for the sliders · 🍕 Pepperoni to tear and share · 🥖 Classic for the board · 🍫🍌 Banana Chocolate Chip for the kids (and you at 7am, don't lie 🤤)
 >
-> Free hand-delivery to your door in Corona, **June 30–July 1**. Ten minutes in a 350° oven the morning of and the crust crackles like it just left mine.
+> Free hand-delivery right to your door in Corona, **June 30–July 1**.
 >
 > Orders close **Sunday at noon.** Link in bio. 🎆
 
@@ -44,7 +43,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 1. **Cover (dark):** kicker "JULY 4, 2026 · THE 250TH", giant "AMERICA TURNS **250**" (250 in ochre), sub "Don't show up with store-bought ⚡", a row of 5 ochre stars. Job: stop the scroll.
 2. **Offer (cream):** "**15%** off every loaf", the ochre AUTO-APPLIED chip, one warm line about home-kitchen + no code.
 3. **Lineup (cream):** "Pick your party loaf" + the 4 loaves as emoji rows with one-line serving cues; "all 15% off" footer line.
-4. **The catch (cream):** "A dozen loaves — **that's the batch**", three icon bullets (2-each scarcity · free hand-delivery Jun 30 – Jul 1 · the 350° refresh tip).
+4. **The catch (cream):** "A dozen loaves — **that's the batch**", three icon bullets (free hand-delivery Jun 30 – Jul 1 · made & delivered by me · centerpiece for the 250th).
 5. **CTA (dark, bookend):** "Order by SUNDAY, JUNE 28 / **NOON**", the 15% chip, "👉 link in bio", "when they're gone, I'm already gone 🎆".
 
 ---
@@ -67,9 +66,9 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 > 🍫🍌 **Banana Chocolate Chip** — dessert + the kid-pleaser + Fourth-of-July-morning toast.
 
 **Slide 4 — the catch (in a good way):**
-> Small-batch, baked to order. 🥖
-> **A dozen loaves, that's the batch** — and only **2 each** of Classic & Banana Chocolate Chip.
-> Free hand-delivery to your door (Corona area), **June 30 – July 1**.
+> **A dozen loaves. That's the batch.**
+> Free hand-delivery right to your door (Corona area), **June 30 – July 1**.
+> Made & hand-delivered by me — your centerpiece for the 250th.
 
 **Slide 5 — CTA:**
 > 🗓️ **Order by SUNDAY, JUNE 28 — NOON.**
@@ -85,7 +84,7 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 >
 > 🧀🌶️ Jalapeño Cheddar · 🍕 Pepperoni · 🥖 Classic · 🍫🍌 Banana Chocolate Chip
 >
-> I'll **hand-deliver to your door** (Corona area) on **June 30 – July 1** — so it's stocked and ready for your party. Day-of, give it **10 minutes in a 350° oven** and the crust crackles like it just came out of mine.
+> I'll **hand-deliver right to your door** (Corona area) on **June 30 – July 1** — stocked and ready for your party.
 >
 > 🗓️ **Order by Sunday, June 28 at noon.** Link in bio. Let's do this Fourth right. 🎆
 >
@@ -114,7 +113,6 @@ Shared system: **Caprasimo** for big headlines, **Plus Jakarta Sans** for body. 
 **Frame D — Classic + serving tip (Sat Jun 27):**
 > 🥖 The one that does everything
 > Crostini → dips → burger buns → cheese board.
-> 🔥 TIP: 10 min in a 350° oven day-of = bakery-fresh crust.
 > [Link sticker]
 
 **Frame E — Banana Chocolate Chip (Sat Jun 27):**

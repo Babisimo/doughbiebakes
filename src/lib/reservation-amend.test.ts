@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { parseAmendBody } from "./reservation-amend.ts";
+import { parseAmendBody, stockDeltas } from "./reservation-amend.ts";
 
 const item = (over = {}) => ({
   productSlug: "classic",
@@ -58,4 +58,37 @@ test("parses collectedCents override and null (clear)", () => {
 
 test("rejects a negative collectedCents", () => {
   assert.equal(parseAmendBody({ collectedCents: -5 }).ok, false);
+});
+
+test("stockDeltas: reducing a quantity yields a negative delta (stock returns)", () => {
+  // Erin 2→1: delta = newQty − oldQty = −1 (one loaf freed back to the drop).
+  const d = stockDeltas(
+    [{ productSlug: "pepperoni", quantity: 2 }],
+    [{ productSlug: "pepperoni", quantity: 1 }],
+  );
+  assert.deepEqual(d, [{ slug: "pepperoni", delta: -1 }]);
+});
+
+test("stockDeltas: increasing a quantity yields a positive delta (more taken)", () => {
+  const d = stockDeltas(
+    [{ productSlug: "classic", quantity: 1 }],
+    [{ productSlug: "classic", quantity: 3 }],
+  );
+  assert.deepEqual(d, [{ slug: "classic", delta: 2 }]);
+});
+
+test("stockDeltas: unchanged quantities produce no delta", () => {
+  const d = stockDeltas(
+    [{ productSlug: "classic", quantity: 1 }, { productSlug: "rye", quantity: 2 }],
+    [{ productSlug: "classic", quantity: 1 }, { productSlug: "rye", quantity: 2 }],
+  );
+  assert.deepEqual(d, []);
+});
+
+test("stockDeltas: a slug only in old (line dropped) returns all its stock", () => {
+  const d = stockDeltas(
+    [{ productSlug: "classic", quantity: 1 }, { productSlug: "rye", quantity: 2 }],
+    [{ productSlug: "classic", quantity: 1 }],
+  );
+  assert.deepEqual(d, [{ slug: "rye", delta: -2 }]);
 });

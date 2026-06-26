@@ -1,7 +1,11 @@
 import { getAdminSession } from "@/lib/admin-auth";
-import { computeSaleTotals } from "@/lib/favors";
-import { parseAmendBody } from "@/lib/reservation-amend";
-import { updateReservationPricing } from "@/sanity/lib/mutations";
+import { computeSaleTotals, recomputeAmendedSale } from "@/lib/favors";
+import { parseAmendBody, stockDeltas } from "@/lib/reservation-amend";
+import {
+  adjustDropStock,
+  getReservationForAmend,
+  updateReservationPricing,
+} from "@/sanity/lib/mutations";
 
 export const runtime = "nodejs";
 
@@ -25,22 +29,53 @@ export async function POST(
   const parsed = parseAmendBody(body);
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
 
-  // Recompute the total from amended item prices (same helper the in-person
-  // sale form uses); favorsCents is ignored here.
-  const totalCents = parsed.value.items
-    ? computeSaleTotals(parsed.value.items).totalCents
-    : undefined;
+  const newItems = parsed.value.items;
+  const cleanItems = newItems?.map(({ productSlug, productName, quantity, priceCents }) => ({
+    productSlug,
+    productName,
+    quantity,
+    priceCents,
+  }));
 
-  const ok = await updateReservationPricing(id, {
-    items: parsed.value.items?.map(({ productSlug, productName, quantity, priceCents }) => ({
-      productSlug,
-      productName,
-      quantity,
-      priceCents,
-    })),
-    totalCents,
-    collectedCents: parsed.value.collectedCents,
-  });
+  // In-person sales support quantity edits: re-apply the stored flash discount
+  // to the new subtotal and reconcile drop stock. Online reservations keep the
+  // existing price-only path untouched (no quantity/stock/discount changes).
+  const existing = newItems ? await getReservationForAmend(id) : null;
+
+  let ok: boolean;
+  if (newItems && existing?.channel === "in-person") {
+    const sale = recomputeAmendedSale(newItems, existing.promoPercentOff);
+    // collectedCents: an explicit number is the baker's override; otherwise the
+    // discounted total (or unset → falls back to the full total when no sale).
+    const collectedCents =
+      typeof parsed.value.collectedCents === "number"
+        ? parsed.value.collectedCents
+        : sale.collectedCents ?? null;
+
+    ok = await updateReservationPricing(id, {
+      items: cleanItems,
+      totalCents: sale.totalCents,
+      collectedCents,
+      // number ⇒ set; null ⇒ unset a now-irrelevant discount.
+      discountedTotalCents: sale.discountedTotalCents ?? null,
+    });
+
+    if (ok && existing.dropId) {
+      const deltas = stockDeltas(existing.items, newItems);
+      try {
+        await adjustDropStock(existing.dropId, deltas);
+      } catch (err) {
+        console.error("[amend] PRICING SAVED BUT STOCK NOT RECONCILED", id, err);
+      }
+    }
+  } else {
+    const totalCents = newItems ? computeSaleTotals(newItems).totalCents : undefined;
+    ok = await updateReservationPricing(id, {
+      items: cleanItems,
+      totalCents,
+      collectedCents: parsed.value.collectedCents,
+    });
+  }
 
   if (!ok) {
     return Response.json(

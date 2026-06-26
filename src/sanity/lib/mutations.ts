@@ -67,6 +67,86 @@ export async function decrementDropQuantities(
   await patch.commit({ autoGenerateArrayKeys: false });
 }
 
+/**
+ * Read the fields the amend route needs to correctly re-price an in-person sale:
+ * its channel, the drop it sold against, the stored flash-sale percent, and the
+ * current item lines (to diff stock). Uses the authed write client. Returns null
+ * when unconfigured or the reservation is missing.
+ */
+export async function getReservationForAmend(id: string): Promise<{
+  channel?: string;
+  dropId?: string;
+  promoPercentOff?: number;
+  items: { productSlug: string; quantity: number }[];
+} | null> {
+  if (!writeClient || !id) return null;
+  const r = await writeClient.fetch<{
+    channel?: string;
+    dropId?: string;
+    promoPercentOff?: number;
+    items?: { productSlug?: string; quantity?: number }[];
+  } | null>(
+    `*[_type == "reservation" && _id == $id][0]{
+      channel, "dropId": drop._ref, promoPercentOff,
+      items[]{ productSlug, quantity }
+    }`,
+    { id },
+  );
+  if (!r) return null;
+  return {
+    channel: r.channel,
+    dropId: r.dropId,
+    promoPercentOff: typeof r.promoPercentOff === "number" ? r.promoPercentOff : undefined,
+    items: (r.items ?? []).map((i) => ({
+      productSlug: typeof i.productSlug === "string" ? i.productSlug : "",
+      quantity: Number(i.quantity) || 0,
+    })),
+  };
+}
+
+/**
+ * Apply signed per-loaf stock deltas to a drop, used when an in-person sale's
+ * quantity is amended. `delta` is the *additional* units taken from stock:
+ * positive takes more, negative returns freed stock (`next = max(0, current −
+ * delta)`). Unlike {@link decrementDropQuantities} this never changes the drop's
+ * status — an amend shouldn't silently flip open/soldout. Best-effort: the
+ * caller swallows failures (the reservation doc stays authoritative).
+ */
+export async function adjustDropStock(
+  dropId: string,
+  deltas: { slug: string; delta: number }[],
+): Promise<void> {
+  if (!writeClient || !dropId) return;
+  const wanted = new Map(
+    deltas.filter((d) => d.slug && d.delta !== 0).map((d) => [d.slug, d.delta] as const),
+  );
+  if (wanted.size === 0) return;
+
+  const drop = await writeClient.fetch<{
+    _id: string;
+    lineItems?: { _key: string; quantity?: number; product?: { slug?: { current?: string } } }[];
+  } | null>(
+    `*[_type == "drop" && _id == $id][0]{
+      _id, "lineItems": lineItems[]{ _key, quantity, "product": product->{ "slug": slug } }
+    }`,
+    { id: dropId },
+  );
+  if (!drop?.lineItems?.length) return;
+
+  let patch = writeClient.patch(drop._id);
+  let changed = false;
+  for (const li of drop.lineItems) {
+    const slug = li.product?.slug?.current;
+    const delta = slug ? wanted.get(slug) ?? 0 : 0;
+    if (delta === 0 || !li._key) continue;
+    const next = Math.max(0, (li.quantity ?? 0) - delta);
+    changed = true;
+    patch = patch.set({ [`lineItems[_key=="${li._key}"].quantity`]: next });
+  }
+  if (!changed) return;
+  await patch.commit({ autoGenerateArrayKeys: false });
+}
+
 type MemberSelectionInput = {
   dropId: string;
   email: string;
@@ -246,6 +326,10 @@ export async function createInPersonSale(input: {
   customerPhone?: string;
   items: ReservationItemInput[];
   totalCents: number;
+  promoPercentOff?: number;
+  discountedTotalCents?: number;
+  discountLabel?: string;
+  collectedCents?: number;
 }): Promise<string | null> {
   if (!writeClient || !input.dropId) return null;
   const now = new Date().toISOString();
@@ -259,6 +343,16 @@ export async function createInPersonSale(input: {
     drop: { _type: "reference", _ref: input.dropId },
     items: input.items.map((i) => ({ _type: "reservationItem", ...i })),
     totalCents: input.totalCents,
+    ...(typeof input.promoPercentOff === "number"
+      ? { promoPercentOff: input.promoPercentOff }
+      : {}),
+    ...(typeof input.discountedTotalCents === "number"
+      ? { discountedTotalCents: input.discountedTotalCents }
+      : {}),
+    ...(input.discountLabel ? { discountLabel: input.discountLabel } : {}),
+    ...(typeof input.collectedCents === "number"
+      ? { collectedCents: input.collectedCents }
+      : {}),
     status: "confirmed",
     createdAt: now,
     decidedAt: now,
@@ -288,6 +382,8 @@ export async function updateReservationPricing(
     items?: ReservationItemInput[];
     totalCents?: number;
     collectedCents?: number | null;
+    /** number ⇒ set; null ⇒ unset; undefined ⇒ leave untouched. */
+    discountedTotalCents?: number | null;
   },
 ): Promise<boolean> {
   if (!writeClient || !id) return false;
@@ -302,6 +398,11 @@ export async function updateReservationPricing(
     unset.push("collectedCents");
   } else if (typeof input.collectedCents === "number") {
     set.collectedCents = input.collectedCents;
+  }
+  if (input.discountedTotalCents === null) {
+    unset.push("discountedTotalCents");
+  } else if (typeof input.discountedTotalCents === "number") {
+    set.discountedTotalCents = input.discountedTotalCents;
   }
 
   try {

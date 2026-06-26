@@ -86,9 +86,10 @@ and any rollup built on it. Understated discounts inflate revenue.
 `getConfirmedReservationsForDrop` in `src/lib/catalog.ts` (doesn't read
 `discountedTotalCents`) + `reservationCollectedCents` in `src/lib/favors.ts`.
 
-**Note:** The **in-person** path is already correct — `createInPersonSale` and the
-amend route set `collectedCents` to the discounted total, so hand-logged sales
-tally right. This bug is online-only.
+**Note:** The **in-person** path is correct by construction (Model B, see #4):
+the sale price is baked into the per-line prices, so `totalCents` already equals
+what's collected (`collectedCents` stays unset and falls back to it). This bug is
+online-only.
 
 **How to fix (options):**
 - Set `collectedCents` to `discountedTotalCents` when a discount applies, at
@@ -98,6 +99,36 @@ tally right. This bug is online-only.
 
 **Verify:** with a discounted online reservation, the calculator's "Actually
 collected" reflects the discounted amount, not full price.
+
+---
+
+## 4. In-person and online flash-sale pricing use two different models
+
+**Status:** NOTE — shipped, intentional divergence (logged 2026-06-26).
+
+**What:** As of the "Model B" change, **in-person** sales bake the sale price into
+each per-line `priceCents` (`totalCents` = Σ charged = collected; `promoPercentOff`
+stored only for context + the favor baseline; **no** `discountedTotalCents`). A
+favor is anything charged below the sale price. **Online** reservations still use
+**discount-on-total**: `totalCents` = full subtotal, `discountedTotalCents` = the
+discounted amount, line items stored at list.
+
+**Why it matters:** There are now two shapes for "a discounted reservation."
+- Admin list (`src/app/admin/reservations/page.tsx`) renders them differently:
+  in-person shows total + a "Flash Sale −N%" badge; online shows a struck-through
+  discounted total.
+- Favor reports value in-person favors at the sale price via `promoPercentOff`
+  (`effectiveListCents` in `src/lib/favors.ts`); online lines sit at list so they
+  naturally show $0 favor.
+- Anyone extending discount/favor logic must handle both shapes. **Unifying online
+  onto Model B would also resolve #3.**
+
+**Where:** in-person create/amend routes + `effectiveListCents`/`favorLines`/
+`actualFavorsCents` in `src/lib/favors.ts`; online reserve route + `createReservation`.
+
+**Design:** `docs/superpowers/specs/2026-06-26-favor-baseline-flash-sale-design.md`.
+A one-time migration (`scripts/migrate-favor-baseline.mjs`) already converted the two
+pre-existing in-person flash-sale records (Victoria, Erin) to Model B.
 
 ---
 

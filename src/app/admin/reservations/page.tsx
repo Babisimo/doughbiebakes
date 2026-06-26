@@ -6,6 +6,7 @@ import { ReservationActions } from "@/components/reservation-actions";
 import { ReservationAmend } from "@/components/reservation-amend";
 import { getAdminSession } from "@/lib/admin-auth";
 import { getDropsView } from "@/lib/catalog";
+import { flashSaleStatus } from "@/lib/flash-sale";
 import { formatPrice } from "@/lib/money";
 import { sanityClient } from "@/sanity/client";
 import { RESERVATIONS_QUERY } from "@/sanity/lib/queries";
@@ -35,6 +36,7 @@ type Row = {
   promoCode?: string;
   promoPercentOff?: number;
   discountedTotalCents?: number;
+  discountLabel?: string;
 };
 
 export default async function AdminReservationsPage() {
@@ -44,18 +46,25 @@ export default async function AdminReservationsPage() {
     ? await fresh.fetch<Row[]>(RESERVATIONS_QUERY, {}, { cache: "no-store" })
     : [];
 
+  const now = new Date();
   const { current, previous } = await getDropsView({ fresh: true });
   const saleDrops: SaleDrop[] = [current, ...previous]
     .filter((d): d is NonNullable<typeof d> => d !== null)
-    .map((d) => ({
-      id: d.id,
-      title: d.title,
-      lines: d.lineItems.map((li) => ({
-        productSlug: li.product.slug,
-        productName: li.product.name,
-        listPriceCents: li.product.priceCents,
-      })),
-    }));
+    .map((d) => {
+      // A flash sale is gated to OPEN drops, so previous/closed drops resolve to
+      // 0 here and the form records them at full price, as it should.
+      const flash = flashSaleStatus(d, now);
+      return {
+        id: d.id,
+        title: d.title,
+        flashPercentOff: flash.active ? flash.percentOff : 0,
+        lines: d.lineItems.map((li) => ({
+          productSlug: li.product.slug,
+          productName: li.product.name,
+          listPriceCents: li.product.priceCents,
+        })),
+      };
+    });
   const linesByDropId = new Map(saleDrops.map((d) => [d.id, d.lines]));
 
   return (
@@ -83,13 +92,15 @@ export default async function AdminReservationsPage() {
                 <p className="text-sm text-ink-700">
                   {r.customerEmail} · {r.customerPhone} ·{" "}
                   {r.items.map((i) => `${i.quantity}× ${i.productName}`).join(", ")} ·{" "}
-                  {r.promoCode && typeof r.discountedTotalCents === "number" ? (
+                  {(r.promoCode || r.discountLabel) &&
+                  typeof r.discountedTotalCents === "number" ? (
                     <>
                       <span className="font-bold">{formatPrice(r.discountedTotalCents)}</span>{" "}
                       <span className="text-xs text-ink-500 line-through">{formatPrice(r.totalCents)}</span>{" "}
                       <span className="text-xs font-semibold uppercase text-acid-600">
-                        {r.promoCode}
-                          {typeof r.promoPercentOff === "number" ? ` −${r.promoPercentOff}%` : ""}
+                        {r.promoCode
+                          ? `${r.promoCode}${typeof r.promoPercentOff === "number" ? ` −${r.promoPercentOff}%` : ""}`
+                          : r.discountLabel}
                       </span>
                     </>
                   ) : (
@@ -111,6 +122,9 @@ export default async function AdminReservationsPage() {
                   }))}
                   totalCents={r.totalCents}
                   collectedCents={r.collectedCents}
+                  canEditQuantity={r.channel === "in-person"}
+                  promoPercentOff={r.promoPercentOff}
+                  discountLabel={r.discountLabel}
                 />
               ) : null}
             </li>

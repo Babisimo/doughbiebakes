@@ -3,8 +3,10 @@ import { test } from "node:test";
 
 import {
   actualFavorsCents,
+  computeInPersonSale,
   computeSaleTotals,
   favorLines,
+  recomputeAmendedSale,
   reservationCollectedCents,
   type FavorSource,
   type SaleLineInput,
@@ -67,6 +69,82 @@ test("computeSaleTotals: a loaf reserved for yourself at $0 is a full-list favor
   const r = computeSaleTotals([sale({ quantity: 1, priceCents: 0, listPriceCents: 1200 })]);
   assert.equal(r.totalCents, 0);
   assert.equal(r.favorsCents, 1200);
+});
+
+test("computeInPersonSale: no flash sale leaves the sale undiscounted", () => {
+  const r = computeInPersonSale(
+    [sale({ quantity: 2, priceCents: 900, listPriceCents: 900 })],
+    0,
+  );
+  assert.equal(r.totalCents, 1800);
+  assert.equal(r.favorsCents, 0);
+  assert.equal(r.promoPercentOff, undefined);
+  assert.equal(r.discountedTotalCents, undefined);
+  assert.equal(r.discountLabel, undefined);
+  assert.equal(r.collectedCents, undefined);
+});
+
+test("computeInPersonSale: an active flash sale discounts the total, not the lines", () => {
+  // 2 loaves @ $9 list = $18 subtotal; 20% off => $14.40 collected.
+  const r = computeInPersonSale(
+    [sale({ quantity: 2, priceCents: 900, listPriceCents: 900 })],
+    20,
+  );
+  assert.equal(r.totalCents, 1800);
+  assert.equal(r.favorsCents, 0); // sale markdown is NOT a favor
+  assert.equal(r.promoPercentOff, 20);
+  assert.equal(r.discountedTotalCents, 1440);
+  assert.equal(r.collectedCents, 1440);
+  assert.equal(r.discountLabel, "Flash Sale −20%");
+});
+
+test("computeInPersonSale: a manual favor stacks on top of the flash discount", () => {
+  // 1 @ $9 (list $9) + 1 @ $7 (list $9, a $2 favor) = $16 subtotal, $2 favor.
+  // 10% flash off the $16 subtotal => $14.40 collected.
+  const r = computeInPersonSale(
+    [
+      sale({ quantity: 1, priceCents: 900, listPriceCents: 900 }),
+      sale({ quantity: 1, priceCents: 700, listPriceCents: 900 }),
+    ],
+    10,
+  );
+  assert.equal(r.totalCents, 1600);
+  assert.equal(r.favorsCents, 200);
+  assert.equal(r.promoPercentOff, 10);
+  assert.equal(r.discountedTotalCents, 1440);
+  assert.equal(r.collectedCents, 1440);
+});
+
+test("recomputeAmendedSale: no discount returns just the full total", () => {
+  const r = recomputeAmendedSale(
+    [sale({ quantity: 1, priceCents: 1200, listPriceCents: 1200 })],
+    undefined,
+  );
+  assert.equal(r.totalCents, 1200);
+  assert.equal(r.discountedTotalCents, undefined);
+  assert.equal(r.collectedCents, undefined);
+});
+
+test("recomputeAmendedSale: treats 0/null percent as no discount", () => {
+  for (const pct of [0, null, NaN] as const) {
+    const r = recomputeAmendedSale(
+      [sale({ quantity: 2, priceCents: 1000, listPriceCents: 1000 })],
+      pct,
+    );
+    assert.equal(r.totalCents, 2000);
+    assert.equal(r.discountedTotalCents, undefined);
+  }
+});
+
+test("recomputeAmendedSale: re-applies the stored flash percent (Erin 2→1)", () => {
+  // Erin: 1× Pepperoni @ $12, flash 15% off => $12 full, $10.20 collected.
+  const r = recomputeAmendedSale(
+    [sale({ productSlug: "pepperoni", quantity: 1, priceCents: 1200, listPriceCents: 1200 })],
+    15,
+  );
+  assert.equal(r.totalCents, 1200);
+  assert.equal(r.discountedTotalCents, 1020);
+  assert.equal(r.collectedCents, 1020);
 });
 
 test("reservationCollectedCents: falls back to totalCents when no override", () => {

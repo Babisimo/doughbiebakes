@@ -3,11 +3,17 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { computeSaleTotals, type SaleLineInput } from "@/lib/favors";
+import { computeInPersonSale, type SaleLineInput } from "@/lib/favors";
 import { formatPrice } from "@/lib/money";
 
 type DropLine = { productSlug: string; productName: string; listPriceCents: number };
-export type SaleDrop = { id: string; title: string; lines: DropLine[] };
+export type SaleDrop = {
+  id: string;
+  title: string;
+  /** Active flash-sale percent off for this drop (0 when no sale is live). */
+  flashPercentOff: number;
+  lines: DropLine[];
+};
 
 type Row = { quantity: number; priceCents: number };
 
@@ -50,7 +56,11 @@ export function InPersonSaleForm({ drops }: { drops: SaleDrop[] }) {
       .filter((i) => i.quantity > 0);
   }, [drop, rows]);
 
-  const { totalCents, favorsCents } = computeSaleTotals(saleItems);
+  const flashPercentOff = drop?.flashPercentOff ?? 0;
+  const { totalCents, favorsCents, discountedTotalCents, promoPercentOff } =
+    computeInPersonSale(saleItems, flashPercentOff);
+  const saleActive = typeof discountedTotalCents === "number";
+  const collectedCents = discountedTotalCents ?? totalCents;
 
   function setRow(slug: string, patch: Partial<Row>) {
     setRows((cur) => {
@@ -178,7 +188,21 @@ export function InPersonSaleForm({ drops }: { drops: SaleDrop[] }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm">
-          Total <strong>{formatPrice(totalCents)}</strong>
+          {saleActive ? (
+            <>
+              Total <strong>{formatPrice(collectedCents)}</strong>{" "}
+              <span className="text-xs text-ink-500 line-through">
+                {formatPrice(totalCents)}
+              </span>{" "}
+              <span className="text-xs font-semibold uppercase text-acid-600">
+                Flash Sale −{promoPercentOff}%
+              </span>
+            </>
+          ) : (
+            <>
+              Total <strong>{formatPrice(totalCents)}</strong>
+            </>
+          )}
           {favorsCents > 0 ? (
             <span className="ml-2 text-flame-700">favors {formatPrice(favorsCents)}</span>
           ) : null}

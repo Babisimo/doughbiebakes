@@ -65,5 +65,41 @@ admin reservation list still works; public availability/stock holds still correc
 
 ---
 
+## 3. Online discounted reservations over-count "Actually collected"
+
+**Status:** PENDING (logged 2026-06-26).
+
+**What:** A reservation made with a flash sale or promo stores `totalCents` = the
+**full** subtotal and `discountedTotalCents` = the discounted amount, but
+**never sets `collectedCents`** (see `createReservation` in
+`src/sanity/lib/mutations.ts`). The calculator's "Actually collected" uses
+`reservationCollectedCents(r)` = `collectedCents ?? totalCents`
+(`src/lib/favors.ts`) and **ignores `discountedTotalCents`**. So every discounted
+**online** reservation is counted at full price — over-stating collected revenue
+by the discount.
+
+**Why it matters:** With the Fourth of July flash sale live, online reservations
+booked at −15% still tally as full price in the calculator's "Actually collected"
+and any rollup built on it. Understated discounts inflate revenue.
+
+**Where:** `createReservation` (sets no `collectedCents`) +
+`getConfirmedReservationsForDrop` in `src/lib/catalog.ts` (doesn't read
+`discountedTotalCents`) + `reservationCollectedCents` in `src/lib/favors.ts`.
+
+**Note:** The **in-person** path is already correct — `createInPersonSale` and the
+amend route set `collectedCents` to the discounted total, so hand-logged sales
+tally right. This bug is online-only.
+
+**How to fix (options):**
+- Set `collectedCents` to `discountedTotalCents` when a discount applies, at
+  reservation-create time (mirrors the in-person path). Simplest, consistent.
+- Or make `reservationCollectedCents` prefer `discountedTotalCents` when present
+  and no explicit `collectedCents` override exists (centralizes the rule).
+
+**Verify:** with a discounted online reservation, the calculator's "Actually
+collected" reflects the discounted amount, not full price.
+
+---
+
 See also project memory: `sanity-restricted-read-types`,
-`known-issue-order-drop-attribution`.
+`known-issue-order-drop-attribution`, `flash-sale-fast-follows`.

@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Doughbie — Fourth of July carousel (brand + patriotic)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bone:#fefae0; --paper:#fffdf2; --ink:#283618; --ink700:#36441f; --ink500:#6c7150;
+    --acid:#a55d1f; --flame:#606c38; --sage:#ccd5ae; --ochre:#dda15e; --terracotta:#bc6c25;
+    /* patriotic accents tuned to sit beside the earthy palette */
+    --navy:#27365c; --navy-deep:#1c2742; --brick:#9e3b2e; --gold:#e7b24a;
+    --grad-dark:linear-gradient(150deg,#2f3f26 0%,#283618 42%,#1c2742 100%);
+    --shadow:0 14px 34px -8px rgba(28,29,40,.3); --shadow-sm:0 6px 18px -4px rgba(28,29,40,.24);
+    --display:"Caprasimo",serif; --sans:"Plus Jakarta Sans",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#e6dfcc;font-family:var(--sans);color:var(--ink);padding:28px 16px 64px}
+  .howto{max-width:1080px;margin:0 auto 26px;background:var(--paper);border:1px solid rgba(40,54,24,.16);
+    border-radius:18px;padding:16px 22px;font-size:14px;line-height:1.55;color:var(--ink700)}
+  .howto b{color:var(--ink)} .howto code{background:#f0e7c8;padding:1px 6px;border-radius:6px}
+  .deck{display:flex;flex-direction:column;align-items:center;gap:42px}
+  .slidewrap{width:1080px;max-width:100%}
+  @media(max-width:1120px){.slidewrap{width:min(1080px,92vw)}}
+  .slidelabel{font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:13px;color:#7c7458;margin:0 0 10px 4px}
+  .display{font-family:var(--display);line-height:.98;letter-spacing:-.012em}
+
+  .slide{position:relative;width:1080px;height:1080px;overflow:hidden;border-radius:8px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:center;padding:96px 92px;isolation:isolate}
+  .content{position:relative;z-index:2;display:flex;flex-direction:column;height:100%;justify-content:center}
+
+  .cream{background:var(--bone)} .cream .content{color:var(--ink)}
+  .dark{background-image:var(--grad-dark)} .dark .content{color:var(--bone)}
+
+  /* warm blobs on cream slides */
+  .blobs::before{content:"";position:absolute;inset:0;z-index:0;opacity:.5;
+    background:radial-gradient(58rem 58rem at -12% -10%,#dda15e60,transparent 60%),
+               radial-gradient(50rem 50rem at 112% 112%,#27365c45,transparent 60%);filter:blur(10px)}
+
+  /* ---- fireworks sky ---- */
+  .sky{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .star{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.85;
+    box-shadow:0 0 6px 1px var(--gold)}
+  .fw{position:absolute;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg, var(--fc) 0 1.3deg, transparent 1.3deg 9deg);
+    -webkit-mask:radial-gradient(closest-side,transparent 7%,#000 13%,#000 44%,transparent 60%);
+            mask:radial-gradient(closest-side,transparent 7%,#000 13%,#000 44%,transparent 60%);
+    opacity:var(--fo,.5);filter:drop-shadow(0 0 6px var(--fc))}
+  .fw::after{content:"";position:absolute;inset:32%;border-radius:50%;background:var(--fc);opacity:.5;filter:blur(5px)}
+  .cream .sky{opacity:.28}  /* keep fireworks faint behind dark text */
+
+  .kicker{font-weight:700;letter-spacing:.24em;text-transform:uppercase;font-size:23px}
+  .cream .kicker{color:var(--brick)} .dark .kicker{color:var(--gold)}
+  .chip{display:inline-flex;align-items:center;gap:.5ch;background:var(--ochre);color:var(--ink);
+    font-family:var(--display);border-radius:999px;padding:10px 30px;font-size:46px;box-shadow:var(--shadow-sm)}
+  .chip.sm{font-size:30px;padding:7px 22px}
+
+  .foot{position:absolute;left:92px;right:92px;bottom:64px;z-index:3;display:flex;align-items:center;
+    justify-content:space-between;font-size:20px;font-weight:600;letter-spacing:.04em}
+  .cream .foot{color:var(--ink500)} .dark .foot{color:rgba(254,250,224,.72)}
+  .dots{display:flex;gap:10px}.dot{width:11px;height:11px;border-radius:999px;background:currentColor;opacity:.32}.dot.on{opacity:1}
+
+  .s1 .content{justify-content:center;gap:44px}
+  .s1 .setup{font-family:var(--display);font-size:84px;line-height:1.05;color:var(--bone);max-width:944px}
+  .s1 .strike{position:relative;display:inline-block;color:#efe6cf}
+  /* hand-drawn-ish brick line crossing out CHIPS */
+  .s1 .strike::after{content:"";position:absolute;left:-5%;right:-5%;top:46%;height:12px;border-radius:8px;
+    background:var(--brick);transform:rotate(-2.5deg);box-shadow:0 2px 8px rgba(158,59,46,.5)}
+  .s1 .punch{font-family:var(--display);font-size:150px;line-height:.95;color:var(--gold)}
+  .s1 .punch .arr{color:var(--bone)}
+  .s2 .big{font-size:150px;margin:14px 0 30px}.s2 .big .pct{color:var(--acid)}
+  .s2 .line{font-size:34px;font-weight:500;color:var(--ink700);max-width:780px;line-height:1.4;margin-top:34px}
+  .s3 h2{font-size:76px}
+  .s3 .sub3{margin-top:12px;font-weight:600;font-size:26px;color:var(--brick);letter-spacing:.01em}
+  .grid3{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:30px}
+  .pcard{background:rgba(255,253,242,.5);border:1.5px solid rgba(40,54,24,.14);border-radius:22px;
+    padding:16px 16px 18px;display:flex;flex-direction:column;gap:12px}
+  /* loaf photo box — <img> so EXIF orientation is honored (object-fit cover) */
+  .ph{position:relative;height:220px;border-radius:14px;overflow:hidden;background:#efe3cf}
+  .ph img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+  .pcard .nm{font-family:var(--display);font-size:34px;line-height:1}
+  .pcard .ds{font-size:21px;color:var(--ink500);font-weight:500;line-height:1.25}
+  .s4 .big{font-size:114px;line-height:.98}.s4 .big em{font-style:normal;color:var(--brick)}
+  .s4 ul{list-style:none;margin-top:44px;display:flex;flex-direction:column;gap:24px}
+  .s4 li{font-size:32px;font-weight:500;color:var(--ink700);display:flex;gap:18px;align-items:flex-start;line-height:1.35}
+  .s4 li b{color:var(--ink);font-weight:600}.s4 li .ic{font-size:36px;flex:none}
+  .s5{text-align:center}.s5 .content{align-items:center}
+  .s5 .when{font-family:var(--display);font-size:92px;margin-top:8px}
+  .s5 .noon{font-family:var(--display);font-size:226px;color:var(--gold);line-height:.9;margin:6px 0 28px}
+  .s5 .cta{font-size:44px;font-weight:700;margin-top:8px}
+  .s5 .small{font-size:30px;color:rgba(254,250,224,.82);font-weight:500;margin-top:28px;max-width:760px;line-height:1.4}
+  .s5 .foot{justify-content:center;gap:26px}
+  /* transition / "where to get it" interstitial (dark) */
+  .sx .content{justify-content:center;gap:30px}
+  .sx .head{font-family:var(--display);font-size:96px;line-height:1.0;color:var(--bone)}
+  .sx .tease{font-family:var(--display);font-size:50px;color:var(--gold);line-height:1.06}
+  .sx .hint{font-weight:600;font-size:26px;color:rgba(254,250,224,.8);letter-spacing:.02em}
+
+  @media print{
+    @page{size:11.25in 11.25in;margin:0}
+    body{background:#fff;padding:0}.howto,.slidelabel{display:none!important}.deck{gap:0}
+    .slidewrap{width:1080px;max-width:none}
+    .slide{border-radius:0;box-shadow:none;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .slide:last-child{break-after:auto;page-break-after:avoid}
+  }
+
+  /* export mode: ?only=N isolates one slide at 1080×1080 for PNG screenshots */
+  body.export{padding:0;background:#fff}
+  body.export .howto,body.export .slidelabel{display:none}
+  body.export .deck{gap:0}
+  body.export .slidewrap{width:1080px;max-width:none}
+  body.export .slide{border-radius:0;box-shadow:none}
+
+  /* ===== FULL AMERICANA THEME (navy / red / white / gold + stripes) ===== */
+  body.bold{background:#0a1430;--brick:#e0394e;--gold:#f2c14e}
+  body.bold .slide{background-image:radial-gradient(120% 90% at 50% 0%,#16306e 0%,#0b1f4d 45%,#07112a 100%);color:#fdfcf7}
+  body.bold .slide::before{content:"";position:absolute;inset:auto;top:0;left:0;right:0;bottom:auto;height:14px;z-index:3;opacity:1;filter:none;background:repeating-linear-gradient(90deg,#c0233a 0 60px,#fdfcf7 60px 120px)}
+  body.bold .slide::after{content:"";position:absolute;left:0;right:0;bottom:0;top:auto;height:14px;z-index:3;background:repeating-linear-gradient(90deg,#c0233a 0 60px,#fdfcf7 60px 120px)}
+  body.bold .content{color:#fdfcf7}
+  body.bold .kicker{color:#f2c14e}
+  body.bold .chip{background:#c0233a;color:#fdfcf7;border:3px solid rgba(255,255,255,.85)}
+  body.bold .foot{color:rgba(253,252,247,.82)}
+  body.bold .dot{background:#fdfcf7}
+  body.bold .dot.on{background:#f2c14e}
+  body.bold .s1 .setup{color:#fdfcf7}
+  body.bold .s1 .strike{color:#fff}
+  body.bold .s1 .strike::after{background:#c0233a;box-shadow:0 2px 10px rgba(192,35,58,.65)}
+  body.bold .s1 .punch{color:#f2c14e}
+  body.bold .s1 .punch .arr{color:#fdfcf7}
+  body.bold .pcard{background:rgba(255,255,255,.08);border:1.5px solid rgba(242,193,78,.45)}
+  body.bold .pcard .nm{color:#fff}
+  body.bold .pcard .ds{color:#cdd8f2}
+  body.bold .s3 .sub3{color:#f2c14e}
+  body.bold .s2 .big{color:#fdfcf7}
+  body.bold .s2 .big .pct{color:#f2c14e}
+  body.bold .s2 .line{color:#d6e0f6}
+  body.bold .s4 .big{color:#fdfcf7}
+  body.bold .s4 .big em{color:#f2c14e}
+  body.bold .s4 li{color:#d6e0f6}
+  body.bold .s4 li b{color:#fff}
+  body.bold .sx .head{color:#fdfcf7}
+  body.bold .sx .tease{color:#f2c14e}
+  body.bold .sx .hint{color:rgba(253,252,247,.82)}
+  body.bold .s5 .when{color:#fdfcf7}
+  body.bold .s5 .noon{color:#f2c14e;-webkit-text-stroke:2px #c0233a;text-stroke:2px #c0233a}
+  body.bold .s5 .cta{color:#fff}
+  body.bold .s5 .small{color:#cdd8f2}
+</style>
+</head>
+<body class="bold">
+  <div class="howto"><b>Full Americana.</b> Navy / red / white / gold, fireworks + stripes — same content as the brand version. Export each slide: right-click → Inspect → right-click the <code>&lt;div class="slide"&gt;</code> → <b>Capture node screenshot</b>. Caption is in the .md.</div>
+  <div class="deck">
+
+    <!-- 1 COVER -->
+    <div class="slidewrap"><p class="slidelabel">Slide 1 / 6 — cover</p>
+      <div class="slide dark s1">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--gold);--fo:.55;width:340px;height:340px;top:-70px;right:-40px"></span>
+          <span class="fw" style="--fc:var(--brick);--fo:.42;width:240px;height:240px;top:120px;left:-70px"></span>
+          <span class="fw" style="--fc:#5b7bb0;--fo:.4;width:200px;height:200px;bottom:120px;right:160px"></span>
+          <span class="star" style="top:90px;left:280px"></span><span class="star" style="top:200px;right:240px"></span>
+          <span class="star" style="bottom:300px;left:160px"></span><span class="star" style="top:340px;left:520px"></span>
+        </div>
+        <div class="content">
+          <p class="setup">DON'T BRING <span class="strike">CHIPS</span> TO YOUR FOURTH OF JULY PARTY.</p>
+          <p class="punch">BRING THIS<br>INSTEAD <span class="arr">→</span></p>
+        </div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 2 LINEUP — each .ph is a photo drop-zone: in Canva drop a loaf photo on it, then delete the emoji + "add photo" label -->
+    <div class="slidewrap"><p class="slidelabel">Slide 2 / 6 — the lineup (drop a loaf photo into each dashed box)</p>
+      <div class="slide cream blobs s3">
+        <div class="sky"><span class="fw" style="--fc:var(--gold);width:220px;height:220px;top:-40px;right:90px"></span></div>
+        <div class="content">
+          <h2 class="display">4 loaves, 4 ways.</h2>
+          <p class="sub3">What to bring — and what to do with it. 👇</p>
+          <div class="grid3">
+            <div class="pcard"><div class="ph"><img src="photos/jalapeno-cheddar.jpeg" alt="Jalapeño Cheddar sourdough" style="object-position:center 30%"></div><div class="nm">Jalapeño Cheddar</div><div class="ds">→ Grilled-cheese sliders off the grill.</div></div>
+            <div class="pcard"><div class="ph"><img src="photos/pepperoni.jpeg" alt="Pepperoni sourdough" style="object-position:center 70%"></div><div class="nm">Pepperoni</div><div class="ds">→ Tear-and-share app, zero prep.</div></div>
+            <div class="pcard"><div class="ph"><img src="photos/classic.jpg" alt="Classic sourdough"></div><div class="nm">Classic</div><div class="ds">→ Crostini + dips, the cheese board.</div></div>
+            <div class="pcard"><div class="ph"><img src="photos/banana-choc-chip.jpeg" alt="Banana Chocolate Chip sourdough"></div><div class="nm">Banana Choc Chip</div><div class="ds">→ Dessert + 4th-of-July-morning toast.</div></div>
+          </div>
+        </div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 3 TRANSITION — where to get them + tease the discount -->
+    <div class="slidewrap"><p class="slidelabel">Slide 3 / 6 — where to get them</p>
+      <div class="slide dark sx">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--gold);--fo:.5;width:300px;height:300px;top:-60px;right:-40px"></span>
+          <span class="fw" style="--fc:#5b7bb0;--fo:.4;width:220px;height:220px;bottom:130px;left:-60px"></span>
+          <span class="star" style="top:140px;left:300px"></span><span class="star" style="bottom:280px;right:240px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">Where to get 'em</p>
+          <p class="head">Reserve online.<br>I bring them<br>to your door.</p>
+          <p class="tease">…and every loaf's on sale. →</p>
+          <p class="hint">🔗 link in bio · free Corona-area hand-delivery</p>
+        </div>
+        <div class="foot"><span>DOUGHBIE · CORONA, CA</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 4 OFFER -->
+    <div class="slidewrap"><p class="slidelabel">Slide 4 / 6 — the offer</p>
+      <div class="slide cream blobs s2">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--brick);width:260px;height:260px;top:-50px;right:-30px"></span>
+          <span class="fw" style="--fc:#27365c;width:200px;height:200px;bottom:90px;left:-50px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">And the best part —</p>
+          <h2 class="display big"><span class="pct">15%</span> off<br>every loaf.</h2>
+          <span class="chip">⚡ AUTO-APPLIED AT CHECKOUT</span>
+          <p class="line">Naturally leavened, baked to order in my home kitchen. No code to remember — the discount comes off at the link. 🤍</p>
+        </div>
+        <div class="foot"><span>MADE IN A HOME KITCHEN</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 5 CATCH -->
+    <div class="slidewrap"><p class="slidelabel">Slide 5 / 6 — the catch</p>
+      <div class="slide cream blobs s4">
+        <div class="sky"><span class="fw" style="--fc:#27365c;width:240px;height:240px;bottom:-50px;right:-40px"></span></div>
+        <div class="content">
+          <p class="kicker">Small batch, real talk</p>
+          <h2 class="display big" style="margin-top:20px">A dozen loaves.<br><em>That's the batch.</em></h2>
+          <ul>
+            <li><span class="ic">🚪</span><span><b>Free hand-delivery</b> right to your door — Corona area, <b>June 30 – July 1</b>.</span></li>
+            <li><span class="ic">🧑‍🍳</span><span>Mixed, baked, and hand-delivered. Every loaf.</span></li>
+            <li><span class="ic">🍽️</span><span>Your centerpiece for the 250th — cookout, potluck, or just because.</span></li>
+          </ul>
+        </div>
+        <div class="foot"><span>SMALL-BATCH · MADE TO ORDER</span><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i><i class="dot"></i></span></div>
+      </div></div>
+
+    <!-- 6 CTA -->
+    <div class="slidewrap"><p class="slidelabel">Slide 6 / 6 — the call to action</p>
+      <div class="slide dark s5">
+        <div class="sky">
+          <span class="fw" style="--fc:var(--gold);--fo:.6;width:360px;height:360px;top:-80px;left:-50px"></span>
+          <span class="fw" style="--fc:var(--brick);--fo:.45;width:260px;height:260px;top:60px;right:-40px"></span>
+          <span class="fw" style="--fc:#5b7bb0;--fo:.42;width:220px;height:220px;bottom:150px;left:120px"></span>
+          <span class="star" style="top:120px;left:300px"></span><span class="star" style="top:240px;right:260px"></span><span class="star" style="bottom:320px;right:200px"></span>
+        </div>
+        <div class="content">
+          <p class="kicker">Order by</p>
+          <div class="when">SUNDAY, JUNE 28</div>
+          <div class="noon display">NOON.</div>
+          <span class="chip sm">⚡ 15% OFF EVERYTHING</span>
+          <p class="cta">👉 Tap the link in my bio</p>
+          <p class="small">When they're gone, they're gone. Let's do the 250th right. 🎆🤍</p>
+        </div>
+        <div class="foot"><span class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot on"></i></span></div>
+      </div></div>
+
+  </div>
+  <script>
+    (function(){
+      var p = new URLSearchParams(location.search).get('only');
+      if(!p) return;
+      document.body.classList.add('export');
+      var n = parseInt(p,10) - 1;
+      document.querySelectorAll('.slidewrap').forEach(function(w,i){ if(i!==n) w.remove(); });
+    })();
+  </script>
+</body>
+</html>

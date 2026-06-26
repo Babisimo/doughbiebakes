@@ -1,5 +1,7 @@
 import { getAdminSession } from "@/lib/admin-auth";
-import { computeSaleTotals, type SaleLineInput } from "@/lib/favors";
+import { getDropById } from "@/lib/catalog";
+import { computeInPersonSale, type SaleLineInput } from "@/lib/favors";
+import { flashSaleStatus } from "@/lib/flash-sale";
 import { createInPersonSale } from "@/sanity/lib/mutations";
 
 export const runtime = "nodejs";
@@ -50,7 +52,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const { totalCents } = computeSaleTotals(items);
+  // Re-derive the flash sale from the drop itself (never trust a client-sent
+  // percent), mirroring the public reserve route. A sale is gated to OPEN drops,
+  // so recording against a closed/previous drop yields no discount.
+  const drop = await getDropById(dropId, { fresh: true });
+  const flash = flashSaleStatus(drop, new Date());
+  const sale = computeInPersonSale(items, flash.active ? flash.percentOff : 0);
 
   const id = await createInPersonSale({
     dropId,
@@ -65,7 +72,11 @@ export async function POST(req: Request) {
       quantity,
       priceCents,
     })),
-    totalCents,
+    totalCents: sale.totalCents,
+    promoPercentOff: sale.promoPercentOff,
+    discountedTotalCents: sale.discountedTotalCents,
+    discountLabel: sale.discountLabel,
+    collectedCents: sale.collectedCents,
   });
 
   if (!id) {

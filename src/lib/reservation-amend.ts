@@ -66,3 +66,35 @@ export function parseAmendBody(
   }
   return { ok: true, value };
 }
+
+type StockLine = { productSlug: string; quantity: number };
+
+/**
+ * Per-loaf stock delta between a reservation's old and new lines, for an
+ * in-person amend. `delta = newQty − oldQty` is the *additional* units taken
+ * from the drop: positive takes more stock, negative returns freed stock. A slug
+ * present only in `oldItems` (line dropped) returns all of it; only non-zero
+ * deltas are emitted. No I/O — the caller applies these to the drop best-effort.
+ */
+export function stockDeltas(
+  oldItems: StockLine[],
+  newItems: StockLine[],
+): { slug: string; delta: number }[] {
+  const qty = (rows: StockLine[]) => {
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      if (!r.productSlug) continue;
+      const n = int(r.quantity);
+      m.set(r.productSlug, (m.get(r.productSlug) ?? 0) + (Number.isFinite(n) ? n : 0));
+    }
+    return m;
+  };
+  const oldQ = qty(oldItems);
+  const newQ = qty(newItems);
+  const out: { slug: string; delta: number }[] = [];
+  for (const slug of new Set([...oldQ.keys(), ...newQ.keys()])) {
+    const delta = (newQ.get(slug) ?? 0) - (oldQ.get(slug) ?? 0);
+    if (delta !== 0) out.push({ slug, delta });
+  }
+  return out;
+}

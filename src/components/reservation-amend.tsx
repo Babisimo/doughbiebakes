@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { effectiveListCents } from "@/lib/favors";
 import { formatPrice } from "@/lib/money";
-import { discountedTotalCents } from "@/lib/promo-math";
 
 export type AmendDropLine = {
   productSlug: string;
@@ -70,25 +70,23 @@ export function ReservationAmend({
   const priceOf = (it: AmendItem) => prices[it.productSlug] ?? it.priceCents;
   const qtyOf = (it: AmendItem) =>
     canEditQuantity ? quantities[it.productSlug] ?? it.quantity : it.quantity;
-
-  // Full subtotal at the charged per-line prices, then the live flash discount.
+  // The per-loaf favor baseline: the sale price when a flash sale applied, else
+  // list. Charged prices already reflect the sale, so they are the going rate.
+  const baselineOf = (slug: string) => {
+    const list = listBySlug.get(slug);
+    return typeof list === "number" ? effectiveListCents(list, promoPercentOff) : undefined;
+  };
   const pct = Math.max(0, Math.floor(promoPercentOff ?? 0));
-  const newTotal = items.reduce((s, it) => s + priceOf(it) * qtyOf(it), 0);
-  const discountedTotal = pct > 0 ? discountedTotalCents(newTotal, pct) : newTotal;
-  const hasDiscount = pct > 0;
 
-  // The default "collected" (discounted total, or full when no sale), recomputed
-  // from the *stored* total so we can tell an automatic default from a real
-  // override the baker typed earlier.
-  const storedDefault = pct > 0 ? discountedTotalCents(totalCents, pct) : totalCents;
-  // Actually-collected input (cents). Seeded from a real override or the default.
-  const [collected, setCollected] = useState<number>(collectedCents ?? storedDefault);
-  // True only when the stored collected is a genuine override (differs from the
-  // computed default). Until touched, the field tracks the live discounted total.
-  const [collectedTouched, setCollectedTouched] = useState<boolean>(
-    collectedCents != null && collectedCents !== storedDefault,
-  );
-  const effectiveCollected = collectedTouched ? collected : discountedTotal;
+  // Total due is simply what's charged across the (possibly amended) lines.
+  const newTotal = items.reduce((s, it) => s + priceOf(it) * qtyOf(it), 0);
+
+  // Actually-collected input (cents). Seeded from a real override or the total.
+  const [collected, setCollected] = useState<number>(collectedCents ?? totalCents);
+  // True once the baker explicitly typed a collected amount (or one was loaded).
+  // Until then, the field tracks the live recomputed total.
+  const [collectedTouched, setCollectedTouched] = useState<boolean>(collectedCents != null);
+  const effectiveCollected = collectedTouched ? collected : newTotal;
 
   const qtyInvalid = canEditQuantity && items.some((it) => qtyOf(it) < 1);
 
@@ -108,10 +106,9 @@ export function ReservationAmend({
           listPriceCents: listBySlug.get(it.productSlug) ?? price,
         };
       });
-      // Equal to the discounted default ⇒ clear the override (null); the server
-      // resolves null to the discounted total (or the full total when no sale).
+      // Equal to the recomputed total ⇒ clear the override (null) for clean data.
       const collectedCentsPayload =
-        effectiveCollected === discountedTotal ? null : effectiveCollected;
+        effectiveCollected === newTotal ? null : effectiveCollected;
 
       const res = await fetch(
         `/api/admin/reservations/${reservationId}/amend`,
@@ -160,9 +157,9 @@ export function ReservationAmend({
           {items.map((it) => {
             const price = priceOf(it);
             const qty = qtyOf(it);
-            const list = listBySlug.get(it.productSlug);
+            const baseline = baselineOf(it.productSlug);
             const favor =
-              typeof list === "number" ? qty * Math.max(0, list - price) : 0;
+              typeof baseline === "number" ? qty * Math.max(0, baseline - price) : 0;
             return (
               <tr key={it.productSlug} className="border-t border-ink/10">
                 <td className="py-2 font-semibold">{it.productName}</td>
@@ -187,7 +184,7 @@ export function ReservationAmend({
                   )}
                 </td>
                 <td className="py-2 text-ink-500">
-                  {typeof list === "number" ? formatPrice(list) : "—"}
+                  {typeof baseline === "number" ? formatPrice(baseline) : "—"}
                 </td>
                 <td className="py-2">
                   <span className="text-ink-500">$</span>
@@ -228,18 +225,12 @@ export function ReservationAmend({
           />
         </label>
         <p className="text-sm">
-          Total due{" "}
-          {hasDiscount ? (
-            <>
-              <strong>{formatPrice(discountedTotal)}</strong>{" "}
-              <span className="text-xs text-ink-500 line-through">{formatPrice(newTotal)}</span>{" "}
-              <span className="text-xs font-semibold uppercase text-acid-600">
-                {discountLabel ?? `Flash Sale −${pct}%`}
-              </span>
-            </>
-          ) : (
-            <strong>{formatPrice(newTotal)}</strong>
-          )}
+          Total due <strong>{formatPrice(newTotal)}</strong>
+          {pct > 0 ? (
+            <span className="ml-2 text-xs font-semibold uppercase text-acid-600">
+              {discountLabel ?? `Flash Sale −${pct}%`}
+            </span>
+          ) : null}
         </p>
       </div>
 

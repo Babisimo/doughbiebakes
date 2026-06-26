@@ -47,6 +47,9 @@ export type ReservationSource = {
   items: BakeListItem[];
   totalCents: number;
   collectedCents?: number;
+  /** Flash-sale percent that applied — marks the favor baseline down to the
+   * sale price for this reservation's items. */
+  promoPercentOff?: number;
 };
 
 export type DropForBake = {

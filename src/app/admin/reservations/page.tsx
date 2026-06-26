@@ -94,6 +94,7 @@ export default async function AdminReservationsPage() {
                   {r.items.map((i) => `${i.quantity}× ${i.productName}`).join(", ")} ·{" "}
                   {(r.promoCode || r.discountLabel) &&
                   typeof r.discountedTotalCents === "number" ? (
+                    // Online discount-on-total: show discounted vs full (struck).
                     <>
                       <span className="font-bold">{formatPrice(r.discountedTotalCents)}</span>{" "}
                       <span className="text-xs text-ink-500 line-through">{formatPrice(r.totalCents)}</span>{" "}
@@ -104,7 +105,15 @@ export default async function AdminReservationsPage() {
                       </span>
                     </>
                   ) : (
-                    formatPrice(r.totalCents)
+                    // In-person sale price is baked into the total; show a badge for context.
+                    <>
+                      <span className="font-bold">{formatPrice(r.totalCents)}</span>
+                      {r.discountLabel ? (
+                        <span className="ml-1 text-xs font-semibold uppercase text-acid-600">
+                          {r.discountLabel}
+                        </span>
+                      ) : null}
+                    </>
                   )}{" "}
                   · {r.dropTitle ?? "—"}
                 </p>

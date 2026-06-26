@@ -3,10 +3,9 @@ import { test } from "node:test";
 
 import {
   actualFavorsCents,
-  computeInPersonSale,
   computeSaleTotals,
+  effectiveListCents,
   favorLines,
-  recomputeAmendedSale,
   reservationCollectedCents,
   type FavorSource,
   type SaleLineInput,
@@ -71,80 +70,34 @@ test("computeSaleTotals: a loaf reserved for yourself at $0 is a full-list favor
   assert.equal(r.favorsCents, 1200);
 });
 
-test("computeInPersonSale: no flash sale leaves the sale undiscounted", () => {
-  const r = computeInPersonSale(
-    [sale({ quantity: 2, priceCents: 900, listPriceCents: 900 })],
-    0,
-  );
-  assert.equal(r.totalCents, 1800);
-  assert.equal(r.favorsCents, 0);
-  assert.equal(r.promoPercentOff, undefined);
-  assert.equal(r.discountedTotalCents, undefined);
-  assert.equal(r.discountLabel, undefined);
-  assert.equal(r.collectedCents, undefined);
+test("effectiveListCents: no sale returns the list price unchanged", () => {
+  assert.equal(effectiveListCents(1200, 0), 1200);
+  assert.equal(effectiveListCents(1200, undefined), 1200);
+  assert.equal(effectiveListCents(1200, null), 1200);
 });
 
-test("computeInPersonSale: an active flash sale discounts the total, not the lines", () => {
-  // 2 loaves @ $9 list = $18 subtotal; 20% off => $14.40 collected.
-  const r = computeInPersonSale(
-    [sale({ quantity: 2, priceCents: 900, listPriceCents: 900 })],
-    20,
-  );
-  assert.equal(r.totalCents, 1800);
-  assert.equal(r.favorsCents, 0); // sale markdown is NOT a favor
-  assert.equal(r.promoPercentOff, 20);
-  assert.equal(r.discountedTotalCents, 1440);
-  assert.equal(r.collectedCents, 1440);
-  assert.equal(r.discountLabel, "Flash Sale −20%");
+test("effectiveListCents: a flash percent marks the baseline down", () => {
+  // $12 at 15% off => $10.20 going price.
+  assert.equal(effectiveListCents(1200, 15), 1020);
+  assert.equal(effectiveListCents(1000, 20), 800);
 });
 
-test("computeInPersonSale: a manual favor stacks on top of the flash discount", () => {
-  // 1 @ $9 (list $9) + 1 @ $7 (list $9, a $2 favor) = $16 subtotal, $2 favor.
-  // 10% flash off the $16 subtotal => $14.40 collected.
-  const r = computeInPersonSale(
-    [
-      sale({ quantity: 1, priceCents: 900, listPriceCents: 900 }),
-      sale({ quantity: 1, priceCents: 700, listPriceCents: 900 }),
-    ],
-    10,
-  );
-  assert.equal(r.totalCents, 1600);
-  assert.equal(r.favorsCents, 200);
-  assert.equal(r.promoPercentOff, 10);
-  assert.equal(r.discountedTotalCents, 1440);
-  assert.equal(r.collectedCents, 1440);
+test("actualFavorsCents: a free favor during a sale is valued at the sale price", () => {
+  const list = new Map([["banana", 1200]]);
+  // Free loaf during a 15% sale => favor is $10.20, not the full $12.
+  const sources: SoldSource[] = [
+    { promoPercentOff: 15, items: [{ productSlug: "banana", quantity: 1, priceCents: 0 }] },
+  ];
+  assert.equal(actualFavorsCents(sources, list), 1020);
 });
 
-test("recomputeAmendedSale: no discount returns just the full total", () => {
-  const r = recomputeAmendedSale(
-    [sale({ quantity: 1, priceCents: 1200, listPriceCents: 1200 })],
-    undefined,
-  );
-  assert.equal(r.totalCents, 1200);
-  assert.equal(r.discountedTotalCents, undefined);
-  assert.equal(r.collectedCents, undefined);
-});
-
-test("recomputeAmendedSale: treats 0/null percent as no discount", () => {
-  for (const pct of [0, null, NaN] as const) {
-    const r = recomputeAmendedSale(
-      [sale({ quantity: 2, priceCents: 1000, listPriceCents: 1000 })],
-      pct,
-    );
-    assert.equal(r.totalCents, 2000);
-    assert.equal(r.discountedTotalCents, undefined);
-  }
-});
-
-test("recomputeAmendedSale: re-applies the stored flash percent (Erin 2→1)", () => {
-  // Erin: 1× Pepperoni @ $12, flash 15% off => $12 full, $10.20 collected.
-  const r = recomputeAmendedSale(
-    [sale({ productSlug: "pepperoni", quantity: 1, priceCents: 1200, listPriceCents: 1200 })],
-    15,
-  );
-  assert.equal(r.totalCents, 1200);
-  assert.equal(r.discountedTotalCents, 1020);
-  assert.equal(r.collectedCents, 1020);
+test("actualFavorsCents: paying the sale price is not a favor", () => {
+  const list = new Map([["pepperoni", 1200]]);
+  // Charged the sale price ($10.20) during a 15% sale => no favor.
+  const sources: SoldSource[] = [
+    { promoPercentOff: 15, items: [{ productSlug: "pepperoni", quantity: 1, priceCents: 1020 }] },
+  ];
+  assert.equal(actualFavorsCents(sources, list), 0);
 });
 
 test("reservationCollectedCents: falls back to totalCents when no override", () => {
@@ -174,6 +127,23 @@ test("favorLines: two buyers of one loaf at different prices → two lines, bigg
   );
   assert.equal(lines[1].who, "Maria");
   assert.equal(lines[1].favorCents, 200);
+});
+
+test("favorLines: during a sale, the line's favor + baseline use the sale price", () => {
+  const list = new Map([["banana", 1200]]);
+  const lines = favorLines(
+    [
+      {
+        who: "Victoria",
+        promoPercentOff: 15,
+        items: [{ productSlug: "banana", productName: "Banana", quantity: 1, priceCents: 0 }],
+      },
+    ],
+    list,
+  );
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0].favorCents, 1020); // $10.20, the sale-price giveaway
+  assert.equal(lines[0].listCents, 1020); // baseline shown is the sale price
 });
 
 test("favorLines: full-price and above-list items produce no line", () => {

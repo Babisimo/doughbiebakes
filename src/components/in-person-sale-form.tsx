@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { computeInPersonSale, type SaleLineInput } from "@/lib/favors";
+import { computeSaleTotals, effectiveListCents, type SaleLineInput } from "@/lib/favors";
 import { formatPrice } from "@/lib/money";
 
 type DropLine = { productSlug: string; productName: string; listPriceCents: number };
@@ -40,27 +40,34 @@ export function InPersonSaleForm({ drops }: { drops: SaleDrop[] }) {
 
   const saleItems = useMemo<SaleLineInput[]>(() => {
     if (!drop) return [];
+    const pct = drop.flashPercentOff ?? 0;
     return drop.lines
       .map((l) => {
         const row = rows[l.productSlug];
         const quantity = row?.quantity ?? 0;
-        const priceCents = row?.priceCents ?? l.listPriceCents;
+        const sale = effectiveListCents(l.listPriceCents, pct);
+        const priceCents = row?.priceCents ?? sale;
         return {
           productSlug: l.productSlug,
           productName: l.productName,
           quantity,
           priceCents,
-          listPriceCents: l.listPriceCents,
+          // Baseline for the favor calc is the sale price (= list when no sale).
+          listPriceCents: sale,
         };
       })
       .filter((i) => i.quantity > 0);
   }, [drop, rows]);
 
+  // Total is simply what's charged; favors are the gap below the sale price.
+  const { totalCents, favorsCents } = computeSaleTotals(saleItems);
+
   const flashPercentOff = drop?.flashPercentOff ?? 0;
-  const { totalCents, favorsCents, discountedTotalCents, promoPercentOff } =
-    computeInPersonSale(saleItems, flashPercentOff);
-  const saleActive = typeof discountedTotalCents === "number";
-  const collectedCents = discountedTotalCents ?? totalCents;
+  const saleActive = flashPercentOff > 0;
+  // The per-loaf "going price" during a sale is the sale price; that's the
+  // default charge and the favor baseline. A favor is anything charged below it.
+  const salePriceOf = (listCents: number) =>
+    effectiveListCents(listCents, flashPercentOff);
 
   function setRow(slug: string, patch: Partial<Row>) {
     setRows((cur) => {
@@ -150,12 +157,22 @@ export function InPersonSaleForm({ drops }: { drops: SaleDrop[] }) {
           {drop?.lines.map((l) => {
             const row = rows[l.productSlug];
             const qty = row?.quantity ?? 0;
-            const price = row?.priceCents ?? l.listPriceCents;
-            const favor = qty * Math.max(0, l.listPriceCents - price);
+            const sale = salePriceOf(l.listPriceCents);
+            const price = row?.priceCents ?? sale;
+            const favor = qty * Math.max(0, sale - price);
             return (
               <tr key={l.productSlug} className="border-t border-ink/10">
                 <td className="py-2 font-semibold">{l.productName}</td>
-                <td className="py-2 text-ink-500">{formatPrice(l.listPriceCents)}</td>
+                <td className="py-2 text-ink-500">
+                  {saleActive ? (
+                    <>
+                      <span className="line-through">{formatPrice(l.listPriceCents)}</span>{" "}
+                      <span className="font-semibold text-acid-600">{formatPrice(sale)}</span>
+                    </>
+                  ) : (
+                    formatPrice(l.listPriceCents)
+                  )}
+                </td>
                 <td className="py-2">
                   <input
                     type="number"
@@ -188,21 +205,12 @@ export function InPersonSaleForm({ drops }: { drops: SaleDrop[] }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm">
+          Total <strong>{formatPrice(totalCents)}</strong>
           {saleActive ? (
-            <>
-              Total <strong>{formatPrice(collectedCents)}</strong>{" "}
-              <span className="text-xs text-ink-500 line-through">
-                {formatPrice(totalCents)}
-              </span>{" "}
-              <span className="text-xs font-semibold uppercase text-acid-600">
-                Flash Sale −{promoPercentOff}%
-              </span>
-            </>
-          ) : (
-            <>
-              Total <strong>{formatPrice(totalCents)}</strong>
-            </>
-          )}
+            <span className="ml-2 text-xs font-semibold uppercase text-acid-600">
+              Flash Sale −{flashPercentOff}%
+            </span>
+          ) : null}
           {favorsCents > 0 ? (
             <span className="ml-2 text-flame-700">favors {formatPrice(favorsCents)}</span>
           ) : null}

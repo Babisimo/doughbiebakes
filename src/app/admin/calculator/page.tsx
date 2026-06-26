@@ -117,7 +117,11 @@ export default async function CalculatorPage({ searchParams }: Props) {
   // reservations the favor total is computed from.
   const favorSources: FavorSource[] = [
     ...orders.map((o) => ({ who: o.customerName || "(no name)", items: o.items })),
-    ...reservations.map((r) => ({ who: r.customerName || "(no name)", items: r.items })),
+    ...reservations.map((r) => ({
+      who: r.customerName || "(no name)",
+      promoPercentOff: r.promoPercentOff,
+      items: r.items,
+    })),
   ];
   const favors = favorLines(favorSources, listBySlug);
 

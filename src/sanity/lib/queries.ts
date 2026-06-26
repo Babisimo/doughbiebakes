@@ -191,6 +191,7 @@ export const CONFIRMED_RESERVATIONS_FOR_DROP_QUERY = groq`
       "customerPhone": customerPhone,
       totalCents,
       collectedCents,
+      promoPercentOff,
       "items": items[]{ productSlug, productName, quantity, priceCents }
     }`;
 

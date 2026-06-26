@@ -1,5 +1,5 @@
 import { getAdminSession } from "@/lib/admin-auth";
-import { computeSaleTotals, recomputeAmendedSale } from "@/lib/favors";
+import { computeSaleTotals } from "@/lib/favors";
 import { parseAmendBody, stockDeltas } from "@/lib/reservation-amend";
 import {
   adjustDropStock,
@@ -37,27 +37,25 @@ export async function POST(
     priceCents,
   }));
 
-  // In-person sales support quantity edits: re-apply the stored flash discount
-  // to the new subtotal and reconcile drop stock. Online reservations keep the
-  // existing price-only path untouched (no quantity/stock/discount changes).
+  // In-person sales support quantity edits and reconcile drop stock. Per-line
+  // prices already reflect any flash sale (sale price baked in), so the total is
+  // just what's charged. The stored promoPercentOff is left as-is. Online
+  // reservations keep the existing price-only path untouched.
   const existing = newItems ? await getReservationForAmend(id) : null;
 
   let ok: boolean;
   if (newItems && existing?.channel === "in-person") {
-    const sale = recomputeAmendedSale(newItems, existing.promoPercentOff);
-    // collectedCents: an explicit number is the baker's override; otherwise the
-    // discounted total (or unset → falls back to the full total when no sale).
+    const { totalCents } = computeSaleTotals(newItems);
+    // An explicit number is the baker's override; otherwise unset (falls back to
+    // totalCents). Also unset any legacy discount-on-total field from old records.
     const collectedCents =
-      typeof parsed.value.collectedCents === "number"
-        ? parsed.value.collectedCents
-        : sale.collectedCents ?? null;
+      typeof parsed.value.collectedCents === "number" ? parsed.value.collectedCents : null;
 
     ok = await updateReservationPricing(id, {
       items: cleanItems,
-      totalCents: sale.totalCents,
+      totalCents,
       collectedCents,
-      // number ⇒ set; null ⇒ unset a now-irrelevant discount.
-      discountedTotalCents: sale.discountedTotalCents ?? null,
+      discountedTotalCents: null,
     });
 
     if (ok && existing.dropId) {

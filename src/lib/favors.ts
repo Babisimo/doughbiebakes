@@ -5,7 +5,6 @@
  * charged, clamped at zero (charging *above* list is never a negative favor).
  */
 
-import { resolveDiscount } from "./flash-sale.ts";
 import { discountedTotalCents } from "./promo-math.ts";
 
 export type SaleLineInput = {
@@ -18,6 +17,21 @@ export type SaleLineInput = {
 
 const intNonNeg = (n: number) => (Number.isFinite(n) && n > 0 ? Math.floor(n) : 0);
 const centsNonNeg = (n: number) => (Number.isFinite(n) && n > 0 ? Math.round(n) : 0);
+
+/**
+ * A loaf's effective "going price" — the favor baseline. During a flash sale
+ * that's the sale price (`list − percentOff%`); with no sale it's the list price.
+ * A favor is only what's charged *below* this, so a sale markdown everyone gets
+ * is never miscounted as a personal favor. 0/null/undefined percent ⇒ list.
+ */
+export function effectiveListCents(
+  listCents: number,
+  promoPercentOff?: number | null,
+): number {
+  const list = centsNonNeg(listCents);
+  const pct = Math.max(0, Math.floor(Number(promoPercentOff) || 0));
+  return pct > 0 ? discountedTotalCents(list, pct) : list;
+}
 
 /** Total collected and favors given for one in-person sale's lines. */
 export function computeSaleTotals(items: SaleLineInput[]): {
@@ -37,80 +51,23 @@ export function computeSaleTotals(items: SaleLineInput[]): {
   return { totalCents, favorsCents };
 }
 
-export type InPersonSaleResult = {
-  /** Full subtotal at the charged per-line prices (before any flash discount). */
-  totalCents: number;
-  /** Per-line favors given (list − charged), independent of the flash sale. */
-  favorsCents: number;
-  /** Flash-sale percent applied to the whole sale, when one is live. */
-  promoPercentOff?: number;
-  /** Subtotal after the flash discount. Present only when a sale is live. */
-  discountedTotalCents?: number;
-  /** Human label for the discount, e.g. "Flash Sale −20%". */
-  discountLabel?: string;
-  /** What the baker actually collects — the discounted total when a sale is
-   * live. Mirrors `discountedTotalCents`; stored separately so the books
-   * ("Actually collected") reflect the sale without re-deriving the percent. */
-  collectedCents?: number;
-};
-
-/**
- * One in-person sale's money, sale-aware. Per-line prices drive the subtotal
- * and any manual favors (a friend's deal); a live flash sale then discounts the
- * whole subtotal — the same percent-off-the-total model the storefront and
- * online reservations use. A flash markdown is a sale, not a "favor", so it
- * never inflates `favorsCents`. Pass `0` for `flashPercentOff` when no sale is
- * live (the common case), and you get the plain undiscounted totals back.
- */
-export function computeInPersonSale(
-  items: SaleLineInput[],
-  flashPercentOff: number,
-): InPersonSaleResult {
-  const { totalCents, favorsCents } = computeSaleTotals(items);
-  const winner = resolveDiscount({ flashPercent: flashPercentOff, promoPercent: 0 });
-  if (winner.source === "none" || winner.percentOff <= 0) {
-    return { totalCents, favorsCents };
-  }
-  const discounted = discountedTotalCents(totalCents, winner.percentOff);
-  return {
-    totalCents,
-    favorsCents,
-    promoPercentOff: winner.percentOff,
-    discountedTotalCents: discounted,
-    discountLabel: winner.label,
-    collectedCents: discounted,
-  };
-}
-
-/**
- * Re-derive an in-person sale's money after its lines (quantities/prices) are
- * amended, re-applying a stored flash-sale percent to the new subtotal. Pass the
- * reservation's saved `promoPercentOff` (0/null/undefined ⇒ no sale). When a sale
- * applies, `collectedCents` mirrors the discounted total — that's what the baker
- * actually collects and what the books read. Mirrors {@link computeInPersonSale}.
- */
-export function recomputeAmendedSale(
-  items: SaleLineInput[],
-  promoPercentOff: number | null | undefined,
-): { totalCents: number; discountedTotalCents?: number; collectedCents?: number } {
-  const { totalCents } = computeSaleTotals(items);
-  const pct = Math.max(0, Math.floor(Number(promoPercentOff) || 0));
-  if (pct <= 0) return { totalCents };
-  const discounted = discountedTotalCents(totalCents, pct);
-  return { totalCents, discountedTotalCents: discounted, collectedCents: discounted };
-}
-
 export type SoldItem = {
   productSlug: string;
   quantity: number;
   priceCents?: number;
 };
 
-export type SoldSource = { items: SoldItem[] };
+/**
+ * One sale's items, plus the flash-sale percent that applied to it (when any).
+ * The percent marks the favor baseline down to the sale price — see
+ * {@link effectiveListCents}.
+ */
+export type SoldSource = { items: SoldItem[]; promoPercentOff?: number | null };
 
 /**
  * Real favors given across a drop's orders/reservations: for every item with a
- * known list price and a recorded charged price, sum max(0, list - charged) x qty.
+ * known list price and a recorded charged price, sum max(0, baseline - charged)
+ * x qty, where `baseline` is the sale price when the sale carried a flash percent.
  * Items missing a price or an unknown slug contribute nothing.
  */
 export function actualFavorsCents(
@@ -124,7 +81,8 @@ export function actualFavorsCents(
       const list = listPriceBySlug.get(it.productSlug);
       if (typeof list !== "number") continue;
       const qty = intNonNeg(it.quantity);
-      favors += qty * Math.max(0, centsNonNeg(list) - centsNonNeg(it.priceCents));
+      const baseline = effectiveListCents(list, src.promoPercentOff);
+      favors += qty * Math.max(0, baseline - centsNonNeg(it.priceCents));
     }
   }
   return favors;
@@ -132,6 +90,7 @@ export function actualFavorsCents(
 
 export type FavorSource = {
   who: string;
+  promoPercentOff?: number | null;
   items: {
     productSlug: string;
     productName?: string;
@@ -173,7 +132,9 @@ export function favorLines(
       const qty = intNonNeg(it.quantity);
       if (qty === 0) continue;
       const charged = centsNonNeg(it.priceCents);
-      const listCents = centsNonNeg(list);
+      // Baseline is the sale price when the sale carried a flash percent, so a
+      // markdown everyone gets isn't shown as a personal favor.
+      const listCents = effectiveListCents(list, src.promoPercentOff);
       const favorCents = qty * Math.max(0, listCents - charged);
       if (favorCents <= 0) continue;
       lines.push({
